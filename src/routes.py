@@ -3,6 +3,7 @@ import logging
 import os
 import traceback
 
+import sentry_sdk
 from werkzeug.exceptions import NotFound as InvalidURLException
 from flask import jsonify, request, Response, send_from_directory, send_file
 
@@ -19,6 +20,17 @@ api_version_1_web.add_namespace(upload.upload_files_ns)
 app.register_blueprint(version_1_web, url_prefix='/user/v1')
 
 _logger = logging.getLogger(__name__)
+
+
+sentry_sdk.init(
+    dsn="https://bf651016a6029f4f008b902578b10f3f@o1068161.ingest.sentry.io/4506552476499968",
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    traces_sample_rate=1.0,
+    # Set profiles_sample_rate to 1.0 to profile 100%
+    # of sampled transactions.
+    # We recommend adjusting this value in production
+)
 
 
 @app.before_request
