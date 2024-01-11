@@ -1,0 +1,42 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: meetingx-api
+  name: meetingx-api
+spec:
+  minReadySeconds: 5
+  replicas: 1
+  selector:
+    matchLabels:
+      app: meetingx-api
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: meetingx-api
+    spec:
+      containers:
+      - envFrom:
+        - configMapRef:
+            name: api-config
+        image: <IMAGE>
+        name: meetingx-api
+        imagePullPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: meetingx-api-service
+spec:
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+  selector:
+    app: meetingx-api
+  type: LoadBalancer
