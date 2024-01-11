@@ -119,16 +119,16 @@ JSON Body
   "last_name": "Doe",
   "phone_number": "+916655928947",
   "password": "Admin@1234",
-  "organization_name": "Smart Assistance Systems",
+  "teams_name": "Smart Assistance Systems",
   "country_id": "4662f059-60eb-4a63-a568-98b92986ec68"
 }
 ```
 
-If everything work well, the response body with organization_id will return
+If everything work well, the response body with teams_id will return
 
 ```Json
 {
-  "organization_id": "2d747b63-47e7-4316-9c5d-72bee6f088ec"
+  "teams_id": "2d747b63-47e7-4316-9c5d-72bee6f088ec"
 }
 ```
 

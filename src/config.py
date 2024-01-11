@@ -1,10 +1,5 @@
 import os
-
-from flask.cli import load_dotenv
 from sqlalchemy.pool import NullPool
-
-load_dotenv()
-
 
 class Config:
     """
@@ -21,19 +16,24 @@ class Config:
     JWT_BLACKLIST_ENABLED = True
     JWT_CLAIMS_IN_REFRESH_TOKEN = True
     JWT_BLACKLIST_TOKEN_CHECKS = ["access"]
-    JWT_TOKEN_LOCATION = ["headers"]
+    JWT_TOKEN_LOCATION = ["headers", "query_string"]
     SQLALCHEMY_DATABASE_URI = os.environ["DATABASE_URI"]
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO=False
     SQLALCHEMY_ENGINE_OPTIONS = {
         "poolclass": NullPool
     }
-    PROTOTYPE_SCHEMA = 'default'
     CORS_ORIGIN = os.environ['CORS_ORIGIN']
     UPLOAD_FOLDER = os.environ['UPLOAD_FOLDER']
+    SENTRY_CONFIG = os.environ['SENTRY_CONFIG']
+    PROTOTYPE_SCHEMA = 'cs_cognicept'
+    PUBLIC_SCHEMA_TABLES = ['user', 'organization', 'user_organization_mapping',
+                            'user_notification_token', 'agent', 'user_password_reset_token', 'access_keys']
+    GET_SCHEMAS_QUERY = "select schema_name from information_schema.schemata WHERE schema_name NOT LIKE 'pg_%%' and schema_name LIKE 'cs_%%' "
+    GET_INDIVIDUAL_SCHEMA_QUERY = "select schema_name from information_schema.schemata WHERE schema_name LIKE 'cs_"
+    GET_ALL_SCHEMAS_QUERY = "select schema_name from information_schema.schemata WHERE schema_name NOT LIKE 'pg_%%' and schema_name LIKE 'cs_%%' "
     TOKEN_SALT = os.environ['TOKEN_SALT']
-
     API_URL = os.environ['API_URL']
+    BASE_URL = os.environ['BASE_URL']
 
 
 class ProductionConfig(Config):
