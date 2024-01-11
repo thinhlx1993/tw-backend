@@ -3,7 +3,6 @@ import os.path
 
 
 from openai import OpenAI
-from docx import Document
 from src.v1.services import files_services, mailgun_services
 
 
