@@ -30,7 +30,7 @@ def upgrade():
     op.execute(insert_user_role)
     op.execute("INSERT INTO public.user_role_mapping (user_id,role_id) VALUES ('8f3ee82d-fa40-42c1-84cd-2da215937c40','b40ee1ae-5a12-487a-98cc-b6d07238e17a');")
     op.execute("INSERT INTO public.teams (teams_id,teams_name,teams_code,\"owner\",created_at,updated_at,is_disabled,is_deleted) VALUES ('791492c7-112b-49b4-9788-cb48160b45eb','Default','Default','8f3ee82d-fa40-42c1-84cd-2da215937c40','2024-01-11 17:04:06.087','2024-01-11 17:04:06.087',false,false);")
-    op.execute("INSERT INTO public.user_teams_mapping (user_id,teams_id,is_default) VALUES '8f3ee82d-fa40-42c1-84cd-2da215937c40','791492c7-112b-49b4-9788-cb48160b45eb',true);")
+    op.execute("INSERT INTO public.user_teams_mapping (user_id,teams_id,is_default) VALUES ('8f3ee82d-fa40-42c1-84cd-2da215937c40','791492c7-112b-49b4-9788-cb48160b45eb',true);")
     pass
 
 

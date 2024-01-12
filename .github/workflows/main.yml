@@ -31,7 +31,7 @@ jobs:
      - name: Update deployment file
        run: TAG=$(echo $GITHUB_SHA | head -c7) && sed -i 's|<IMAGE>|registry.digitalocean.com/meetingx/tw-api:'${TAG}'|' $GITHUB_WORKSPACE/config/deployment.yaml
      - name: Save DigitalOcean kubeconfig with short-lived credentials
-       run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 k8s-1-28-2-do-0-sgp1-1704968941741
+       run: doctl kubernetes cluster kubeconfig save --expiry-seconds 3600 k8s-1-28-2-do-0-sgp1-1704968941741
      - name: Deploy to DigitalOcean Kubernetes
        run: kubectl apply -f $GITHUB_WORKSPACE/config/deployment.yaml
      - name: Verify deployment
