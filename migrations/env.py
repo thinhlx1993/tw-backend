@@ -3,10 +3,7 @@ from alembic import context
 import logging
 from logging.config import fileConfig
 from src import app
-from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool, MetaData, Table, ForeignKeyConstraint, Index
-
-load_dotenv()
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
