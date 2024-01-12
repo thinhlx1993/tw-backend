@@ -277,6 +277,9 @@ class Teams(Resource):
                 return {"message": "Error creating teams"}, 500
         except Exception as err:
             _logger.exception(err)
+            teams_services.rollback_teams_creation(
+                teams_id, user_id
+            )
             # Resetting migration path to all teams when
             # an exception occurs
             current_app.config['GET_SCHEMAS_QUERY'] = (
@@ -286,20 +289,22 @@ class Teams(Resource):
         # Setting search path
         try:
             migration_services.set_search_path(teams_id)
+            if not user_services.create_user_role_mapping(
+                    user_id, RoleId.Administrator.value
+            ):
+                teams_services.rollback_teams_creation(teams_id, user_id)
+                return {"message": "Error mapping role"}, 500
+
+            # Create user preference with default page as robotops
+            # and notifications_enabled as True
+            if not user_services.create_user_preference(user_id):
+                return {"message": "Error mapping role"}, 500
         except Exception as err:
             _logger.exception(err)
+            teams_services.rollback_teams_creation(
+                teams_id, user_id
+            )
             return {"message": str(err)}, 500
-
-        if not user_services.create_user_role_mapping(
-                user_id, RoleId.Administrator.value
-        ):
-            teams_services.rollback_teams_creation(teams_id, user_id)
-            return {"message": "Error mapping role"}, 500
-
-        # Create user preference with default page as robotops
-        # and notifications_enabled as True
-        if not user_services.create_user_preference(user_id, "robotops", True):
-            return {"message": "Error mapping role"}, 500
 
         return {"teams_id": str(teams_id)}, 200
 

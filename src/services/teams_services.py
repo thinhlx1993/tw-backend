@@ -371,6 +371,19 @@ def format_user_org_list_result(result):
     return formatted_result
 
 
+def rollback_teams_creation(teams_id, user_id):
+    """Since organization creating error, let remove resources that created before"""
+    try:
+        user_services.delete_user_teams_mapping(user_id, teams_id)
+        # remove schema
+        delete_teams(teams_id)
+        drop_schema(teams_id)
+        db.session.commit()
+    except Exception as ex:
+        _logger.exception(ex)
+
+
+
 def delete_teams(teams_id):
     """
     Delete user teams
@@ -388,15 +401,3 @@ def delete_teams(teams_id):
     except:
         db.session.rollback()
         raise
-
-
-def rollback_teams_creation(org_id, user_id):
-    """Since teams creating error, let remove resources that created before"""
-    try:
-        user_services.delete_user_teams_mapping(user_id, org_id)
-        # remove schema
-        delete_teams(org_id)
-        drop_schema(org_id)
-        db.session.commit()
-    except Exception as ex:
-        _logger.exception(ex)

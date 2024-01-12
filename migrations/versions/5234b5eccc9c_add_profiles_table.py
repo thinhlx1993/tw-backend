@@ -50,7 +50,7 @@ def upgrade():
             sa.String(length=128),
             nullable=True
         ),
-        sa.Column('username', sa.String(length=128), nullable=True),
+        sa.Column('username', sa.String(length=128), nullable=True, unique=True),
         sa.Column('name', sa.String(length=128), nullable=True),
         sa.Column('password', sa.String(length=128), nullable=True),
         sa.Column('fa', sa.String(length=128), nullable=True),
@@ -58,7 +58,7 @@ def upgrade():
         sa.Column('gpt_key', sa.String(length=128), nullable=True),
         sa.Column('cookies', sa.Numeric(precision=5, scale=2), nullable=True),
         sa.Column('notes', sa.Text(), nullable=True),
-        sa.Column('metadata', sa.JSON(), nullable=True),
+        sa.Column('profile_data', sa.JSON(), nullable=True),
         sa.Column('status', sa.String(length=128), nullable=True),
         sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
         sa.Column('modified_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),

@@ -22,8 +22,8 @@ class Profiles(db.Model):
     group_id = db.Column(
         db.String(128),
         ForeignKey("groups.group_id"),
-        nullable=False)
-    username = db.Column(db.String(128), nullable=True)
+        nullable=True)
+    username = db.Column(db.String(128), nullable=True, unique=True)
     name = db.Column(db.String(128), nullable=True)
     password = db.Column(db.String(128), nullable=True)
     fa = db.Column(db.String(128), nullable=True)
@@ -31,7 +31,7 @@ class Profiles(db.Model):
     gpt_key = db.Column(db.String(128), nullable=True)
     cookies = db.Column(db.String(128), nullable=True)
     notes = db.Column(db.Text(), nullable=True)
-    metadata = db.Column(db.JSON(), nullable=True)
+    profile_data = db.Column(db.JSON(), nullable=True)
     status = db.Column(db.String(128), nullable=True)
     created_at = db.Column(
         db.DateTime(),
@@ -45,17 +45,7 @@ class Profiles(db.Model):
     )
 
     # Constructor initializing values
-    def __init__(self, username, password,
-                 fa, proxy, gpt_key, cookies,
-                 notes, status):
-        self.username = username
-        self.password = password
-        self.fa = fa
-        self.proxy = proxy
-        self.gpt_key = gpt_key
-        self.cookies = cookies
-        self.notes = notes
-        self.status = status
+    # def __init__(self):
 
     def repr_name(self):
         return {
