@@ -36,9 +36,6 @@ class Groups(db.Model):
     )
 
     # Constructor initializing values
-    def __init__(self, group_name, notes):
-        self.group_name = group_name
-        self.notes = notes
 
     def repr_name(self):
         return {

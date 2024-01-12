@@ -34,6 +34,7 @@ class Config:
     TOKEN_SALT = os.environ['TOKEN_SALT']
     API_URL = os.environ['API_URL']
     BASE_URL = os.environ['BASE_URL']
+    SUPER_ADMIN = os.environ['SUPER_ADMIN']
 
 
 class ProductionConfig(Config):

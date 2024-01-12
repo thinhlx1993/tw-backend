@@ -643,9 +643,9 @@ class UserLogin(Resource):
             @Author: Thinh Le
             """
             default_teams = user_services.get_default_org(user_details.user_id)
-            user_teamss = teams_services.get_user_org_list(user_details.user_id)
+            user_teams = teams_services.get_user_org_list(user_details.user_id)
             if not default_teams:
-                org_list = user_teamss.get("org_list", [])
+                org_list = user_teams.get("org_list", [])
                 if len(org_list) == 0:
                     # Try to create user default org
                     if user_details.first_name and user_details.last_name:
@@ -1034,8 +1034,6 @@ class UserSwitchTeams(Resource):
         try:
             request_data = user_ns2.payload
             teams_id = request_data['teams_id']
-            teams_code = request_data.get('teams_code', None)
-            blacklist = request_data.get('blacklist', False)
             claims = get_jwt_claims()
             username = get_jwt_identity()
             user_id = claims['user_id']
@@ -1043,14 +1041,15 @@ class UserSwitchTeams(Resource):
             _logger.debug(f"Request validation failed: {e}")
             return {"message": "Bad request. Invalid input"}, 400
 
+        teams = teams_services.get_teams(teams_id)
+        if not teams:
+            return {"message": "Team not found"}, 400
+
         if teams_id == claims['teams_id']:
             # Return the same JWT from request header
             access_token = request.headers.get('Authorization').split(" ")[1]
             token = {"access_token": access_token}
             return token, 200
-
-        if teams_code is None:
-            teams_code = teams_services.get_teams(teams_id).teams_code
 
         try:
             # Added super admin functionality here.
@@ -1066,7 +1065,6 @@ class UserSwitchTeams(Resource):
                     'default_page': claims.get('default_page', ''),
                     'profile_name': claims.get('profile_name', ''),
                     'teams_id': str(teams_id),
-                    'teams_code': str(teams_code).lower(),
                     'authorized': claims.get('authorized')
                 }
                 refresh_token = create_refresh_token(
@@ -1089,7 +1087,6 @@ class UserSwitchTeams(Resource):
                     'default_page': claims.get('default_page', ''),
                     'profile_name': claims.get('profile_name', ''),
                     'teams_id': str(teams_id),
-                    'teams_code': str(teams_code).lower(),
                     'authorized': claims.get('authorized')
                 }
                 refresh_token = create_refresh_token(

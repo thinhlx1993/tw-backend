@@ -56,24 +56,21 @@ def drop_schema(org_id):
         'DROP SCHEMA IF EXISTS "cs_' + str(org_id) + '" CASCADE ')
 
 
-def get_teams(org_id):
+def get_teams(teams_id):
     """
     To fetch an teams with the given id
 
-    :param str org_id: id to check in DB
+    :param str teams_id: id to check in DB
 
     :return: Teams row from table
     """
     try:
         teams = (Teams.query.filter(
-            Teams.teams_id == org_id).first())
-        db.session.flush()
+            Teams.teams_id == teams_id).first())
         return teams
-            
     except Exception as err:
-        db.session.rollback()
         capture_exception(err)
-        raise
+        return None
 
 
 def update_query(query, model, filters=None, throw_error=True):

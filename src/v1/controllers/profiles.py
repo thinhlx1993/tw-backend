@@ -1,24 +1,12 @@
-"""Controller for teams."""
+"""Controller for profiles."""
 
 import logging
-from datetime import datetime
-import json, uuid, os
-from concurrent.futures import ThreadPoolExecutor
-
-from flask_restx import fields, reqparse, Resource
+from flask_restx import fields, Resource
 from flask_jwt_extended import get_jwt_claims
-from flask_jwt_extended import get_jwt_identity
-from flask import current_app
-from sentry_sdk import capture_exception
-
-from src.models import teams
-from src.parsers import page_parser
-from src.services import user_services, teams_services, profiles_services
+from src.services import profiles_services
 from src.services import migration_services
 from src.utilities.custom_decorator import custom_jwt_required
 from src.version_handler import api_version_1_web
-from src.custom_exceptions import InvalidJWTToken
-from src.enums.role_permissions import RoleId
 
 # Create module log
 _logger = logging.getLogger(__name__)
@@ -41,6 +29,26 @@ profile_create_model = profiles_ns2.model(
         "cookies": fields.String(example="cookies"),
         "notes": fields.String(example="notes"),
         "status": fields.String(example="status")
+    }
+)
+
+profile_update_model = profiles_ns2.model(
+    "profile_update_model", {
+        "username": fields.String(example="new_username"),
+        "password": fields.String(example="new_password"),
+        "fa": fields.String(example="new_fa"),
+        "proxy": fields.String(example="new_proxy"),
+        "gpt_key": fields.String(example="new_gpt_key"),
+        "cookies": fields.String(example="new_cookies"),
+        "notes": fields.String(example="new_notes"),
+        "status": fields.String(example="new_status")
+    }
+)
+
+profile_operation_response_model = profiles_ns2.model(
+    "profile_operation_response_model", {
+        "message": fields.String(example="Operation successful"),
+        "profile": fields.Nested(profile_update_model, description="Profile details")
     }
 )
 
@@ -99,4 +107,40 @@ class ProfilesController(Resource):
         return {"profile_id": profile.profile_id}, 200
 
 
+class ProfilesIdController(Resource):
+    """Class for /profiles/profile_id functionalities."""
+    @profiles_ns2.expect(profile_update_model)  # Assuming profile_update_model is defined for updating a profile
+    @profiles_ns2.response(200, "Profile updated successfully", profile_operation_response_model)
+    @profiles_ns2.response(401, "Authorization information is missing or invalid.", unauthorized_response_model)
+    @profiles_ns2.response(500, "Internal Server Error", internal_server_error_model)
+    @custom_jwt_required()
+    def put(self, profile_id):
+        """Update a profile by ID"""
+        try:
+            data = profiles_ns2.payload
+            profile = profiles_services.update_profile(profile_id, data)
+            if profile:
+                return {"message": "Profile updated successfully", "profile": profile}, 200
+            return {"message": "Profile not found"}, 404
+        except Exception as e:
+            _logger.debug(f"Error updating profile: {e}")
+            return {"message": "Data not valid or internal error"}, 400
+
+    @profiles_ns2.response(200, "Profile deleted successfully", profile_operation_response_model)
+    @profiles_ns2.response(401, "Authorization information is missing or invalid.", unauthorized_response_model)
+    @profiles_ns2.response(500, "Internal Server Error", internal_server_error_model)
+    @custom_jwt_required()
+    def delete(self, profile_id):
+        """Delete a profile by ID"""
+        try:
+            result = profiles_services.delete_profile(profile_id)
+            if result:
+                return {"message": "Profile deleted successfully"}, 200
+            return {"message": "Profile not found"}, 404
+        except Exception as e:
+            _logger.debug(f"Error deleting profile: {e}")
+            return {"message": "Internal error"}, 500
+
+
 profiles_ns2.add_resource(ProfilesController, "/")
+profiles_ns2.add_resource(ProfilesIdController, "/<string:profile_id>")

@@ -247,13 +247,15 @@ class Teams(Resource):
             _logger.debug(f"Data not valid: {e}")
             return {"message": "Data not valid"}, 400
         try:
-            org_name = data['teams_name']
+            teams_name = data['teams_name']
         except Exception as e:
             _logger.debug(f"Request validation failed: {e}")
             return {"message": "Bad request. Invalid input"}, 400
+
+        status, teams_id, err_msg = teams_services.create_teams(
+            teams_name, user_id)
+
         try:
-            status, teams_id, err_msg = teams_services.create_teams(
-                org_name, user_id)
             # Create teams and schema for user
             if status:
                 # Create user teams mapping with is_default=False

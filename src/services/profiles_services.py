@@ -44,10 +44,10 @@ def get_all_profiles():
     return profiles
 
 
-def update_profile(profile_id, **kwargs):
+def update_profile(profile_id, data):
     profile = Profiles.query.get(profile_id)
     if profile:
-        for key, value in kwargs.items():
+        for key, value in data.items():
             if hasattr(profile, key):
                 setattr(profile, key, value)
         db.session.flush()
