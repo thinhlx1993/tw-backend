@@ -2,7 +2,7 @@
 import src.log_config
 
 import os
-
+from alembic import command
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
@@ -46,7 +46,7 @@ if os.environ['CONFIG'] == 'PROD':
     manager = Manager(app)
     manager.add_command('db', MigrateCommand)
     with app.app_context():
-        db.upgrade(migrate.get_config(), 'head')
+        command.upgrade(migrate.get_config(), 'head')
 
 # Set JWT Config
 jwt = JWTManager(app)
