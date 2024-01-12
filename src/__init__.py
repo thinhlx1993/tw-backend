@@ -7,8 +7,9 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
+from flask_script import Manager
 from flask_caching import Cache
-from flask_migrate import Migrate
+from flask_migrate import Migrate, MigrateCommand
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
@@ -40,6 +41,12 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 migrate = Migrate(app, db, compare_type=True)
+
+if os.environ['CONFIG'] == 'PROD':
+    manager = Manager(app)
+    manager.add_command('db', MigrateCommand)
+    with app.app_context():
+        db.upgrade(migrate.get_config(), 'head')
 
 # Set JWT Config
 jwt = JWTManager(app)
