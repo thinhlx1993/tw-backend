@@ -26,7 +26,7 @@ class UserRoleMapping(db.Model):
     teams_id = db.Column(db.String(128), ForeignKey("teams.teams_id"),
                         primary_key=True, nullable=False,)
     __table_args__ = (UniqueConstraint(
-        'user_id', 'role_id', 'teams_id', name='_user_role_teams_uc'),)
+        'user_id', 'role_id', 'teams_id', name='_user_role_team_uc'),)
 
     # Constructor initializing values
     def __init__(self, user_id, role_id, teams_id):

@@ -226,10 +226,12 @@ def upgrade():
         op.create_table('user_role_mapping',
                         sa.Column('user_id', sa.String(128), nullable=False),
                         sa.Column('role_id', sa.String(128), nullable=False),
+                        sa.Column('teams_id', sa.String(128), nullable=False),
                         sa.ForeignKeyConstraint(['role_id'], ['user_role.role_id'], ),
                         sa.ForeignKeyConstraint(['user_id'], ['user.user_id'], ),
+                        sa.ForeignKeyConstraint(['teams_id'], ['teams.teams_id'], ),
                         sa.PrimaryKeyConstraint('user_id', 'role_id'),
-                        sa.UniqueConstraint('user_id', 'role_id', name='_user_role_uc'),
+                        sa.UniqueConstraint('user_id', 'role_id', 'teams_id', name='_user_role_team_uc'),
                         schema='public'
                         )
     op.create_table('mission_schedule',

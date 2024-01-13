@@ -1,5 +1,7 @@
 import os
 import logging
+
+import jwt
 from flask import request
 from functools import wraps
 from flask_jwt_extended import verify_jwt_in_request, get_jwt_claims
@@ -34,8 +36,9 @@ def custom_jwt_required():
             except ExpiredSignatureError:
                    return {"message":"Authorization token expired"},401
             except NoAuthorizationError as ex:
-                # _logger.exception(ex)
                 return {"message": "Not authorized"}, 401
+            except jwt.exceptions.DecodeError:
+                return {"message": "Not Found JWT Header"}, 500
             except Exception as ex:
                 _logger.exception(ex)
                 return {"message": str(ex)}, 500

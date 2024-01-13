@@ -1876,12 +1876,13 @@ def create_default_user_teams(
 
     # Setting search path
     try:
-        migration_services.set_search_path(org_id)
         # Create user role_mapping with role as admin
         if not create_user_role_mapping(
                 user.user_id, 'b40ee1ae-5a12-487a-98cc-b6d07238e17a', org_id
         ):
             return None, {"message": "Error mapping role"}, 500
+
+        migration_services.set_search_path(org_id)
 
         # Create user preference with default page as robotops
         # and notifications_enabled as True
