@@ -42,6 +42,6 @@ class Groups(db.Model):
             "group_id": self.group_id,
             "group_name": self.group_name,
             "notes": self.notes,
-            "created_at": self.created_at.isoformat(),
-            "modified_at": self.modified_at.isoformat()
+            "created_at": self.created_at.strftime("%d-%m-%Y %H:%M"),
+            "modified_at": self.modified_at.strftime("%d-%m-%Y %H:%M")
         }

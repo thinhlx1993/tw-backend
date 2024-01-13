@@ -9,6 +9,8 @@ page_parser.add_argument(
     help='per_page value to be added', location='args')
 page_parser.add_argument('sort_by', type=str,
                          help='Field to be sorted', location='args')
+page_parser.add_argument('search', type=str,
+                         help='Search username', location='args')
 page_parser.add_argument('sort_order', type=str, choices=('asc', 'desc'),
                          help='asc or desc', location='args')
 page_parser.add_argument('filter', type=str,
@@ -19,6 +21,10 @@ date_page_parser.add_argument('start_date', type=inputs.date_from_iso8601, requi
                               help='start date in format YYYY-MM-DD', location='args')
 date_page_parser.add_argument('end_date', type=inputs.date_from_iso8601,
                               help='end date in format YYYY-MM-DD', location='args')
+
+profile_page_parser = page_parser.copy()
+profile_page_parser.add_argument("group_id", type=str,
+                         help='Search by group', location='args')
 
 filter_parser = reqparse.RequestParser()
 filter_parser.add_argument('filter', type=str,

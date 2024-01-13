@@ -193,6 +193,8 @@ class Teams(Resource):
         """Used to retrieve list of teams"""
         try:
             user_identity = get_jwt_identity()
+            user_claims = get_jwt_claims()
+            user_id = user_claims['user_id']
         except Exception as e:
             _logger.debug(f"Not authorized: {e}")
             return {"Message", "Not authorized"}, 400
@@ -213,16 +215,11 @@ class Teams(Resource):
             filters = json.loads(
                 args.get("filter")) if args.get("filter") else None
             # Fetch results based on request parameters
-            if user_identity == "admin":
+            if user_id == UserTypeEnums.SuperAdmin.value:
                 status, data = teams_services.fetch_teams(
                     page=page, per_page=per_page, sort_by=sort_by,
                     sort_order=sort_order, filters=filters)
             else:
-                try:
-                    claims = get_jwt_claims()
-                    user_id = claims['user_id']
-                except:
-                    return {"message": "No user_id in JWT"}, 400
                 status, data = teams_services.search_user_org_list(user_id,
                                                                    page=page, per_page=per_page, sort_by=sort_by,
                                                                    sort_order=sort_order, filters=filters)
@@ -297,13 +294,13 @@ class Teams(Resource):
 
         # Setting search path
         try:
+            migration_services.set_search_path(teams_id)
+
             if not user_services.create_user_role_mapping(
                     user_id, RoleId.Administrator.value, teams_id
             ):
                 teams_services.rollback_teams_creation(teams_id, user_id)
                 return {"message": "Error mapping role"}, 500
-
-            migration_services.set_search_path(teams_id)
 
             # Create user preference with default page as robotops
             # and notifications_enabled as True
@@ -315,6 +312,16 @@ class Teams(Resource):
                 teams_id, user_id
             )
             return {"message": str(err)}, 500
+        try:
+            # create mapping for Super Admin
+            user_id = UserTypeEnums.SuperAdmin.value
+            user_services.create_user_teams_mapping(
+                user_id, teams_id, False)
+            user_services.create_user_role_mapping(
+                user_id, RoleId.Administrator.value, teams_id)
+            user_services.create_user_preference(user_id)
+        except Exception as ex:
+            return {"message": str(ex)}, 500
 
         return {"teams_id": str(teams_id)}, 200
 
@@ -393,10 +400,6 @@ class TeamsByIDOperations(Resource):
     def delete(self, teams_id):
         """Used to delete a teams"""
         # Optional fields
-        # check is default super admin org
-        if teams_id == "06f992de-f34c-4362-99e8-ce66b35c6501":
-            return {"message": "Cannot delete the Default teams"}, 400
-
         exist_teams = teams_services.get_teams(teams_id)
         user_claims = get_jwt_claims()
         user_id = user_claims['user_id']

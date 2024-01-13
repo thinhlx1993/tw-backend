@@ -230,7 +230,7 @@ def upgrade():
                         sa.ForeignKeyConstraint(['role_id'], ['user_role.role_id'], ),
                         sa.ForeignKeyConstraint(['user_id'], ['user.user_id'], ),
                         sa.ForeignKeyConstraint(['teams_id'], ['teams.teams_id'], ),
-                        sa.PrimaryKeyConstraint('user_id', 'role_id'),
+                        sa.PrimaryKeyConstraint('user_id', 'role_id', 'teams_id'),
                         sa.UniqueConstraint('user_id', 'role_id', 'teams_id', name='_user_role_team_uc'),
                         schema='public'
                         )
@@ -300,6 +300,9 @@ def upgrade():
                     )
     op.execute(
         "CREATE OR REPLACE VIEW user_details AS SELECT u.user_id,u.username,u.email,u.password,u.first_name,u.last_name, u.phone_number, up.preference_id, up.default_page,up.is_disabled, up.notifications_enabled, up.modified_at  FROM \"user\" u JOIN user_preference up ON up.user_id=u.user_id;")
+    # op.execute(
+    #     "INSERT INTO public.user_role (role_id,role_name,role_description,created_on,is_deletable) VALUES ('270325cc-0378-48f2-8b18-67e1c22a64c5','client','Client','2024-01-11 16:36:46.967',false), ('b40ee1ae-5a12-487a-98cc-b6d07238e17a','admin','Admin','2024-01-11 16:36:46.967',false);"
+    # )
     # ### end Alembic commands ###
 
 

@@ -376,6 +376,7 @@ def format_user_org_list_result(result):
 def rollback_teams_creation(teams_id, user_id):
     """Since organization creating error, let remove resources that created before"""
     try:
+        user_services.delete_user_roles_mapping(user_id, teams_id)
         user_services.delete_user_teams_mapping(user_id, teams_id)
         # remove schema
         delete_teams(teams_id)

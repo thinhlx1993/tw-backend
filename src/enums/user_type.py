@@ -2,9 +2,10 @@ from enum import Enum
 
 
 class UserTypeEnums(Enum):
-    SuperAdmin = "8f3ee82d-fa40-42c1-84cd-2da215937c40"
+    SuperAdmin = "a3213c22-c8c5-4e86-aa7c-ec4a08f0a7f9"
 
 class UserRoleEnums(Enum):
     SuperAdmin = "Super Admin"
+    AdminId = 'b40ee1ae-5a12-487a-98cc-b6d07238e17a'
     Admin = "Admin"
     User = "User"

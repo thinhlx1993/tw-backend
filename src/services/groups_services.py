@@ -29,13 +29,12 @@ def get_all_groups():
     return groups
 
 
-def update_group(group_id, new_group_name=None, new_notes=None):
+def update_group(group_id, data):
     group = Groups.query.filter_by(group_id=group_id).first()
     if group:
-        if new_group_name:
-            group.group_name = new_group_name
-        if new_notes:
-            group.notes = new_notes
+        for key, val in data.items():
+            if hasattr(group, key):
+                group.__setattr__(key, val)
         db.session.flush()
         return group
     return None  # Or handle the case where the group is not found
