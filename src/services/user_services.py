@@ -43,9 +43,9 @@ from src.services import (
 )
 from src.config import Config
 
-
 # Create module log
 _logger = logging.getLogger(__name__)
+
 
 class AlertEmailType(str, Enum):
     NORMAL = "normal"
@@ -77,7 +77,7 @@ def check_user_exists(username=None, user_id=None):
     try:
         if username:
             user = (models.User.query.filter(and_(
-                func.lower(models.User.username) == func.lower(username), 
+                func.lower(models.User.username) == func.lower(username),
                 models.User.is_disabled == False)).first())
         elif user_id:
             user = (models.User.query.filter(and_(
@@ -91,6 +91,7 @@ def check_user_exists(username=None, user_id=None):
         raise
     db.session.flush()
     return user
+
 
 def get_user(email):
     """
@@ -153,6 +154,7 @@ def get_user_details(username=None, user_id=None):
     db.session.flush()
     return user
 
+
 def validate_password(username, password):
     """
     Validates password against hash stored in database
@@ -163,7 +165,7 @@ def validate_password(username, password):
     :return: True if password is valid, False if password is invalid.
     """
     # Get a dictionary containing user data for 'username'
-    user = row_to_dict(models.User.query.filter((func.lower(models.User.username)==func.lower(username))).first())
+    user = row_to_dict(models.User.query.filter((func.lower(models.User.username) == func.lower(username))).first())
 
     # Check input password against hashed password in DB
     if user['password'] == password:
@@ -191,7 +193,7 @@ def user_row_to_dict(user_row):
 
 @jwt.token_in_blacklist_loader
 # This is invoked when the token is verified by the verify_jwt_request().
-#This method and decorator is mandatory if JWT_BLACKLIST_ENABLED is true in config
+# This method and decorator is mandatory if JWT_BLACKLIST_ENABLED is true in config
 def validate_auth_token(token_data):
     """
     Validates whether the auth token is present in the blacklist
@@ -209,6 +211,7 @@ def validate_auth_token(token_data):
         db.session.rollback()
         capture_exception(err)
         raise
+
 
 def get_user_permissions(username):
     """
@@ -327,7 +330,6 @@ def create_user(username, password, first_name, last_name):
     return user
 
 
-
 def blacklist_token(token):
     """
     Blacklist the token
@@ -425,7 +427,7 @@ def delete_user(user_id, new_teams_owner):
     if not user_exists:
         data = {"Message": "User not found"}
         return False, data
-    
+
     # Delete user's FK constraints
     try:
         delete_user_teams_constraints(user_id, new_teams_owner)
@@ -439,7 +441,7 @@ def delete_user(user_id, new_teams_owner):
     try:
         db.session.query(models.User).filter(
             models.User.user_id == user_id
-            ).delete()
+        ).delete()
         data = {"Message": "User successfully deleted"}
         db.session.flush()
     except Exception as e:
@@ -504,7 +506,8 @@ def get_user_list():
         # SELECT user_id, username, email, first_name, last_name,
         # (first_name||' '||last_name) profile_name, default_page,
         # is_disabled, notifications_enabled order_by username
-        result = db.session.query(models.User).join(models.UserDetails, models.UserDetails.user_id == models.User.user_id).all()
+        result = db.session.query(models.User).join(models.UserDetails,
+                                                    models.UserDetails.user_id == models.User.user_id).all()
     except Exception as ex:
         _logger.exception(ex)
         raise DatabaseQueryException
@@ -621,7 +624,7 @@ def create_user_role(role_name, role_description, permission_ids, is_deletable=N
         # kill_session(session)
         return False, {"Message": str(e)}
     # kill_session(session)
-    return True,  {"Message": "Role Created Successfully"}
+    return True, {"Message": "Role Created Successfully"}
 
 
 def update_user_role_mapping(user_id, role_id):
@@ -803,7 +806,7 @@ def get_user_notification(user_id):
         user_in_teams = db.session.query(models.UserPreference).filter(
             models.UserPreference.user_id == user_id).first()
         user_global = models.User.query.filter(models.User.user_id == user_id).first()
-        if not user_in_teams or not user_global :
+        if not user_in_teams or not user_global:
             return False, {"Message": "Invalid user Id"}
         user_out = {
             "user_id": str(user_id),
@@ -849,7 +852,7 @@ def get_user_teams(user_id):
     if not result:
         teams = None
     else:
-        teams=result.teams_id
+        teams = result.teams_id
 
     return teams
 
@@ -886,8 +889,8 @@ def create_user_teams_mapping(user_id, teams_id, is_default=True):
     :return bool: True if successful
     """
     try:
-        user_org_mapping = models.UserTeamsMapping(user_id, 
-            teams_id, is_default)
+        user_org_mapping = models.UserTeamsMapping(user_id,
+                                                   teams_id, is_default)
         db.session.add(user_org_mapping)
         db.session.flush()
         return True
@@ -895,6 +898,7 @@ def create_user_teams_mapping(user_id, teams_id, is_default=True):
         db.session.rollback()
         capture_exception(e)
         raise
+
 
 def delete_user_teams_mapping(user_id, teams_id):
     """
@@ -906,17 +910,21 @@ def delete_user_teams_mapping(user_id, teams_id):
     :return bool: True if successful
     """
     try:
-        (models.UserTeamsMapping.query.filter(and_(
-                models.UserTeamsMapping.user_id == user_id, 
+        if user_id:
+            (models.UserTeamsMapping.query.filter(and_(
+                models.UserTeamsMapping.user_id == user_id,
                 models.UserTeamsMapping.teams_id == teams_id))
-                .delete())
+             .delete())
+        else:
+            (models.UserTeamsMapping.query.filter(models.UserTeamsMapping.teams_id == teams_id)
+             .delete())
         db.session.flush()
         return True
     except:
         db.session.rollback()
         raise
 
-    
+
 def delete_user_all_teams_mapping(user_id):
     """
     Delete all teams mapping with user_id
@@ -927,13 +935,14 @@ def delete_user_all_teams_mapping(user_id):
     """
     try:
         db.session.query(models.UserTeamsMapping).filter(
-                    models.UserTeamsMapping.user_id == user_id
-                ).delete()
+            models.UserTeamsMapping.user_id == user_id
+        ).delete()
         db.session.flush()
         return True
     except:
         db.session.rollback()
         raise
+
 
 def delete_user_role_mapping(user_id):
     """
@@ -945,8 +954,8 @@ def delete_user_role_mapping(user_id):
     """
     try:
         db.session.query(models.UserRoleMapping).filter(
-                    models.UserRoleMapping.user_id == user_id
-                ).delete()
+            models.UserRoleMapping.user_id == user_id
+        ).delete()
         db.session.flush()
         return True
     except:
@@ -971,7 +980,7 @@ def delete_user_preference(user_id):
     except:
         db.session.rollback()
         raise
-    
+
 
 def delete_user_notification_token(user_id):
     """
@@ -983,14 +992,14 @@ def delete_user_notification_token(user_id):
     """
     try:
         db.session.query(models.UserNotificationToken).filter(
-                    models.UserNotificationToken.user_id == user_id
-                ).delete()
+            models.UserNotificationToken.user_id == user_id
+        ).delete()
         db.session.flush()
         return True
     except:
         db.session.rollback()
         raise
-    
+
 
 def delete_user_password_reset_token(user_id):
     """
@@ -1002,8 +1011,8 @@ def delete_user_password_reset_token(user_id):
     """
     try:
         db.session.query(models.UserPasswordResetToken).filter(
-                    models.UserPasswordResetToken.user_id == user_id
-                ).delete()
+            models.UserPasswordResetToken.user_id == user_id
+        ).delete()
         db.session.flush()
         return True
     except:
@@ -1028,6 +1037,7 @@ def disable_user(user_id):
         db.session.rollback()
         raise
 
+
 def generate_token(obj, validity_sec=86400):
     """
     Create a signed and timed token for password reset
@@ -1040,14 +1050,15 @@ def generate_token(obj, validity_sec=86400):
         salt = app.config['TOKEN_SALT'] if 'TOKEN_SALT' in app.config else None
         # Create token from JWT_KEY and TOKEN_SALT that expires in validity_sec
         # Default validity is 24 hours
-        serialized_token = Serializer(app.config['JWT_SECRET_KEY'], 
-            salt=salt, expires_in=validity_sec)
+        serialized_token = Serializer(app.config['JWT_SECRET_KEY'],
+                                      salt=salt, expires_in=validity_sec)
         # Decoding to get string of token
         token = serialized_token.dumps(obj).decode('utf-8')
         return token
     except Exception as e:
         capture_exception(e)
         raise
+
 
 def add_password_reset_token(token, user_id):
     """
@@ -1065,6 +1076,7 @@ def add_password_reset_token(token, user_id):
         db.session.rollback()
         capture_exception(e)
         raise
+
 
 def send_password_reset_email(email, username, token):
     """
@@ -1121,7 +1133,7 @@ def check_password_token_validity(token):
         if token_row:
             token_created_at = token_row.created_at
             if ((datetime.datetime.now() - token_created_at)
-                .total_seconds() > 86400):
+                    .total_seconds() > 86400):
                 return None
     except Exception as e:
         db.session.rollback()
@@ -1139,6 +1151,7 @@ def check_password_token_validity(token):
     except Exception as e:
         capture_exception(e)
         return None
+
 
 def deserialize_token(token):
     """
@@ -1160,6 +1173,7 @@ def deserialize_token(token):
         capture_exception(e)
         return None
 
+
 def invalidate_password_reset_token(token):
     """
     Invalidate password reset token after use
@@ -1176,6 +1190,8 @@ def invalidate_password_reset_token(token):
         db.session.rollback()
         capture_exception(e)
         raise
+
+
 def check_user_teams_mapping(user_id, teams_id):
     """
     Check if user belongs to teams
@@ -1185,9 +1201,9 @@ def check_user_teams_mapping(user_id, teams_id):
     """
     try:
         exists = (models.UserTeamsMapping.query.filter(and_(
-            models.UserTeamsMapping.user_id == user_id), 
+            models.UserTeamsMapping.user_id == user_id),
             (models.UserTeamsMapping.teams_id == teams_id))
-            .scalar() is not None)
+                  .scalar() is not None)
         if exists:
             return True
         else:
@@ -1206,9 +1222,9 @@ def get_default_org(user_id):
     """
     try:
         user_org_mapping = (models.UserTeamsMapping.query.filter(and_(
-            models.UserTeamsMapping.user_id == user_id), 
+            models.UserTeamsMapping.user_id == user_id),
             (models.UserTeamsMapping.is_default == True))
-            .first())
+                            .first())
         # print(user_org_mapping)
         return user_org_mapping
     except Exception as e:
@@ -1225,9 +1241,10 @@ def get_user_preference(user_id):
         capture_exception(e)
         raise
 
-def create_operator_name(profile_name, add_id_in_zendesk = False):
+
+def create_operator_name(profile_name, add_id_in_zendesk=False):
     try:
-        #setup zendesk operator. If no name provided, use "John Doe" as the name as at least one operator is required.
+        # setup zendesk operator. If no name provided, use "John Doe" as the name as at least one operator is required.
         if not profile_name.strip():
             return False
         operator_code = "john_doe"
@@ -1239,7 +1256,7 @@ def create_operator_name(profile_name, add_id_in_zendesk = False):
         }
         # Remove characters other than numbers and alphabets
         operator_code_sample = re.sub(r"[^\w\s]", '_', profile_name)
-        #Remove whitespaces with underscore
+        # Remove whitespaces with underscore
         operator_code_sample = re.sub(r"\s+", '_', operator_code_sample)
         status, operator_data = custom_field_services.get_operator_details_from_code(operator_code_sample)
         if status and len(operator_data) > 0:
@@ -1249,25 +1266,25 @@ def create_operator_name(profile_name, add_id_in_zendesk = False):
                 profile_name)
             data['tag'] = operator_code
         else:
-            #Set to dummy value if user's profile name is not provided
+            # Set to dummy value if user's profile name is not provided
             data['operator_value'] = 'John Doe'
         try:
             # for new entries from v2, add id in zendesk for each operator
             if add_id_in_zendesk:
                 status_operator, out_data = \
-                custom_field_services.insert_custom_field_value(
-                data, "Operator")
+                    custom_field_services.insert_custom_field_value(
+                        data, "Operator")
                 status, out = zendesk_services.add_operator_options(
-                name=data['operator_value'], value=str(out_data.operator_id))
+                    name=data['operator_value'], value=str(out_data.operator_id))
             else:
                 status_operator, out_data = \
-                custom_field_services.insert_custom_field_value(
-                data, "Operator")
-                #Convert value to lowercase as it is stored in lowercase 
+                    custom_field_services.insert_custom_field_value(
+                        data, "Operator")
+                # Convert value to lowercase as it is stored in lowercase
                 # in zendesk
                 value = data['tag'].lower()
                 status, out = zendesk_services.add_operator_options(
-                        name=data['operator_value'], value=value)
+                    name=data['operator_value'], value=value)
             if not status_operator:
                 return False
             return True
@@ -1326,6 +1343,7 @@ def generate_qr_code(user_id, user_email):
         capture_exception(e)
         raise
 
+
 def activate_mfa(user_id, otp):
     """
     Activate MFA for user
@@ -1375,6 +1393,7 @@ def deactivate_mfa(user_id):
         db.session.rollback()
         raise
 
+
 def get_mfa_status(user_id):
     """
     Get MFA status of user
@@ -1390,6 +1409,7 @@ def get_mfa_status(user_id):
         capture_exception(e)
         db.session.rollback()
         raise
+
 
 def verify_mfa(user_id, otp):
     """
@@ -1419,6 +1439,7 @@ def verify_mfa(user_id, otp):
         capture_exception(e)
         db.session.rollback()
         raise
+
 
 def send_mail(email, template, data):
     """
@@ -1454,7 +1475,9 @@ def send_mail(email, template, data):
         capture_exception(e)
         raise
 
-def send_fm_alert_email(email, issue_set, image_set, robot_name, waypoint, captured_at, alert_type = AlertEmailType.NORMAL):
+
+def send_fm_alert_email(email, issue_set, image_set, robot_name, waypoint, captured_at,
+                        alert_type=AlertEmailType.NORMAL):
     """
     Send inspect image alert to end user
     :param email: Recipient email address
@@ -1500,6 +1523,7 @@ def send_fm_alert_email(email, issue_set, image_set, robot_name, waypoint, captu
         capture_exception(e)
         raise
 
+
 def send_user_email_verification_mail(email, username, token):
     """
     Send email verification mail to user
@@ -1510,7 +1534,7 @@ def send_user_email_verification_mail(email, username, token):
     """
     # Prep email content
     reset_url = (
-        app.config['SMARTPLUS4_BASE_URL'] + "/email-verification?token=" + token)
+            app.config['SMARTPLUS4_BASE_URL'] + "/email-verification?token=" + token)
     data = {
         'name': username,
         'email': email,
@@ -1518,6 +1542,7 @@ def send_user_email_verification_mail(email, username, token):
     }
     template = app.config['SENDGRID_EMAIL_VERIFICATION_TEMPLATE']
     send_mail(email, template, data)
+
 
 def send_add_user_to_teams_mail(email, username, teams, token):
     """
@@ -1530,7 +1555,7 @@ def send_add_user_to_teams_mail(email, username, teams, token):
     """
     # Prep email content
     invite_link = (app.config['SMARTPLUS4_BASE_URL'] +
-        "/invite?token=" + token + "&path=login")
+                   "/invite?token=" + token + "&path=login")
     data = {
         'name': username,
         'teams': teams,
@@ -1540,8 +1565,9 @@ def send_add_user_to_teams_mail(email, username, teams, token):
     template = app.config['SENDGRID_ADD_USER_TO_ORG']
     send_mail(email, template, data)
 
-def send_user_registration_with_teams_mail(email, username, 
-    teams, token):
+
+def send_user_registration_with_teams_mail(email, username,
+                                           teams, token):
     """
     Send user registration with teams invitation mail to user
     :param email: Recipient email address
@@ -1552,7 +1578,7 @@ def send_user_registration_with_teams_mail(email, username,
     """
     # Prep email content
     invite_link = (app.config['SMARTPLUS4_BASE_URL'] +
-        "/invite?token=" + token + "&path=signup")
+                   "/invite?token=" + token + "&path=signup")
     data = {
         'name': username,
         'teams': teams,
@@ -1561,6 +1587,7 @@ def send_user_registration_with_teams_mail(email, username,
     }
     template = app.config['SENDGRID_REG_WITH_ORG']
     send_mail(email, template, data)
+
 
 def update_user_email_verification(user_id):
     """
@@ -1648,6 +1675,8 @@ def send_va_alert_email(email, image_set, captured_at, detections, waypoint, rob
     except Exception as e:
         capture_exception(e)
         raise
+
+
 def get_user_details_google_auth(request, auth_code):
     """
     Get the user details from Google using auth code
@@ -1661,9 +1690,9 @@ def get_user_details_google_auth(request, auth_code):
         total_retries -= 1
         # Get the google Auth endpoints from discovery url
         google_provider_cfg = requests.get(
-        app.config['GOOGLE_DISCOVERY_URL']).json()
+            app.config['GOOGLE_DISCOVERY_URL']).json()
         if google_provider_cfg:
-                break
+            break
         else:
             if total_retries == 0:
                 raise Exception("Exceeded retries for trying request")
@@ -1683,14 +1712,14 @@ def get_user_details_google_auth(request, auth_code):
     while True:
         total_retries -= 1
         token_response = requests.post(
-        token_url,
-        headers=headers,
-        data=body,
-        auth=(app.config["GOOGLE_CLIENT_ID"],
-              app.config["GOOGLE_CLIENT_SECRET"]),
-    )
+            token_url,
+            headers=headers,
+            data=body,
+            auth=(app.config["GOOGLE_CLIENT_ID"],
+                  app.config["GOOGLE_CLIENT_SECRET"]),
+        )
         if token_response.json():
-                break
+            break
         else:
             if total_retries == 0:
                 raise Exception("Exceeded retries for trying request")
@@ -1705,6 +1734,7 @@ def get_user_details_google_auth(request, auth_code):
 
     # Fetching the user response from google using token id.
     return get_user_response(uri, headers, body)
+
 
 def get_user_response(uri, headers, body):
     """
@@ -1721,15 +1751,16 @@ def get_user_response(uri, headers, body):
     while True:
         total_retries -= 1
         userinfo_response = requests.get(
-        uri, headers=headers, data=body)
+            uri, headers=headers, data=body)
         if userinfo_response.json():
-                break
+            break
         else:
             if total_retries == 0:
                 raise Exception("Exceeded retries for trying request")
             else:
                 time.sleep(0.5)
     return userinfo_response.json()
+
 
 def get_user_auth_tokens(user):
     """
@@ -1784,17 +1815,19 @@ def get_user_auth_tokens(user):
             {**user_payload, 'type': 'access'})}
         return token
 
+
 def validate_email(email):
     """
     Validates email and returns boolean value
     :email - email to be validated
     """
     regex = (r"^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*"
-    "@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$")
-    if re.match(regex,email):
+             "@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$")
+    if re.match(regex, email):
         return True
     else:
         return False
+
 
 def update_grafana_user_preference(user_id, public_snapshot_url):
     """
@@ -1809,6 +1842,7 @@ def update_grafana_user_preference(user_id, public_snapshot_url):
         capture_exception(err)
         raise
 
+
 def check_user_password_criteria(password):
     """
     Function to check password selection criteria
@@ -1817,20 +1851,21 @@ def check_user_password_criteria(password):
     """
     # Must have atleast 8 chars, with atleast one symbol or number
     reg = "^(?=.*[a-z])(?=.*[A-Z])((?=.*[0-9])|(?=.*[!@#$%^&*]))(?=.{8,})"
-    reg1 = "^(?=.*[!@#$%^&*])(?=.{8,})" 
+    reg1 = "^(?=.*[!@#$%^&*])(?=.{8,})"
     reg3 = "^(?=.*[0-9])(?=.{8,})"
     # compiling regex
     pat = re.compile(reg)
-    pat2 = re.compile(reg1) 
+    pat2 = re.compile(reg1)
     pat3 = re.compile(reg3)
     # searching regex                
     mat = re.search(pat, password)
-    mat2 = re.search(pat2, password) 
+    mat2 = re.search(pat2, password)
     mat3 = re.search(pat3, password)
     # validating conditions
     if mat or mat2 or mat3:
         return True
     return False
+
 
 def check_kabam_users(username):
     """
@@ -1853,11 +1888,11 @@ def check_is_operator_users(roles):
         role
         for role in roles
         if role["role_id"]
-        in [
-            "afae4f16-59ec-40c1-be84-2bf7d0f3453d",
-            "270325cc-0378-48f2-8b18-67e1c22a64c5",
-            "a45671a8-e421-4da9-a9ef-23c11ef951cc",
-        ]
+           in [
+               "afae4f16-59ec-40c1-be84-2bf7d0f3453d",
+               "270325cc-0378-48f2-8b18-67e1c22a64c5",
+               "a45671a8-e421-4da9-a9ef-23c11ef951cc",
+           ]
     ]
     return True if is_client_operator else False
 
@@ -1889,12 +1924,11 @@ def check_is_administrator_user(roles):
         role
         for role in roles
         if role["role_id"]
-        in [
-            "b40ee1ae-5a12-487a-98cc-b6d07238e17a"
-        ]
+           in [
+               "b40ee1ae-5a12-487a-98cc-b6d07238e17a"
+           ]
     ]
     return True if is_client_operator else False
-
 
 
 def send_email_invite_to_default_users(teams_name, teams_id):
@@ -1910,19 +1944,20 @@ def send_email_invite_to_default_users(teams_name, teams_id):
         users = json.loads(os.environ['DEFAULT_USERS_INVITE_EMAIL'])
         for user in users:
             token = generate_token(
-                {'email': user, 
-                'teams_id': str(teams_id), 'role':role})
+                {'email': user,
+                 'teams_id': str(teams_id), 'role': role})
             user_details = get_user(user)
             profile_name = None
             if user_details:
-                profile_name = (user_details.first_name + " " + 
-                    user_details.last_name)
-            send_add_user_to_teams_mail(user, profile_name, 
-                teams_name, token)
+                profile_name = (user_details.first_name + " " +
+                                user_details.last_name)
+            send_add_user_to_teams_mail(user, profile_name,
+                                        teams_name, token)
         return True
     except Exception as e:
         _logger.exception(e)
         return True
+
 
 def is_valid_uuid(uuid_to_check):
     try:
@@ -1932,8 +1967,9 @@ def is_valid_uuid(uuid_to_check):
         _logger.exception(e)
         return False
 
+
 def create_default_user_teams(
-    current_app, user, profile_name, org_name=None
+        current_app, user, profile_name, org_name=None
 ):
     # Generate org_name if not specify
     if not org_name:
@@ -1949,9 +1985,9 @@ def create_default_user_teams(
                 teams_services.create_schema(org_id)
                 # Setting migration path to created teams schema
                 current_app.config['GET_SCHEMAS_QUERY'] = (
-                    current_app.config['GET_INDIVIDUAL_SCHEMA_QUERY']
-                    + str(org_id)
-                    + "'"
+                        current_app.config['GET_INDIVIDUAL_SCHEMA_QUERY']
+                        + str(org_id)
+                        + "'"
                 )
                 migration_services.upgrade_database()
                 # Resetting migration path to all teamss
@@ -1982,14 +2018,14 @@ def create_default_user_teams(
 
     # Create user role_mapping with role as admin
     if not create_user_role_mapping(
-        user.user_id, 'b40ee1ae-5a12-487a-98cc-b6d07238e17a'
+            user.user_id, 'b40ee1ae-5a12-487a-98cc-b6d07238e17a'
     ):
         return None, {"message": "Error mapping role"}, 500
 
     # Create user preference with default page as robotops
     # and notifications_enabled as True
     if not create_user_preference(
-        user.user_id, "robotops", True
+            user.user_id, "robotops", True
     ):
         return None, {"message": "Error user preference"}, 500
 

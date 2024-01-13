@@ -375,10 +375,9 @@ def rollback_teams_creation(teams_id, user_id):
         # remove schema
         delete_teams(teams_id)
         drop_schema(teams_id)
-        db.session.commit()
+        db.session.flush()
     except Exception as ex:
         _logger.exception(ex)
-
 
 
 def delete_teams(teams_id):

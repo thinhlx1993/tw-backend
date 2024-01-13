@@ -114,6 +114,15 @@ org_update_response_ok_model = org_ns2.model(
     "org_update_respoonse_ok_model", org_row_model
 )
 
+org_delete_row_model = org_ns2.model("org_delete_row_model", {
+"message": fields.String(example="Deleted successfully")
+})
+# Org delete response models
+org_delete_response_ok_model = org_ns2.model(
+    "org_delete_response_ok_model", org_row_model
+)
+
+
 org_update_bad_response_model = org_ns2.model(
     "org_update_bad_response_model", {
         "message": fields.String(example="Bad Request. Invalid input")
@@ -355,6 +364,31 @@ class Teams(Resource):
             return {"message": str(err)}, 400
 
 
+class TeamsByIDOperations(Resource):
+    """Class for /teams/teams_id functionalities."""
+
+    @org_ns2.response(200, "OK", org_delete_response_ok_model)
+    @org_ns2.response(400, "Bad Request", org_update_bad_response_model)
+    @org_ns2.response(
+        401, "Authorization information is missing or invalid.",
+        unauthorized_response_model)
+    @org_ns2.response(
+        500, "Internal Server Error", internal_server_error_model)
+    @custom_jwt_required()
+    def delete(self, teams_id):
+        """Used to delete a teams"""
+        # Optional fields
+        exist_teams = teams_services.get_teams(teams_id)
+        if not exist_teams:
+            return {"message": "Team not found"}, 400
+        try:
+            teams_services.rollback_teams_creation(teams_id=teams_id, user_id=None)
+            return {"message": "Deleted successfully"}, 200
+        except Exception as err:
+            _logger.exception(err)
+            return {"message": str(err)}, 400
+
+
 class TeamsUserOperations(Resource):
     """Class for /user functionalities."""
 
@@ -481,3 +515,4 @@ class TeamsUserOperations(Resource):
 
 org_ns2.add_resource(TeamsUserOperations, "/user")
 org_ns2.add_resource(Teams, "/")
+org_ns2.add_resource(TeamsByIDOperations, "/<string:teams_id>")

@@ -1234,7 +1234,7 @@ class UserRegistration(Resource):
 user_ns2.add_resource(UserLogin, "/login")
 user_ns2.add_resource(UserRefresh, "/refresh")
 user_ns2.add_resource(UserLogout, "/logout")
-user_ns2.add_resource(UserOperations, "/")
+user_ns2.add_resource(UserOperations, "")
 # user_ns2.add_resource(UserRegistration, "/registration")
 user_ns2.add_resource(UserSwitchTeams, "/switch_team")
 user_ns2.add_resource(UserTeamsOperations, "/teams")
