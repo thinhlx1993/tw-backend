@@ -21,11 +21,11 @@ class Mission(db.Model):
     # Query class to handle soft deletion
     query_class = QueryWithSoftDelete
 
-    mission_id = db.Column(UUID(as_uuid=True), server_default=text(
+    mission_id = db.Column(db.String(128), server_default=text(
         "uuid_generate_v4()"), primary_key=True, comment='Unique identifier '
         'for mission(Primary Key)')
     mission_name = db.Column(db.String(256), comment='Name of the mission')
-    robot_id = db.Column(UUID(as_uuid=True), ForeignKey(
+    robot_id = db.Column(db.String(128), ForeignKey(
         'robot.robot_id'), comment='Unique identifier for robot '
         'owning the mission(Foreign Key)', nullable=False)
     mission_json = db.Column(JSONB, comment='JSON for mission')

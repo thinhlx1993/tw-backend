@@ -18,18 +18,19 @@ _logger = logging.getLogger(__name__)
 
 @app.before_request
 def log_request_info():
-    _logger.debug(
-        {
-            "request": {
-                "remote_addr": request.remote_addr,
-                "method": request.method,
-                "scheme": request.scheme,
-                "full_path": request.full_path,
-                "headers": request.headers,
-                "data": request.get_data()
-            }
-        }
-    )
+    # _logger.debug(
+    #     {
+    #         "request": {
+    #             "remote_addr": request.remote_addr,
+    #             "method": request.method,
+    #             "scheme": request.scheme,
+    #             "full_path": request.full_path,
+    #             "headers": request.headers,
+    #             "data": request.get_data()
+    #         }
+    #     }
+    # )
+    pass
 
 
 @app.errorhandler(InvalidURLException) 
@@ -44,14 +45,15 @@ def not_found(e):
 @app.errorhandler(Exception)
 def exceptions(e):
     tb = traceback.format_exc()
-    _logger.error(
-        '%s %s %s %s 5xx INTERNAL SERVER ERROR\n%s',
-        request.remote_addr,
-        request.method,
-        request.scheme,
-        request.full_path,
-        tb,
-    )
+    # _logger.error(
+    #     '%s %s %s %s 5xx INTERNAL SERVER ERROR\n%s',
+    #     request.remote_addr,
+    #     request.method,
+    #     request.scheme,
+    #     request.full_path,
+    #     tb,
+    # )
+    _logger.exception(e)
     data = {"message": "Something went wrong"}
     response = app.response_class(
         response=json.dumps(data), status=500, mimetype='application/json'

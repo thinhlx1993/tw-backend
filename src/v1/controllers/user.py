@@ -1,36 +1,27 @@
 """Controller for /user."""
 
 import logging
-import os
-import json
 import uuid
-import io
-import requests
 
-from flask import current_app, redirect
-from flask import request, send_file, jsonify
+from flask import current_app
+from flask import request, jsonify
 from flask_restx import Resource, reqparse, fields
-from flask_jwt_extended import jwt_required, get_raw_jwt, get_jwt_claims
+from flask_jwt_extended import get_raw_jwt, get_jwt_claims
 from flask_jwt_extended import create_access_token, get_jwt_identity, get_jti
 from flask_jwt_extended import create_refresh_token, jwt_refresh_token_required
-import boto3
-from botocore.config import Config as BotoConfig
-import pyqrcode
-from sentry_sdk import capture_exception
-from sqlalchemy import text
 
 from src.config import Config
 from src import app, db
 from src import custom_exceptions
 from src.enums.role_permissions import RoleName
+from src.enums.user_type import UserTypeEnums, UserRoleEnums
 from src.services import (
     user_services,
     teams_services, migration_services
 )
 from src.version_handler import api_version_1_web
 from src.services.teams_services import set_user_default_teams
-from src.services.user_services import validate_email
-from src.utilities.custom_decorator import custom_jwt_required, any_jwt_required
+from src.utilities.custom_decorator import custom_jwt_required
 
 # Create module log
 _logger = logging.getLogger(__name__)
@@ -84,7 +75,6 @@ create_user_model = {
     "password": fields.String(example="123#"),
     "role_id": fields.String(example="270325cc-0378-48f2-8b18-67e1c22a64c5", required=True)
 }
-
 
 register_user_model = {
     "username": fields.String(example="new account", required=True),
@@ -211,8 +201,10 @@ mfa_verify_model = user_ns2.model("mfa_verify_model", {
 # User login response models
 user_login_response_ok_model = user_ns2.model(
     'user_login_response_ok_model', {
-        'access_token': fields.String(example='eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MDUxMTkwNjYsIm5iZiI6MTcwNTExOTA2NiwianRpIjoiNjEyZDRiMWItYjQ0Ni00MzVmLTk5MTItZmZjYmM0YWRkZWVhIiwiZXhwIjoxNzA1NzIzODY2LCJpZGVudGl0eSI6InRoaW5obGUuaWN0IiwiZnJlc2giOmZhbHNlLCJ0eXBlIjoiYWNjZXNzIiwidXNlcl9jbGFpbXMiOnsidXNlcl9pZCI6IjhmM2VlODJkLWZhNDAtNDJjMS04NGNkLTJkYTIxNTkzN2M0MCIsInVzZXIiOiJ0aGluaGxlLmljdCIsInJvbGUiOlt7InJvbGVfbmFtZSI6ImFkbWluIiwicm9sZV9pZCI6ImI0MGVlMWFlLTVhMTItNDg3YS05OGNjLWI2ZDA3MjM4ZTE3YSJ9XSwicGVybWlzc2lvbnMiOm51bGwsImRlZmF1bHRfcGFnZSI6bnVsbCwicHJvZmlsZV9uYW1lIjoiVGhpbmggTGUiLCJ0ZWFtc19pZCI6IjA2Zjk5MmRlLWYzNGMtNDM2Mi05OWU4LWNlNjZiMzVjNjUwMSIsInRlYW1zX2NvZGUiOiJodXlfZHVjXzEiLCJhdXRob3JpemVkIjp0cnVlLCJyZWZyZXNoX2p0aSI6IjAxMGU0OTIzLWM0ODctNGVkMC05Y2FhLTEzMGIzMTM4MjUxNiJ9fQ.tf9oxCQtWyTdjNcS_jm8NR7hPI0KaqU3I07SyiCk69U'),
-        'refresh_token': fields.String(example='eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MDUxMTkwNjYsIm5iZiI6MTcwNTExOTA2NiwianRpIjoiMDEwZTQ5MjMtYzQ4Ny00ZWQwLTljYWEtMTMwYjMxMzgyNTE2IiwiZXhwIjoxNzA3NzExMDY2LCJpZGVudGl0eSI6InRoaW5obGUuaWN0IiwidHlwZSI6InJlZnJlc2giLCJ1c2VyX2NsYWltcyI6eyJ0ZWFtc19pZCI6IjA2Zjk5MmRlLWYzNGMtNDM2Mi05OWU4LWNlNjZiMzVjNjUwMSIsInRlYW1zX2NvZGUiOiJodXlfZHVjXzEifX0.M8wU91mhQrTYyri5vcImxatUmovO37AFYy56nXHf18I'),
+        'access_token': fields.String(
+            example='eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MDUxMTkwNjYsIm5iZiI6MTcwNTExOTA2NiwianRpIjoiNjEyZDRiMWItYjQ0Ni00MzVmLTk5MTItZmZjYmM0YWRkZWVhIiwiZXhwIjoxNzA1NzIzODY2LCJpZGVudGl0eSI6InRoaW5obGUuaWN0IiwiZnJlc2giOmZhbHNlLCJ0eXBlIjoiYWNjZXNzIiwidXNlcl9jbGFpbXMiOnsidXNlcl9pZCI6IjhmM2VlODJkLWZhNDAtNDJjMS04NGNkLTJkYTIxNTkzN2M0MCIsInVzZXIiOiJ0aGluaGxlLmljdCIsInJvbGUiOlt7InJvbGVfbmFtZSI6ImFkbWluIiwicm9sZV9pZCI6ImI0MGVlMWFlLTVhMTItNDg3YS05OGNjLWI2ZDA3MjM4ZTE3YSJ9XSwicGVybWlzc2lvbnMiOm51bGwsImRlZmF1bHRfcGFnZSI6bnVsbCwicHJvZmlsZV9uYW1lIjoiVGhpbmggTGUiLCJ0ZWFtc19pZCI6IjA2Zjk5MmRlLWYzNGMtNDM2Mi05OWU4LWNlNjZiMzVjNjUwMSIsInRlYW1zX2NvZGUiOiJodXlfZHVjXzEiLCJhdXRob3JpemVkIjp0cnVlLCJyZWZyZXNoX2p0aSI6IjAxMGU0OTIzLWM0ODctNGVkMC05Y2FhLTEzMGIzMTM4MjUxNiJ9fQ.tf9oxCQtWyTdjNcS_jm8NR7hPI0KaqU3I07SyiCk69U'),
+        'refresh_token': fields.String(
+            example='eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MDUxMTkwNjYsIm5iZiI6MTcwNTExOTA2NiwianRpIjoiMDEwZTQ5MjMtYzQ4Ny00ZWQwLTljYWEtMTMwYjMxMzgyNTE2IiwiZXhwIjoxNzA3NzExMDY2LCJpZGVudGl0eSI6InRoaW5obGUuaWN0IiwidHlwZSI6InJlZnJlc2giLCJ1c2VyX2NsYWltcyI6eyJ0ZWFtc19pZCI6IjA2Zjk5MmRlLWYzNGMtNDM2Mi05OWU4LWNlNjZiMzVjNjUwMSIsInRlYW1zX2NvZGUiOiJodXlfZHVjXzEifX0.M8wU91mhQrTYyri5vcImxatUmovO37AFYy56nXHf18I'),
     }
 )
 
@@ -332,6 +324,14 @@ user_switch_org_bad_response_model = user_ns2.model(
 user_check_email_response_ok_model = user_ns2.model(
     'user_check_email_response_ok_model', user_row_dict
 )
+
+# User check teams info response models
+user_check_teams_info_response_ok_model = user_ns2.model(
+    'user_check_teams_info_response_ok_model', {
+        "teams_name": fields.String(example='Bad request. Invalid input')
+    }
+)
+
 user_check_email_bad_response_model = user_ns2.model(
     'user_check_email_bad_response_model', {
         'message': fields.String(example='Bad request. Invalid input')
@@ -672,7 +672,7 @@ class UserRefresh(Resource):
             db.session.execute(
                 "SET search_path TO public, 'cs_" + str(teams_id) + "'")
             permissions = user_services.get_user_permissions(username)
-            roles = user_services.get_user_roles(username)
+            roles = user_services.get_user_roles(username, teams_id)
             is_mfa_enabled = user_services.get_mfa_status(
                 user_details.get('user_id'))
             if (user_details.get('first_name') is not None
@@ -782,12 +782,14 @@ class UserGet(Resource):
         """Used to retrive a user from username"""
         try:
             user_details = user_services.get_user_details(username=username)
+            claims = get_jwt_claims()
+            teams_id = claims['teams_id']
             if not user_details:
                 return {"message": "User {} does not exist"
                 .format(username)}, 200
             user_details = user_services.row_to_dict(user_details)
             del user_details['password']
-            roles = user_services.get_user_roles(username)
+            roles = user_services.get_user_roles(username, teams_id)
             user_details['roles'] = roles
             return user_details, 200
         except custom_exceptions.DatabaseQueryException as err:
@@ -838,9 +840,8 @@ class UserOperations(Resource):
             user_services.update_user_email_verification(new_user.user_id)
             db.session.execute(
                 "SET search_path TO public, 'cs_" + str(teams_id) + "'")
-            user_services.create_user_role_mapping(new_user.user_id, role_id)
-            user_services.create_user_teams_mapping(new_user.user_id,
-                                                    teams_id)
+            user_services.create_user_role_mapping(new_user.user_id, role_id, teams_id)
+            user_services.create_user_teams_mapping(new_user.user_id, teams_id)
             return {"user_id": str(new_user.user_id)}, 200
         except custom_exceptions.DatabaseQueryException as err:
             _logger.exception(err)
@@ -872,6 +873,7 @@ class UserOperations(Resource):
             return {"message": "Bad request. Invalid input"}, 400
         try:
             claims = get_jwt_claims()
+            teams_id = claims['teams_id']
             user = user_services.check_user_exists(username=username)
             if not user:
                 return {"message": "User {} does not exist"
@@ -887,11 +889,11 @@ class UserOperations(Resource):
             if is_admin:
                 user_details = user_services.update_user(
                     username,
-                    first_name, last_name, role_id, password)
+                    first_name, last_name, role_id, password, teams_id)
             else:
                 user_details = user_services.update_user(
                     username,
-                    first_name, last_name, None, password)
+                    first_name, last_name, "", password, teams_id)
             return user_details, 200
         except custom_exceptions.DatabaseQueryException as err:
             _logger.exception(err)
@@ -931,7 +933,7 @@ class UserOperations(Resource):
                 user_services.delete_user_teams_mapping(
                     user_id, teams_id)
                 user_services.delete_user_preference(user_id)
-                user_services.delete_user_role_mapping(user_id)
+                user_services.delete_user_role_mapping(user_id, teams_id)
                 # Disable user
                 if user_services.disable_user(user_id):
                     return {"user_id": str(user_id)}, 200
@@ -953,13 +955,15 @@ class UserOperations(Resource):
         """Used to retrieve list of users"""
         try:
             claims = get_jwt_claims()
+            teams_id = claims['teams_id']
             is_administrator = user_services.check_is_administrator_user(claims.get('role'))
             result = []
             if is_administrator:
                 users = user_services.get_user_list()
                 for each_user in users:
-                    # roles = user_services.get_user_roles(each_user['username'])
-                    # each_user['roles'] = roles
+                    roles = user_services.get_user_roles(each_user['username'], teams_id)
+                    is_administrator = user_services.check_is_administrator_user(roles)
+                    each_user['roles'] = UserRoleEnums.Admin.value if is_administrator else UserRoleEnums.User.value
                     result.append(each_user)
                 return {'user_list': result}, 200
             # client does not have permissions to get user list
@@ -1022,6 +1026,7 @@ class UserSwitchTeams(Resource):
                     'default_page': claims.get('default_page', ''),
                     'profile_name': claims.get('profile_name', ''),
                     'teams_id': str(teams_id),
+                    'teams_code':  claims.get('teams_code', '').lower(),
                     'authorized': claims.get('authorized')
                 }
                 refresh_token = create_refresh_token(
@@ -1035,7 +1040,7 @@ class UserSwitchTeams(Resource):
                                                         teams_id):
                 migration_services.set_search_path(teams_id)
                 permissions = user_services.get_user_permissions(username)
-                roles = user_services.get_user_roles(username)
+                roles = user_services.get_user_roles(username, teams_id)
                 user_payload = {
                     'user': username,
                     'user_id': user_id,
@@ -1044,6 +1049,7 @@ class UserSwitchTeams(Resource):
                     'default_page': claims.get('default_page', ''),
                     'profile_name': claims.get('profile_name', ''),
                     'teams_id': str(teams_id),
+                    'teams_code': claims.get('teams_code', '').lower(),
                     'authorized': claims.get('authorized')
                 }
                 refresh_token = create_refresh_token(
@@ -1107,18 +1113,42 @@ class UserCheck(Resource):
         """Used to check whether user exists"""
         username = get_jwt_identity()
         user = user_services.check_user_exists(username=username)
-
         if user is None:
             return {"message": "user does not exist"}, 200
-        return user.repr_name(), 200
+        user_data = user.repr_name()
+        user_data['is_super_admin'] = (
+            True if user_data['user_id'] == UserTypeEnums.SuperAdmin.value else False
+        )
+
+        return user_data, 200
+
+
+class UserTeamInfoOperations(Resource):
+    @custom_jwt_required()
+    @user_ns2.response(200, "OK", user_check_teams_info_response_ok_model)
+    @user_ns2.response(
+        400, "Bad Request", user_check_email_bad_response_model)
+    @user_ns2.response(
+        401, "Authorization information is missing or invalid.",
+        unauthorized_response_model)
+    @user_ns2.response(
+        500, "Internal Server Error", internal_server_error_model)
+    def get(self):
+        """Used to check whether user exists"""
+        claims = get_jwt_claims()
+        teams_id = claims['teams_id']
+        teams = teams_services.get_teams(teams_id=teams_id)
+
+        if teams is None:
+            return {"message": "user does not exist"}, 200
+
+        return teams.repr_name(), 200
 
 
 class UserRegistration(Resource):
-
     """class for /user/registration functionalities"""
 
     @user_ns2.expect(user_register_model)
-    @user_ns2.doc(security=None)
     @user_ns2.response(200, "OK", user_registration_response_ok_model)
     @user_ns2.response(400, "Bad Request", user_registration_bad_response_model)
     @user_ns2.response(
@@ -1129,25 +1159,23 @@ class UserRegistration(Resource):
     @user_ns2.response(
         500, "Internal Server Error", internal_server_error_model
     )
-    @app.route('/debug-sentry')
     def post(self):
         """Used to register a user"""
         try:
             request_data = user_ns2.payload
-            username = request_data["username"]
-            password = request_data["password"]
+            username = request_data["username"].strip()
+            password = request_data["password"].strip()
             first_name = (
-                request_data["first_name"]
+                request_data["first_name"].strip()
                 if "first_name" in request_data
                 else None
             )
             last_name = (
-                request_data["last_name"]
+                request_data["last_name"].strip()
                 if "last_name" in request_data
                 else None
             )
-            org_name = request_data['teams_name']
-            email = username
+            org_name = request_data['teams_name'].strip()
             profile_name = "User" if first_name and last_name else f"{first_name} {last_name}"
         except Exception as e:
             _logger.debug(f"Request validation failed: {e}")
@@ -1192,7 +1220,8 @@ user_ns2.add_resource(UserLogin, "/login")
 user_ns2.add_resource(UserRefresh, "/refresh")
 user_ns2.add_resource(UserLogout, "/logout")
 user_ns2.add_resource(UserOperations, "")
-# user_ns2.add_resource(UserRegistration, "/registration")
+user_ns2.add_resource(UserRegistration, "/registration")
 user_ns2.add_resource(UserSwitchTeams, "/switch_team")
 user_ns2.add_resource(UserTeamsOperations, "/teams")
+user_ns2.add_resource(UserTeamInfoOperations, "/team_info")
 user_ns2.add_resource(UserCheck, '/info')

@@ -20,9 +20,9 @@ class UserPreference(db.Model):
     """
     __tablename__ = 'user_preference'
 
-    preference_id = db.Column(UUID(as_uuid=True), server_default=text(
+    preference_id = db.Column(db.String(128), server_default=text(
         "uuid_generate_v4()"), primary_key=True, nullable=False)
-    user_id = db.Column(UUID(as_uuid=True), ForeignKey('user.user_id'))
+    user_id = db.Column(db.String(128), ForeignKey('user.user_id'))
     modified_at = db.Column(db.DateTime, server_default=func.now())
     default_page = db.Column(db.String(128))
     is_disabled = db.Column(db.Boolean, server_default='false')

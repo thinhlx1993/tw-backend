@@ -48,7 +48,7 @@ class Robot(db.Model):
     __tablename__ = "robot"
 
     robot_id = db.Column(
-        UUID(as_uuid=True), primary_key=True,
+        db.String(128), primary_key=True,
         server_default=text("uuid_generate_v4()"), nullable=False)
     robot_code = db.Column(db.String(30))
     nick_name = db.Column(db.String(30))

@@ -24,11 +24,11 @@ class Teams(db.Model):
     __tablename__ = 'teams'
 
     teams_id = db.Column(
-        UUID(as_uuid=True), server_default=text("uuid_generate_v4()"),
+        db.String(128), server_default=text("uuid_generate_v4()"),
         primary_key=True, nullable=False)
     teams_name = db.Column(db.String(256), nullable=False)
     teams_code = db.Column(db.String(256))
-    owner = db.Column(UUID(as_uuid=True))
+    owner = db.Column(db.String(128))
     created_at = db.Column(db.DateTime, server_default=func.now())
     updated_at = db.Column(db.DateTime, server_default=func.now())
     is_disabled = db.Column(db.Boolean, server_default='false')
@@ -65,6 +65,6 @@ class Teams(db.Model):
             "teams_code": str(self.teams_code).lower(),
             "owner": str(self.owner),
             "is_disabled": str(self.is_disabled),
-            "created_at": self.created_at.isoformat(),
-            "updated_at": self.created_at.isoformat()
+            "created_at": self.created_at.strftime("%d-%m-%Y %H:%M"),
+            "updated_at": self.created_at.strftime("%d-%m-%Y %H:%M")
         }

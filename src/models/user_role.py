@@ -19,7 +19,7 @@ class UserRole(db.Model):
     """
     __tablename__ = 'user_role'
 
-    role_id = db.Column(UUID(as_uuid=True),
+    role_id = db.Column(db.String(128),
                         server_default=text("uuid_generate_v4()"),
                         primary_key=True, nullable=False)
     role_name = db.Column(db.String(32))

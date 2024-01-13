@@ -18,8 +18,8 @@ class UserRoleMappingLog(db.Model):
 
     # Table does not have Primary key(PK), but SQLAlchemy requires
     # table to have one. Hence, both have been set to PK.
-    user_id = db.Column(UUID(as_uuid=True), primary_key=True)
-    role_id = db.Column(UUID(as_uuid=True), primary_key=True)
+    user_id = db.Column(db.String(128), primary_key=True)
+    role_id = db.Column(db.String(128), primary_key=True)
     deactivation_date = db.Column(
         db.DateTime(timezone=True), server_default=func.now())
 

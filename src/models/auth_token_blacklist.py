@@ -15,7 +15,7 @@ class AuthTokenBlacklist(db.Model):
     """
     __tablename__ = 'auth_token_blacklist'
 
-    token_id = db.Column(UUID(as_uuid=True), primary_key=True, nullable=False)
+    token_id = db.Column(db.String(128), primary_key=True, nullable=False)
 
     # Constructor initializing values.
     def __init__(self, token_id):

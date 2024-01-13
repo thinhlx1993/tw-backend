@@ -17,9 +17,9 @@ class UserTeamsMapping(db.Model):
 
     # Table does not have Primary key(PK), but SQLAlchemy requires
     # table to have one. Hence, both have been set to PK.
-    user_id = db.Column(UUID(as_uuid=True), ForeignKey("user.user_id"),
+    user_id = db.Column(db.String(128), ForeignKey("user.user_id"),
                         primary_key=True, nullable=False)
-    teams_id = db.Column(UUID(as_uuid=True), ForeignKey("teams.teams_id"),primary_key=True, nullable=False)
+    teams_id = db.Column(db.String(128), ForeignKey("teams.teams_id"),primary_key=True, nullable=False)
     is_default = db.Column(db.Boolean, server_default='false')
     __table_args__ = (UniqueConstraint(
         'user_id', 'teams_id', name='_user_teams_uc'),)

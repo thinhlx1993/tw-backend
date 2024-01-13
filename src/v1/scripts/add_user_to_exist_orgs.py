@@ -95,7 +95,7 @@ for teams in exist_teamss:
             user_services.create_user_teams_mapping(
                 user_details['user_id'], teams.get('teams_id'), False)
             user_services.create_user_role_mapping(
-                user_details['user_id'], role_id)
+                user_details['user_id'], role_id, teams.get('teams_id'))
             user_services.create_user_preference(
                 user_details['user_id'])
             user_services.update_user_email_verification(user_details['user_id'])

@@ -26,7 +26,7 @@ def create_teams(org_name, owner=None):
         new_org = Teams(teams_name=org_name, teams_code=get_teams_code_from_name(org_name), owner=owner)
         db.session.add(new_org)
         db.session.flush()
-        return True, new_org.teams_id, None
+        return True, str(new_org.teams_id), None
     except MultipleResultsFound as err:
         _logger.exception(err)
         return False, None, "Duplicate teams code"
@@ -364,8 +364,8 @@ def format_user_org_list_result(result):
         formatted_row['teams_name'] = str(row.teams_name)
         formatted_row['teams_code'] = str(row.teams_code).lower()
         formatted_row['owner'] = str(row.owner)
-        formatted_row['created_at'] = row.created_at.isoformat() if row.created_at else None
-        formatted_row['updated_at'] = row.updated_at.isoformat() if row.updated_at else None
+        formatted_row['created_at'] = row.created_at.strftime("%d-%m-%Y %H:%M") if row.created_at else None
+        formatted_row['updated_at'] = row.updated_at.strftime("%d-%m-%Y %H:%M") if row.updated_at else None
         formatted_row['is_disabled'] = row.is_disabled
         formatted_row['is_deleted'] = row.is_deleted
         formatted_result.append(formatted_row)

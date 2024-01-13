@@ -19,7 +19,7 @@ class UserPasswordResetToken(db.Model):
 
     token = db.Column(db.String(512), primary_key=True, nullable=False,
         comment='base64 URL encoded token for password reset')
-    user_id = db.Column(UUID(as_uuid=True), ForeignKey("user.user_id"), 
+    user_id = db.Column(db.String(128), ForeignKey("user.user_id"), 
         nullable=False,  
         comment='User ID that generated the token')
     created_at = db.Column(db.DateTime, server_default=func.now(), 

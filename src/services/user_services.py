@@ -226,10 +226,11 @@ def get_user_permissions(username):
         # SELECT user_role_mapping.role_id FROM user_role_mapping
         # INNER JOIN user ON user_role_mapping.user_id == user.user_id
         # WHERE user.username =: username
-        sub_sub_query = (models.UserRoleMapping.query.join(models.UserDetails, models.UserDetails.user_id ==
-                                                           models.UserRoleMapping.user_id)
-                         .filter(func.lower(models.UserDetails.username) == func.lower(username))
-                         .with_entities(models.UserRoleMapping.role_id).subquery())
+        sub_sub_query = (
+            models.UserRoleMapping.query.join(
+            models.UserDetails, models.UserDetails.user_id == models.UserRoleMapping.user_id).
+            filter(func.lower(models.UserDetails.username) == func.lower(username)).
+            with_entities(models.UserRoleMapping.role_id).subquery())
 
         # SELECT role_permission_mapping.permission_id FROM role_permission_mapping
         # WHERE role_permission_mapping.role_id IN sub_sub_query
@@ -259,11 +260,12 @@ def get_user_permissions(username):
     return permissions
 
 
-def get_user_roles(username):
+def get_user_roles(username, teams_id):
     """
     Gets Roles for username
 
     :param str username: Username to fetch roles for user
+    :param str teams_id: Teams ID to fetch roles for user
 
     :return: Roles for username as list containing list of role_name,
     role_description and role_id
@@ -274,6 +276,7 @@ def get_user_roles(username):
         # WHERE user.username =: username
         sub_query = (models.UserRoleMapping.query.join(models.UserDetails, models.UserDetails.user_id ==
                                                        models.UserRoleMapping.user_id)
+                     .filter(models.UserRoleMapping.teams_id == teams_id)
                      .filter(func.lower(models.UserDetails.username) == func.lower(username))
                      .with_entities(models.UserRoleMapping.role_id).subquery())
 
@@ -291,7 +294,7 @@ def get_user_roles(username):
     # Changing query result to a dict of lists containing role_name,
     # role_description and role_id
     if not result:
-        roles = None
+        roles = []
     else:
         roles = []
         for row in result:
@@ -346,34 +349,36 @@ def blacklist_token(token):
         raise
 
 
-def create_user_role_mapping(user_id, role_id):
+def create_user_role_mapping(user_id, role_id, teams_id):
     """
     Creates a user role mapping
     :param str user_id: User ID to be mapped to role
     :param str role_id: Role ID to be mapped to user
+    :param str teams_id: Teams ID to be mapped to user
     :return UserRoleMapping mapping: UserRoleMapping object created
     from the params
     """
     try:
-        exist = models.UserRoleMapping.query.filter_by(user_id=user_id, role_id=role_id).first()
+        exist = models.UserRoleMapping.query.filter_by(user_id=user_id, role_id=role_id, teams_id=teams_id).first()
         if exist:
             return exist
-        mapping = models.UserRoleMapping(user_id, role_id)
+        mapping = models.UserRoleMapping(user_id, role_id, teams_id)
         db.session.add(mapping)
         db.session.flush()
     except Exception as e:
         db.session.rollback()
         capture_exception(e)
-        raise DatabaseQueryException
+        raise e
 
     return mapping
 
 
-def update_user(username, first_name=None, last_name=None, role_id=None, password=None):
+def update_user(username, first_name=None, last_name=None, role_id=None, password=None, teams_id=None):
     """
     Update a users information
     :param str username: Username for the user
     :param str email: Email ID for the user
+    :param str teams_id: teams_id ID for the user
     :param str first_name : First name of the user
     :param str last_name : Last name of the user
     :param str role_id : Role id to be mapped to user
@@ -397,10 +402,10 @@ def update_user(username, first_name=None, last_name=None, role_id=None, passwor
         # Only map the new role, if it doesn't exist.
         if role_id:
             if not user.user_roles:
-                create_user_role_mapping(user.user_id, role_id)
+                create_user_role_mapping(user.user_id, role_id, teams_id)
             else:
                 user.user_roles.clear()
-                create_user_role_mapping(user.user_id, role_id)
+                create_user_role_mapping(user.user_id, role_id, teams_id)
                 db.session.flush()
 
         db.session.flush()
@@ -627,21 +632,19 @@ def create_user_role(role_name, role_description, permission_ids, is_deletable=N
     return True, {"Message": "Role Created Successfully"}
 
 
-def update_user_role_mapping(user_id, role_id):
+def update_user_role_mapping(user_id, role_id, teams_id):
     """
     Update a user role
     :param user_id : user id of the user
     :param role_id : role id of the user
+    :param teams_id : teams_id of the user
     :return status:  status of the updation
     :return data or error: returns user roles updation message or error
     """
     # session = create_session()
     try:
         user_role = db.session.query(models.UserRoleMapping).filter(
-            models.UserRoleMapping.user_id == user_id).first()
-        user_role_log = models.UserRoleMappingLog(user_id=user_role.user_id,
-                                                  role_id=user_role.role_id, deactivation_date=datetime.datetime.now())
-        db.session.add(user_role_log)
+            models.UserRoleMapping.user_id == user_id, models.UserRoleMapping.teams_id == teams_id).first()
         user_role.role_id = role_id
         db.session.flush()
         db.session.expire(user_role)
@@ -944,17 +947,19 @@ def delete_user_all_teams_mapping(user_id):
         raise
 
 
-def delete_user_role_mapping(user_id):
+def delete_user_role_mapping(user_id, teams_id):
     """
     Delete user role mapping
 
     :param user_id: Unique identifier for user
+    :param teams_id: Unique identifier for teams_id
 
     :return bool: True if successful
     """
     try:
         db.session.query(models.UserRoleMapping).filter(
-            models.UserRoleMapping.user_id == user_id
+            models.UserRoleMapping.user_id == user_id,
+            models.UserRoleMapping.teams_id == teams_id
         ).delete()
         db.session.flush()
         return True
@@ -1240,60 +1245,6 @@ def get_user_preference(user_id):
     except Exception as e:
         capture_exception(e)
         raise
-
-
-def create_operator_name(profile_name, add_id_in_zendesk=False):
-    try:
-        # setup zendesk operator. If no name provided, use "John Doe" as the name as at least one operator is required.
-        if not profile_name.strip():
-            return False
-        operator_code = "john_doe"
-        data = {
-            "operator_value": profile_name,
-            "tag": operator_code,
-            # Taking default zendesk_id as that is the one used always to setup
-            "zendesk_id": Config.ZENDESK_ID
-        }
-        # Remove characters other than numbers and alphabets
-        operator_code_sample = re.sub(r"[^\w\s]", '_', profile_name)
-        # Remove whitespaces with underscore
-        operator_code_sample = re.sub(r"\s+", '_', operator_code_sample)
-        status, operator_data = custom_field_services.get_operator_details_from_code(operator_code_sample)
-        if status and len(operator_data) > 0:
-            return True
-        if profile_name.strip():
-            operator_code = custom_field_services.get_operator_code_from_name(
-                profile_name)
-            data['tag'] = operator_code
-        else:
-            # Set to dummy value if user's profile name is not provided
-            data['operator_value'] = 'John Doe'
-        try:
-            # for new entries from v2, add id in zendesk for each operator
-            if add_id_in_zendesk:
-                status_operator, out_data = \
-                    custom_field_services.insert_custom_field_value(
-                        data, "Operator")
-                status, out = zendesk_services.add_operator_options(
-                    name=data['operator_value'], value=str(out_data.operator_id))
-            else:
-                status_operator, out_data = \
-                    custom_field_services.insert_custom_field_value(
-                        data, "Operator")
-                # Convert value to lowercase as it is stored in lowercase
-                # in zendesk
-                value = data['tag'].lower()
-                status, out = zendesk_services.add_operator_options(
-                    name=data['operator_value'], value=value)
-            if not status_operator:
-                return False
-            return True
-        except Exception as e:
-            _logger.exception(e)
-            return False
-    except Exception as e:
-        _logger.exception(e)
-        return False
 
 
 def check_user_ownership(user_id, org_id):
@@ -1676,92 +1627,6 @@ def send_va_alert_email(email, image_set, captured_at, detections, waypoint, rob
         capture_exception(e)
         raise
 
-
-def get_user_details_google_auth(request, auth_code):
-    """
-    Get the user details from Google using auth code
-    :request the http request
-    :auth_code auth code received in the callback
-    """
-    # Try a total of 3 times if get request fails
-    google_provider_cfg = token_response = {}
-    total_retries = 3
-    while True:
-        total_retries -= 1
-        # Get the google Auth endpoints from discovery url
-        google_provider_cfg = requests.get(
-            app.config['GOOGLE_DISCOVERY_URL']).json()
-        if google_provider_cfg:
-            break
-        else:
-            if total_retries == 0:
-                raise Exception("Exceeded retries for trying request")
-            else:
-                time.sleep(0.5)
-    token_endpoint = google_provider_cfg["token_endpoint"]
-    # The client library prepares the request to fetch the tokens
-    token_url, headers, body = google_oauth_client.prepare_token_request(
-        token_endpoint,
-        authorization_response=request.url,
-        redirect_url=request.base_url,
-        code=auth_code
-    )
-    # Get the token id from google using the secret credentials
-    # Try a total of 3 times if post request fails
-    total_retries = 3
-    while True:
-        total_retries -= 1
-        token_response = requests.post(
-            token_url,
-            headers=headers,
-            data=body,
-            auth=(app.config["GOOGLE_CLIENT_ID"],
-                  app.config["GOOGLE_CLIENT_SECRET"]),
-        )
-        if token_response.json():
-            break
-        else:
-            if total_retries == 0:
-                raise Exception("Exceeded retries for trying request")
-            else:
-                time.sleep(0.5)
-
-    # Fetching the token id from response
-    google_oauth_client.parse_request_body_response(
-        json.dumps(token_response.json()))
-    userinfo_endpoint = google_provider_cfg["userinfo_endpoint"]
-    uri, headers, body = google_oauth_client.add_token(userinfo_endpoint)
-
-    # Fetching the user response from google using token id.
-    return get_user_response(uri, headers, body)
-
-
-def get_user_response(uri, headers, body):
-    """
-    Fetching user details based on id token received from google
-    uri,headers and body given by client
-    :uri - request uri
-    :headers request headers
-    :body request body
-    """
-    # Try a total of 3 times if get request fails
-    # Fetching the user details from google
-    total_retries = 3
-    userinfo_response = {}
-    while True:
-        total_retries -= 1
-        userinfo_response = requests.get(
-            uri, headers=headers, data=body)
-        if userinfo_response.json():
-            break
-        else:
-            if total_retries == 0:
-                raise Exception("Exceeded retries for trying request")
-            else:
-                time.sleep(0.5)
-    return userinfo_response.json()
-
-
 def get_user_auth_tokens(user):
     """
     Common function to  set claims and fetch auth tokens
@@ -1776,7 +1641,7 @@ def get_user_auth_tokens(user):
     db.session.execute("SET search_path TO public, 'cs_" +
                        str(teams_id) + "'")
     permissions = get_user_permissions(user_details["username"])
-    roles = get_user_roles(user_details["username"])
+    roles = get_user_roles(user_details["username"], teams_id)
 
     is_mfa_enabled = get_mfa_status(
         user_details.get('user_id'))
@@ -1850,21 +1715,21 @@ def check_user_password_criteria(password):
     :return bool 
     """
     # Must have atleast 8 chars, with atleast one symbol or number
-    reg = "^(?=.*[a-z])(?=.*[A-Z])((?=.*[0-9])|(?=.*[!@#$%^&*]))(?=.{8,})"
-    reg1 = "^(?=.*[!@#$%^&*])(?=.{8,})"
-    reg3 = "^(?=.*[0-9])(?=.{8,})"
-    # compiling regex
-    pat = re.compile(reg)
-    pat2 = re.compile(reg1)
-    pat3 = re.compile(reg3)
-    # searching regex                
-    mat = re.search(pat, password)
-    mat2 = re.search(pat2, password)
-    mat3 = re.search(pat3, password)
-    # validating conditions
-    if mat or mat2 or mat3:
-        return True
-    return False
+    # reg = "^(?=.*[a-z])(?=.*[A-Z])((?=.*[0-9])|(?=.*[!@#$%^&*]))(?=.{8,})"
+    # reg1 = "^(?=.*[!@#$%^&*])(?=.{8,})"
+    # reg3 = "^(?=.*[0-9])(?=.{8,})"
+    # # compiling regex
+    # pat = re.compile(reg)
+    # pat2 = re.compile(reg1)
+    # pat3 = re.compile(reg3)
+    # # searching regex
+    # mat = re.search(pat, password)
+    # mat2 = re.search(pat2, password)
+    # mat3 = re.search(pat3, password)
+    # # validating conditions
+    # if mat or mat2 or mat3:
+    #     return True
+    return True if len(password.strip()) > 8 else False
 
 
 def check_kabam_users(username):
@@ -2012,22 +1877,20 @@ def create_default_user_teams(
     # Setting search path
     try:
         migration_services.set_search_path(org_id)
+        # Create user role_mapping with role as admin
+        if not create_user_role_mapping(
+                user.user_id, 'b40ee1ae-5a12-487a-98cc-b6d07238e17a', org_id
+        ):
+            return None, {"message": "Error mapping role"}, 500
+
+        # Create user preference with default page as robotops
+        # and notifications_enabled as True
+        if not create_user_preference(user.user_id):
+            return None, {"message": "Error user preference"}, 500
     except Exception as err:
         _logger.exception(err)
+        teams_services.rollback_teams_creation(teams_id=org_id, user_id=None)
         return None, {"message": str(err)}, 500
-
-    # Create user role_mapping with role as admin
-    if not create_user_role_mapping(
-            user.user_id, 'b40ee1ae-5a12-487a-98cc-b6d07238e17a'
-    ):
-        return None, {"message": "Error mapping role"}, 500
-
-    # Create user preference with default page as robotops
-    # and notifications_enabled as True
-    if not create_user_preference(
-            user.user_id, "robotops", True
-    ):
-        return None, {"message": "Error user preference"}, 500
 
     return org_id, None, None
 

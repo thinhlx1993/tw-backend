@@ -32,7 +32,7 @@ class User(db.Model):
     """
     __tablename__ = 'user'
 
-    user_id = db.Column(UUID(as_uuid=True), server_default=text(
+    user_id = db.Column(db.String(128), server_default=text(
         "uuid_generate_v4()"), primary_key=True, nullable=False)
     username = db.Column(db.String(256), nullable=False, unique=True)
     email = db.Column(db.String(256))
@@ -47,7 +47,7 @@ class User(db.Model):
     mfa_secret = db.Column(BYTEA)
     phone_number = db.Column(db.String(128))
     is_email_verified = db.Column(db.Boolean, server_default='false')
-    country_id = db.Column(UUID(as_uuid=True))
+    country_id = db.Column(db.String(128))
     last_active_at = db.Column(db.DateTime, server_default=func.now())
     password_reset_tokens = relationship("UserPasswordResetToken", backref="user")
     user_roles = relationship(
@@ -93,10 +93,10 @@ class User(db.Model):
             'email': str(self.email),
             'first_name': str(self.first_name),
             'last_name': str(self.last_name),
-            'created_at': str(self.created_at),
+            'created_at': self.created_at.strftime("%d-%m-%Y %H:%M"),
             'is_disabled': str(self.is_disabled),
             'phone_number': str(self.phone_number),
             'is_email_verified': str(self.is_email_verified),
-            'last_active_at': str(self.last_active_at),
+            'last_active_at': self.last_active_at.strftime("%d-%m-%Y %H:%M"),
             'is_admin': True if [role for role in self.user_roles if role.role_name == 'admin'] else False
         }

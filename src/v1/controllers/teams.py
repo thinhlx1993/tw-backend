@@ -3,21 +3,19 @@
 import logging
 from datetime import datetime
 import json, uuid, os
-from concurrent.futures import ThreadPoolExecutor
 
 from flask_restx import fields, reqparse, Resource
 from flask_jwt_extended import get_jwt_claims
 from flask_jwt_extended import get_jwt_identity
 from flask import current_app
-from sentry_sdk import capture_exception
 
+from src.enums.user_type import UserTypeEnums
 from src.models import teams
 from src.parsers import page_parser
 from src.services import user_services, teams_services
 from src.services import migration_services
 from src.utilities.custom_decorator import custom_jwt_required
 from src.version_handler import api_version_1_web
-from src.custom_exceptions import InvalidJWTToken
 from src.enums.role_permissions import RoleId
 
 # Create module log
@@ -299,12 +297,13 @@ class Teams(Resource):
 
         # Setting search path
         try:
-            migration_services.set_search_path(teams_id)
             if not user_services.create_user_role_mapping(
-                    user_id, RoleId.Administrator.value
+                    user_id, RoleId.Administrator.value, teams_id
             ):
                 teams_services.rollback_teams_creation(teams_id, user_id)
                 return {"message": "Error mapping role"}, 500
+
+            migration_services.set_search_path(teams_id)
 
             # Create user preference with default page as robotops
             # and notifications_enabled as True
@@ -394,16 +393,25 @@ class TeamsByIDOperations(Resource):
     def delete(self, teams_id):
         """Used to delete a teams"""
         # Optional fields
+        # check is default super admin org
+        if teams_id == "06f992de-f34c-4362-99e8-ce66b35c6501":
+            return {"message": "Cannot delete the Default teams"}, 400
+
         exist_teams = teams_services.get_teams(teams_id)
         user_claims = get_jwt_claims()
         user_id = user_claims['user_id']
         if not exist_teams:
             return {"message": "Team not found"}, 400
+        if (user_id != UserTypeEnums.SuperAdmin.value and
+                str(exist_teams.owner) != user_id):
+            # user cannot delete other user teams
+            return {"message": "You cannot delete other user's team"}, 400
         try:
             is_default = teams_services.check_is_default_org(teams_id, user_id=user_id)
             if not is_default:
                 teams_services.rollback_teams_creation(teams_id=teams_id, user_id=None)
-            return {"message": "Deleted successfully"}, 200
+                return {"message": "Deleted successfully"}, 200
+            return {"message": "Cannot delete the Default teams"}, 400
         except Exception as err:
             _logger.exception(err)
             return {"message": str(err)}, 400
@@ -458,7 +466,7 @@ class TeamsUserOperations(Resource):
             user_services.create_user_teams_mapping(
                 user_details['user_id'], teams_id, False)
             user_services.create_user_role_mapping(
-                user_details['user_id'], role_id)
+                user_details['user_id'], role_id, teams_id)
             user_services.create_user_preference(
                 user_details['user_id'])
             org_name = teams_services.get_teams(teams_id).teams_name
@@ -522,7 +530,7 @@ class TeamsUserOperations(Resource):
             user_services.delete_user_teams_mapping(
                 user_id, current_org)
             user_services.delete_user_preference(user_id)
-            user_services.delete_user_role_mapping(user_id)
+            user_services.delete_user_role_mapping(user_id, current_org)
             return {
                 "message": "User has been removed from org"
             }, 200

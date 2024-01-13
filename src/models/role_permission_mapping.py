@@ -16,10 +16,10 @@ class RolePermissionMapping(db.Model):
 
     # Table does not have Primary key(PK), but SQLAlchemy requires
     # table to have one. Hence, both have been set to PK.
-    role_id = db.Column(UUID(as_uuid=True),
+    role_id = db.Column(db.String(128),
                         ForeignKey("user_role.role_id"), primary_key=True)
     permission_id = db.Column(
-        UUID(as_uuid=True), ForeignKey("user_permissions.permission_id"), primary_key=True)
+        db.String(128), ForeignKey("user_permissions.permission_id"), primary_key=True)
     __table_args__ = (UniqueConstraint('role_id',
                                        'permission_id', name='_role_permission_uc'),)
 

@@ -30,7 +30,7 @@ class MissionInstance(db.Model):
     __tablename__ = "mission_instance"
 
     mission_instance_id = db.Column(
-        UUID(as_uuid=True), server_default=text("uuid_generate_v4()"),
+        db.String(128), server_default=text("uuid_generate_v4()"),
         primary_key=True, comment='Unique identifier '
         'for mission_instance(Primary Key)')
     mission_json = db.Column(JSONB, comment='JSON for mission')
@@ -64,15 +64,15 @@ class MissionInstance(db.Model):
         comment='Boolean to check for mission analysis status'
     )
     robot_id = db.Column(
-        UUID(as_uuid=True), ForeignKey("robot.robot_id"),
+        db.String(128), ForeignKey("robot.robot_id"),
         nullable=False, comment='Unique identifier '
         'for robot(Foreign Key)')
     mission_id = db.Column(
-        UUID(as_uuid=True), ForeignKey("mission.mission_id"),
+        db.String(128), ForeignKey("mission.mission_id"),
         nullable=True, comment='Unique identifier '
         'for mission(Foreign Key)')
     schedule_id = db.Column(
-        UUID(as_uuid=True), ForeignKey("mission_schedule.schedule_id"),
+        db.String(128), ForeignKey("mission_schedule.schedule_id"),
         nullable=True, comment='Unique identifier '
         'for mission_schedule(Foreign Key)')
     loop_count = db.Column(

@@ -26,7 +26,7 @@ class UserDetails(db.Model):
     """
     __tablename__ = 'user_details'
 
-    user_id = db.Column(UUID(as_uuid=True), server_default=text(
+    user_id = db.Column(db.String(128), server_default=text(
         "uuid_generate_v4()"), primary_key=True, nullable=False)
     username = db.Column(db.String(256), nullable=False, unique=True)
     email = db.Column(db.String(256))

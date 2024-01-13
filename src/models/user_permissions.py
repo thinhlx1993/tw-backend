@@ -19,7 +19,7 @@ class UserPermissions(db.Model):
     __tablename__ = "user_permissions"
 
     permission_id = db.Column(
-        UUID(as_uuid=True), server_default=text("uuid_generate_v4()"),
+        db.String(128), server_default=text("uuid_generate_v4()"),
         primary_key=True, nullable=False)
     permission_name = db.Column(db.String(128))
     description = db.Column(db.String(1024))
