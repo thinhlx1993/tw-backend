@@ -100,11 +100,11 @@ class ProfilesController(Resource):
             group_id = args.get("group_id", "")
         except Exception as ex:
             return {"message": "Query data error"}, 500
-        """Used to retrieve list of profiles"""
 
+        """Used to retrieve list of profiles"""
         profiles = profiles_services.get_all_profiles(
-            page, per_page, sort_by, sort_order, search, group_id
-        )
+            page, per_page, sort_by, sort_order, search, group_id)
+
         return profiles, 200
 
     @profiles_ns2.expect(profile_create_model)
@@ -181,5 +181,5 @@ class ProfilesIdController(Resource):
             return {"message": "Internal error"}, 500
 
 
-profiles_ns2.add_resource(ProfilesController, "")
+profiles_ns2.add_resource(ProfilesController, "/")
 profiles_ns2.add_resource(ProfilesIdController, "/<string:profile_id>")

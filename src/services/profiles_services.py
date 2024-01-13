@@ -23,7 +23,7 @@ def create_profile(data):
     new_profile = Profiles()
     for key, val in data.items():
         if hasattr(new_profile, key):
-            new_profile.__setattr__(key, str(val))
+            new_profile.__setattr__(key, val)
 
     db.session.add(new_profile)
     db.session.flush()

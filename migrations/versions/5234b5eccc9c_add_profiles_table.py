@@ -56,7 +56,7 @@ def upgrade():
         sa.Column('fa', sa.String(length=128), nullable=True),
         sa.Column('proxy', sa.String(length=128), nullable=True),
         sa.Column('gpt_key', sa.String(length=128), nullable=True),
-        sa.Column('cookies', sa.Numeric(precision=5, scale=2), nullable=True),
+        sa.Column('cookies', sa.Text(), nullable=True),
         sa.Column('notes', sa.Text(), nullable=True),
         sa.Column('profile_data', sa.JSON(), nullable=True),
         sa.Column('status', sa.String(length=128), nullable=True),

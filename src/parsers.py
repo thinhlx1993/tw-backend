@@ -24,7 +24,7 @@ date_page_parser.add_argument('end_date', type=inputs.date_from_iso8601,
 
 profile_page_parser = page_parser.copy()
 profile_page_parser.add_argument("group_id", type=str,
-                         help='Search by group', location='args')
+                                 help='Search by group', location='args')
 
 filter_parser = reqparse.RequestParser()
 filter_parser.add_argument('filter', type=str,
