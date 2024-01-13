@@ -367,6 +367,22 @@ class Teams(Resource):
 class TeamsByIDOperations(Resource):
     """Class for /teams/teams_id functionalities."""
 
+    @org_ns2.response(200, "OK", org_row_model)
+    @org_ns2.response(400, "Bad Request", org_update_bad_response_model)
+    @org_ns2.response(
+        401, "Authorization information is missing or invalid.",
+        unauthorized_response_model)
+    @org_ns2.response(
+        500, "Internal Server Error", internal_server_error_model)
+    @custom_jwt_required()
+    def get(self, teams_id):
+        """Used to get a team"""
+        # Optional fields
+        exist_teams = teams_services.get_teams(teams_id)
+        if not exist_teams:
+            return {"message": "Team not found"}, 400
+        return exist_teams.repr_name(), 200
+
     @org_ns2.response(200, "OK", org_delete_response_ok_model)
     @org_ns2.response(400, "Bad Request", org_update_bad_response_model)
     @org_ns2.response(
@@ -379,10 +395,14 @@ class TeamsByIDOperations(Resource):
         """Used to delete a teams"""
         # Optional fields
         exist_teams = teams_services.get_teams(teams_id)
+        user_claims = get_jwt_claims()
+        user_id = user_claims['user_id']
         if not exist_teams:
             return {"message": "Team not found"}, 400
         try:
-            teams_services.rollback_teams_creation(teams_id=teams_id, user_id=None)
+            is_default = teams_services.check_is_default_org(teams_id, user_id=user_id)
+            if not is_default:
+                teams_services.rollback_teams_creation(teams_id=teams_id, user_id=None)
             return {"message": "Deleted successfully"}, 200
         except Exception as err:
             _logger.exception(err)

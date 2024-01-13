@@ -65,6 +65,6 @@ class Teams(db.Model):
             "teams_code": str(self.teams_code).lower(),
             "owner": str(self.owner),
             "is_disabled": str(self.is_disabled),
-            "created_at": str(self.created_at),
-            "updated_at": str(self.updated_at)
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.created_at.isoformat()
         }

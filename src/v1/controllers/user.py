@@ -211,51 +211,8 @@ mfa_verify_model = user_ns2.model("mfa_verify_model", {
 # User login response models
 user_login_response_ok_model = user_ns2.model(
     'user_login_response_ok_model', {
-        'access_token': fields.String(example='eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI'
-                                              '1NiJ9.eyJpYXQiOjE2NjM2Mzg2ODEsIm5iZiI6MTY2MzYzODY4MSwianRpIjoiNjhhZDV'
-                                              'iMzAtYTY3OS00OTRjLThkMTEtMTdkYWYwNDAwYjEyIiwiZXhwIjoxNjY0MjQzNDgxLCJp'
-                                              'ZGVudGl0eSI6InNvbWVvbmVAZ21haWwuY29tIiwiZnJlc2giOmZhbHNlLCJ0eXBlIjoiY'
-                                              'WNjZXNzIiwidXNlcl9jbGFpbXMiOnsidXNlcl9pZCI6ImYyNjM5MGU2LTBlNWEtNDIzMC'
-                                              '05ODlkLTc2YmE5MzBkZTU2YSIsInVzZXIiOiJzb21lb25lQGdtYWlsLmNvbSIsInJvbGU'
-                                              'iOlt7InJvbGVfbmFtZSI6ImFkbWluIiwicm9sZV9kZXNjcmlwdGlvbiI6IkFkbWluaXN0'
-                                              'cmF0b3Igb2YgdGhlIHN5c3RlbSIsInJvbGVfaWQiOiJiNDBlZTFhZS01YTEyLTQ4N2EtO'
-                                              'ThjYy1iNmQwNzIzOGUxN2EifV0sInBlcm1pc3Npb25zIjpbeyJwZXJtaXNzaW9uX25hbW'
-                                              'UiOiJyb2JvdG9wczp2aXNpdCIsImRlc2NyaXB0aW9uIjoiVmlzaXQgUm9ib3RvcHMgcGF'
-                                              'nZSJ9LHsicGVybWlzc2lvbl9uYW1lIjoibG9nb3V0OnZpc2l0IiwiZGVzY3JpcHRpb24i'
-                                              'OiJBYmxlIHRvIGxvZ291dCJ9LHsicGVybWlzc2lvbl9uYW1lIjoidGlja2V0czp2aXNpd'
-                                              'CIsImRlc2NyaXB0aW9uIjoiVmlldyB0aWNrZXRzIHBhZ2UifSx7InBlcm1pc3Npb25fbm'
-                                              'FtZSI6InJvYm90VGVsZW9wOnZpc2l0IiwiZGVzY3JpcHRpb24iOiJBY2Nlc3Mgcm9ib3Q'
-                                              'gdGVsZW9wIGZlYXR1cmUifSx7InBlcm1pc3Npb25fbmFtZSI6ImRhc2hib2FyZDp2aXNp'
-                                              'dCIsImRlc2NyaXB0aW9uIjoiVmlldyBkYXNoYm9hcmQgcGFnZSJ9LHsicGVybWlzc2lvb'
-                                              'l9uYW1lIjoidXNlcjp2aXNpdCIsImRlc2NyaXB0aW9uIjoiVmlldyB1c2VyIGxpc3QifS'
-                                              'x7InBlcm1pc3Npb25fbmFtZSI6InJvYm9vcHM6dmlzaXQiLCJkZXNjcmlwdGlvbiI6IlJ'
-                                              'vYm90b3BzIHBhZ2UgdmlzaXQifSx7InBlcm1pc3Npb25fbmFtZSI6InNldHRpbmdzOnZp'
-                                              'c2l0IiwiZGVzY3JpcHRpb24iOiJUbyB2aXNpdCBhbmQgbW9kaWZ5IHNldHRpbmdzIn0se'
-                                              'yJwZXJtaXNzaW9uX25hbWUiOiJyb2JvdHM6dmlzaXQiLCJkZXNjcmlwdGlvbiI6IlZpZX'
-                                              'cgcm9ib3QgbGlzdCJ9LHsicGVybWlzc2lvbl9uYW1lIjoic2l0ZXM6dmlzaXQiLCJkZXN'
-                                              'jcmlwdGlvbiI6IlZpZXcgc2l0ZXMgbGlzdCJ9LHsicGVybWlzc2lvbl9uYW1lIjoid2F5'
-                                              'cG9pbnQ6Y3JlYXRlIiwiZGVzY3JpcHRpb24iOiJDcmVhdGUgYSB3YXlwb2ludCJ9LHsic'
-                                              'GVybWlzc2lvbl9uYW1lIjoid2F5cG9pbnQ6cmVhZCIsImRlc2NyaXB0aW9uIjoiR2V0IG'
-                                              'Egd2F5cG9pbnQifSx7InBlcm1pc3Npb25fbmFtZSI6IndheXBvaW50OnVwZGF0ZSIsImR'
-                                              'lc2NyaXB0aW9uIjoiVXBkYXRlL0VkaXQgYSB3YXlwb2ludCJ9LHsicGVybWlzc2lvbl9u'
-                                              'YW1lIjoid2F5cG9pbnQ6ZGVsZXRlIiwiZGVzY3JpcHRpb24iOiJEZWxldGUgYSB3YXlwb'
-                                              '2ludCJ9LHsicGVybWlzc2lvbl9uYW1lIjoibWlzc2lvbjpjcmVhdGUiLCJkZXNjcmlwdG'
-                                              'lvbiI6IkNyZWF0ZSBhIG1pc3Npb24ifSx7InBlcm1pc3Npb25fbmFtZSI6Im1pc3Npb24'
-                                              '6cmVhZCIsImRlc2NyaXB0aW9uIjoiR2V0IGEgbWlzc2lvbiJ9LHsicGVybWlzc2lvbl9u'
-                                              'YW1lIjoibWlzc2lvbjp1cGRhdGUiLCJkZXNjcmlwdGlvbiI6IlVwZGF0ZS9FZGl0IGEgb'
-                                              'Wlzc2lvbiJ9LHsicGVybWlzc2lvbl9uYW1lIjoibWlzc2lvbjpkZWxldGUiLCJkZXNjc'
-                                              'mlwdGlvbiI6IkRlbGV0ZSBhIG1pc3Npb24ifSx7InBlcm1pc3Npb25fbmFtZSI6InNjaG'
-                                              'VkdWxlOmNyZWF0ZSIsImRlc2NyaXB0aW9uIjoiQ3JlYXRlIGEgc2NoZWR1bGUifSx7InB'
-                                              'lcm1pc3Npb25fbmFtZSI6InNjaGVkdWxlOnJlYWQiLCJkZXNjcmlwdGlvbiI6IkdldCBh'
-                                              'IHNjaGVkdWxlIn0seyJwZXJtaXNzaW9uX25hbWUiOiJzY2hlZHVsZTp1cGRhdGUiLCJkZ'
-                                              'XNjcmlwdGlvbiI6IlVwZGF0ZS9FZGl0IGEgc2NoZWR1bGUifSx7InBlcm1pc3Npb25fbm'
-                                              'FtZSI6InNjaGVkdWxlOmRlbGV0ZSIsImRlc2NyaXB0aW9uIjoiRGVsZXRlIGEgc2NoZWR'
-                                              '1bGUifSx7InBlcm1pc3Npb25fbmFtZSI6InJvYm90QWN0aW9uOnVzZSIsImRlc2NyaXB0'
-                                              'aW9uIjoiVXNlIHRoZSByb2JvdCBhY3Rpb24gYnV0dG9uIn1dLCJkZWZhdWx0X3BhZ2UiO'
-                                              'iJyb2JvdG9wcyIsInByb2ZpbGVfbmFtZSI6IkpvaG4gRG9lIiwiY29tcGFueV9pZCI6Ij'
-                                              'E3YjBhYzUzLTc2ZmEtNDdmZC1hNmJmLWQyYWNlZjRmODdhYiIsIm9yZ2FuaXphdGlvbl9'
-                                              'pZCI6ImVmNDkzYzU1LTMxNTQtNDQ3Ny05YzFmLWNjZDZkY2JhMmFkYiIsImF1dGhvcml6'
-                                              'ZWQiOnRydWV9fQ.YsG8iDEo86iWvRSw30A7zWKUEsS38W7_me7H7zBnMmQ')
+        'access_token': fields.String(example='eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MDUxMTkwNjYsIm5iZiI6MTcwNTExOTA2NiwianRpIjoiNjEyZDRiMWItYjQ0Ni00MzVmLTk5MTItZmZjYmM0YWRkZWVhIiwiZXhwIjoxNzA1NzIzODY2LCJpZGVudGl0eSI6InRoaW5obGUuaWN0IiwiZnJlc2giOmZhbHNlLCJ0eXBlIjoiYWNjZXNzIiwidXNlcl9jbGFpbXMiOnsidXNlcl9pZCI6IjhmM2VlODJkLWZhNDAtNDJjMS04NGNkLTJkYTIxNTkzN2M0MCIsInVzZXIiOiJ0aGluaGxlLmljdCIsInJvbGUiOlt7InJvbGVfbmFtZSI6ImFkbWluIiwicm9sZV9pZCI6ImI0MGVlMWFlLTVhMTItNDg3YS05OGNjLWI2ZDA3MjM4ZTE3YSJ9XSwicGVybWlzc2lvbnMiOm51bGwsImRlZmF1bHRfcGFnZSI6bnVsbCwicHJvZmlsZV9uYW1lIjoiVGhpbmggTGUiLCJ0ZWFtc19pZCI6IjA2Zjk5MmRlLWYzNGMtNDM2Mi05OWU4LWNlNjZiMzVjNjUwMSIsInRlYW1zX2NvZGUiOiJodXlfZHVjXzEiLCJhdXRob3JpemVkIjp0cnVlLCJyZWZyZXNoX2p0aSI6IjAxMGU0OTIzLWM0ODctNGVkMC05Y2FhLTEzMGIzMTM4MjUxNiJ9fQ.tf9oxCQtWyTdjNcS_jm8NR7hPI0KaqU3I07SyiCk69U'),
+        'refresh_token': fields.String(example='eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MDUxMTkwNjYsIm5iZiI6MTcwNTExOTA2NiwianRpIjoiMDEwZTQ5MjMtYzQ4Ny00ZWQwLTljYWEtMTMwYjMxMzgyNTE2IiwiZXhwIjoxNzA3NzExMDY2LCJpZGVudGl0eSI6InRoaW5obGUuaWN0IiwidHlwZSI6InJlZnJlc2giLCJ1c2VyX2NsYWltcyI6eyJ0ZWFtc19pZCI6IjA2Zjk5MmRlLWYzNGMtNDM2Mi05OWU4LWNlNjZiMzVjNjUwMSIsInRlYW1zX2NvZGUiOiJodXlfZHVjXzEifX0.M8wU91mhQrTYyri5vcImxatUmovO37AFYy56nXHf18I'),
     }
 )
 

@@ -73,6 +73,11 @@ def get_teams(teams_id):
         return None
 
 
+def check_is_default_org(teams_id, user_id):
+    mapping = UserTeamsMapping.query.filter_by(teams_id=teams_id, user_id=user_id, is_default=True).first()
+    return mapping
+
+
 def update_query(query, model, filters=None, throw_error=True):
     """
     Update query based on filters and model
@@ -375,7 +380,7 @@ def rollback_teams_creation(teams_id, user_id):
         # remove schema
         delete_teams(teams_id)
         drop_schema(teams_id)
-        db.session.flush()
+        db.session.commit()
     except Exception as ex:
         _logger.exception(ex)
 
