@@ -23,6 +23,8 @@ def create_profile(data):
     new_profile = Profiles()
     for key, val in data.items():
         if hasattr(new_profile, key):
+            if isinstance(val, str):
+                val = val.strip()
             new_profile.__setattr__(key, val)
 
     db.session.add(new_profile)
@@ -79,6 +81,8 @@ def update_profile(profile_id, data):
     if profile:
         for key, value in data.items():
             if hasattr(profile, key):
+                if isinstance(value, str):
+                    value = value.strip()
                 setattr(profile, key, value)
         profile.modified_at = datetime.datetime.now()
         db.session.flush()
