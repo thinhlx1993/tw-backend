@@ -14,4 +14,5 @@ from src.models.user_password_reset_token import UserPasswordResetToken
 from src.models.mission import Mission
 from src.models.mission_schedule import MissionSchedule
 from src.models.mission_instance import MissionInstance
-from src.models.robot import Robot
+from src.models.tasks import Task
+from src.models.mission_tasks import MissionTask

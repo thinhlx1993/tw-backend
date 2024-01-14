@@ -21,8 +21,10 @@ _logger = logging.getLogger(__name__)
 
 MISSION_TASK_UPDATE_MAX_RETRY = 3
 
+
 def get_mission_instance_from_timestamp_and_schedule_id(
-        mission_id, schedule_id, timestamp, is_deleted=[False]):
+    mission_id, schedule_id, timestamp, is_deleted=[False]
+):
     """Get mission_instance details from timestamp and schedule_id.
 
     :param str(uuid) schedule_id: Unique ID for schedule
@@ -36,28 +38,28 @@ def get_mission_instance_from_timestamp_and_schedule_id(
             mission_instance = (
                 MissionInstance.query.filter(
                     MissionInstance.start_timestamp == timestamp,
-                    MissionInstance.is_deleted == False)
-                .join(
-                    Mission,
-                    MissionInstance.mission_id == Mission.mission_id)
-                .join(
-                    Robot, Robot.robot_id == Mission.robot_id)
+                    MissionInstance.is_deleted == False,
+                )
+                .join(Mission, MissionInstance.mission_id == Mission.mission_id)
+                .join(Robot, Robot.robot_id == Mission.robot_id)
                 .filter(Mission.mission_id == mission_id)
-                .first())
+                .first()
+            )
         else:
             # Fetch record with start_timestamp and schedule_id
             mission_instance = (
                 MissionInstance.query.filter(
                     MissionInstance.schedule_id == schedule_id,
                     MissionInstance.start_timestamp == timestamp,
-                    MissionInstance.is_deleted.in_(is_deleted))
+                    MissionInstance.is_deleted.in_(is_deleted),
+                )
                 .join(
-                    Mission,
-                    MissionInstance.mission_instance_id == Mission.mission_id)
-                .join(
-                    Robot, Mission.robot_id == Robot.robot_id)
+                    Mission, MissionInstance.mission_instance_id == Mission.mission_id
+                )
+                .join(Robot, Mission.robot_id == Robot.robot_id)
                 .filter(Mission.mission_id == mission_id)
-                .first())
+                .first()
+            )
         return mission_instance
     except Exception as err:
         capture_exception(err)
@@ -65,11 +67,22 @@ def get_mission_instance_from_timestamp_and_schedule_id(
 
 
 def create_mission_instance(
-        robot_id, start_timestamp, mission_json, mission_id=None,
-        issues_recorded=None, end_timestamp=None, schedule_id=None,
-        is_deleted=False, is_complete=False, required_intervention=False,
-        success_category=None, is_cancelled=False, is_scheduled=False,
-        analysis_complete=False, loop_count=None):
+    robot_id,
+    start_timestamp,
+    mission_json,
+    mission_id=None,
+    issues_recorded=None,
+    end_timestamp=None,
+    schedule_id=None,
+    is_deleted=False,
+    is_complete=False,
+    required_intervention=False,
+    success_category=None,
+    is_cancelled=False,
+    is_scheduled=False,
+    analysis_complete=False,
+    loop_count=None,
+):
     """Creates mission_instance
 
     :param str(uuid) robot_id: Unique ID for robot
@@ -89,10 +102,22 @@ def create_mission_instance(
     """
     try:
         new_mission_instance = MissionInstance(
-            robot_id, start_timestamp, mission_json, mission_id,
-            issues_recorded, end_timestamp, schedule_id, is_deleted,
-            is_complete, required_intervention, success_category,
-            is_cancelled, is_scheduled, analysis_complete, loop_count)
+            robot_id,
+            start_timestamp,
+            mission_json,
+            mission_id,
+            issues_recorded,
+            end_timestamp,
+            schedule_id,
+            is_deleted,
+            is_complete,
+            required_intervention,
+            success_category,
+            is_cancelled,
+            is_scheduled,
+            analysis_complete,
+            loop_count,
+        )
         db.session.add(new_mission_instance)
         db.session.flush()
         return new_mission_instance
@@ -110,13 +135,15 @@ def delete_mission_instance(mission_instance_id):
     """
     try:
         mission_instance_row = MissionInstance.query.filter(
-            MissionInstance.mission_instance_id == mission_instance_id).first()
+            MissionInstance.mission_instance_id == mission_instance_id
+        ).first()
         if mission_instance_row:
             # Update last_updated_at for corresponding mission_schedules
             schedule_id = mission_instance_row.schedule_id
             if schedule_id:
                 mission_schedule = MissionSchedule.query.filter(
-                    MissionSchedule.schedule_id==schedule_id).first()
+                    MissionSchedule.schedule_id == schedule_id
+                ).first()
                 mission_schedule.last_updated_at = datetime.datetime.utcnow()
             db.session.delete(mission_instance_row)
             db.session.flush()
@@ -137,7 +164,8 @@ def delete_ended_mission_instance(mission_instance_id):
     """
     try:
         mission_instance_row = MissionInstance.query.filter(
-            MissionInstance.mission_instance_id == mission_instance_id).first()
+            MissionInstance.mission_instance_id == mission_instance_id
+        ).first()
         mission_instance_row.is_deleted = True
         mission_instance_row.schedule_id = None
         mission_instance_row.last_updated_at = datetime.datetime.utcnow()
@@ -158,7 +186,8 @@ def get_mission_instance(mission_instance_id):
     try:
         mission_instance_row = MissionInstance.query.filter(
             MissionInstance.mission_instance_id == mission_instance_id,
-            MissionInstance.is_deleted == False).first()
+            MissionInstance.is_deleted == False,
+        ).first()
         if mission_instance_row:
             return mission_instance_row.repr_name()
         else:
@@ -176,8 +205,8 @@ def update_mission_instance(data):
     """
     try:
         mission_instance_row = MissionInstance.query.filter(
-            MissionInstance.mission_instance_id ==
-            data['mission_instance_id']).first()
+            MissionInstance.mission_instance_id == data["mission_instance_id"]
+        ).first()
         if mission_instance_row:
             for attribute in data:
                 if data[attribute] is not None:
@@ -188,7 +217,8 @@ def update_mission_instance(data):
             schedule_id = mission_instance_row.schedule_id
             if schedule_id:
                 mission_schedule = MissionSchedule.query.filter(
-                    MissionSchedule.schedule_id==schedule_id).first()
+                    MissionSchedule.schedule_id == schedule_id
+                ).first()
                 mission_schedule.last_updated_at = datetime.datetime.utcnow()
             db.session.flush()
             return mission_instance_row
@@ -200,8 +230,13 @@ def update_mission_instance(data):
 
 
 def search_mission_instance(
-        page=0, per_page=10, sort_by="start_timestamp",
-        sort_order="asc", distinct_field=None, filters=None):
+    page=0,
+    per_page=10,
+    sort_by="start_timestamp",
+    sort_order="asc",
+    distinct_field=None,
+    filters=None,
+):
     """
     Search mission_instance based on filters.
 
@@ -221,20 +256,30 @@ def search_mission_instance(
             return False, {"Message": "Invalid sort_by Key provided"}
         sorting_order = sort_by + " " + sort_order
         query = MissionInstance.query
-        
-        if filters and filters.get('start_timestamp', None) and filters.get('end_timestamp', None):
-            start_timestamp = filters.get('start_timestamp')
-            end_timestamp = filters.get('end_timestamp')
-            query = query.filter(and_(MissionInstance.start_timestamp >= start_timestamp, MissionInstance.end_timestamp <= end_timestamp))
-            
-            filters.pop('start_timestamp')
-            filters.pop('end_timestamp')
+
+        if (
+            filters
+            and filters.get("start_timestamp", None)
+            and filters.get("end_timestamp", None)
+        ):
+            start_timestamp = filters.get("start_timestamp")
+            end_timestamp = filters.get("end_timestamp")
+            query = query.filter(
+                and_(
+                    MissionInstance.start_timestamp >= start_timestamp,
+                    MissionInstance.end_timestamp <= end_timestamp,
+                )
+            )
+
+            filters.pop("start_timestamp")
+            filters.pop("end_timestamp")
 
         status, query = dashboard_services.update_query(
-            query, MissionInstance, filters=filters)
+            query, MissionInstance, filters=filters
+        )
         if not status:
             return False, query
-        
+
         if distinct_field:
             field = getattr(MissionInstance, distinct_field, None)
             query = query.distinct(field)
@@ -245,12 +290,12 @@ def search_mission_instance(
         if per_page:
             query = query.limit(per_page)
         if page:
-            query = query.offset(per_page*(page-1))
+            query = query.offset(per_page * (page - 1))
         query = query.all()
         data = [format_mission_instance(i) for i in query]
         out_data["data"] = data
         out_data["result_count"] = count
-        out_data["max_pages"] = math.ceil(count/per_page)
+        out_data["max_pages"] = math.ceil(count / per_page)
         db.session.flush()
     except Exception as err:
         _logger.exception(err)
@@ -282,7 +327,7 @@ def format_mission_instance(row):
         "is_complete": row.is_complete,
         "mission_json": row.mission_json,
         "is_scheduled": row.is_scheduled,
-        "analysis_complete": row.analysis_complete
+        "analysis_complete": row.analysis_complete,
     }
 
 
@@ -298,11 +343,12 @@ def get_mission_instances_after_timestamp(schedule_id, start_timestamp=None):
         if start_timestamp:
             mission_instances = MissionInstance.query.filter(
                 MissionInstance.schedule_id == schedule_id,
-                MissionInstance.start_timestamp >
-                start_timestamp).all()
+                MissionInstance.start_timestamp > start_timestamp,
+            ).all()
         else:
             mission_instances = MissionInstance.query.filter(
-                MissionInstance.schedule_id == schedule_id).all()
+                MissionInstance.schedule_id == schedule_id
+            ).all()
         return mission_instances
     except Exception as err:
         capture_exception(err)
@@ -310,10 +356,10 @@ def get_mission_instances_after_timestamp(schedule_id, start_timestamp=None):
 
 
 def get_mission_instances_between_timestamp(
-        schedule_id,
-        start_timestamp=datetime.datetime.utcnow(),
-        end_timestamp=datetime.datetime.utcnow()
-        + datetime.timedelta(hours=24)):
+    schedule_id,
+    start_timestamp=datetime.datetime.utcnow(),
+    end_timestamp=datetime.datetime.utcnow() + datetime.timedelta(hours=24),
+):
     """Returns a list of mission_instances between two timestamps.
 
     If no timestamp is provided, start_timestamp will be current time in UTC
@@ -326,8 +372,11 @@ def get_mission_instances_between_timestamp(
     try:
         mission_instances = MissionInstance.query.filter(
             MissionInstance.schedule_id == schedule_id,
-            and_(MissionInstance.start_timestamp >= start_timestamp,
-            MissionInstance.start_timestamp <= end_timestamp)).all()
+            and_(
+                MissionInstance.start_timestamp >= start_timestamp,
+                MissionInstance.start_timestamp <= end_timestamp,
+            ),
+        ).all()
         return mission_instances
     except Exception as err:
         capture_exception(err)
@@ -344,18 +393,17 @@ def update_task_status(data):
     try:
         mission_instance_row = get_mission_instance_for_update(data)
 
-        task_status_list = data['task_status_list']
+        task_status_list = data["task_status_list"]
         new_mission_json = mission_instance_row.mission_json
 
-        if (
-            task_status_list is not None and
-            len(new_mission_json['tasks']) != len(task_status_list)
+        if task_status_list is not None and len(new_mission_json["tasks"]) != len(
+            task_status_list
         ):
             raise Exception("Length of lists not matching")
-        
+
         if (
-            mission_instance_row.task_last_updated_at and
             mission_instance_row.task_last_updated_at
+            and mission_instance_row.task_last_updated_at
             > convert_iso_str_to_date_time(data["timestamp"])
         ):
             print("Outdated task update, ignoring")
@@ -369,28 +417,26 @@ def update_task_status(data):
 
         # Iterating through task_status_list and updating mission_json
         if task_status_list is not None:
-            for task in new_mission_json['tasks']:
-                if 'end_time' not in task:
+            for task in new_mission_json["tasks"]:
+                if "end_time" not in task:
                     # Updating end_time only when task status
                     # is either "completed" or "error" or "cancelled"
-                    if(task_status_list[counter] in [
-                            "completed", "error", "cancelled"]):
+                    if task_status_list[counter] in ["completed", "error", "cancelled"]:
                         # Updating current task 'end_time'
-                        task['end_time'] = str(data['timestamp'])
-                if 'start_time' not in task:
+                        task["end_time"] = str(data["timestamp"])
+                if "start_time" not in task:
                     # Updating start_time only when task status
                     # is "running"
-                    if(task_status_list[counter] == "running"):
-                        task['start_time'] = str(data['timestamp'])
+                    if task_status_list[counter] == "running":
+                        task["start_time"] = str(data["timestamp"])
 
-                if('start_time' in task and
-                        task_status_list[counter] == "idling"):
+                if "start_time" in task and task_status_list[counter] == "idling":
                     # Updating end_time for skipped mission tasks
-                    task['status'] = "skipped"
-                    if 'end_time' not in task:
-                        task['end_time'] = str(data['timestamp'])
+                    task["status"] = "skipped"
+                    if "end_time" not in task:
+                        task["end_time"] = str(data["timestamp"])
                 else:
-                    task['status'] = task_status_list[counter]
+                    task["status"] = task_status_list[counter]
                 counter += 1
             mission_instance_row.mission_json = new_mission_json
             mission_instance_row.task_last_updated_at = str(data["timestamp"])
@@ -404,16 +450,21 @@ def update_task_status(data):
         capture_exception(err)
         raise
 
-def get_mission_instance_for_update(data, retry = 1):
+
+def get_mission_instance_for_update(data, retry=1):
     """THIS QUERY USES ROW LEVEL LOCKING TO UPDATE
     MISSION TASKS WITHOUT LOST UPDATE PROBLEM
     THIS WILL LOCK READ/WRITE FOR THE SPECIFIC ROW
     AND WILL ONLY BE RELEASED AFTER SUCCESSFUL COMMIT/ROLLBACK
     """
     try:
-        mission_instance_row = MissionInstance.query.filter(
-            MissionInstance.mission_instance_id == data['mission_instance_id']
-        ).with_for_update().first()
+        mission_instance_row = (
+            MissionInstance.query.filter(
+                MissionInstance.mission_instance_id == data["mission_instance_id"]
+            )
+            .with_for_update()
+            .first()
+        )
 
         if mission_instance_row is None:
             raise Exception("MissionInstance not found")
@@ -424,7 +475,6 @@ def get_mission_instance_for_update(data, retry = 1):
             raise
         return get_mission_instance_for_update(data, retry + 1)
 
-    
 
 def update_mission_instances_from_mission(mission_json, mission_id):
     """Updates mission_json column of mission instance.
@@ -440,7 +490,8 @@ def update_mission_instances_from_mission(mission_json, mission_id):
             MissionInstance.mission_id == mission_id,
             MissionInstance.is_deleted == False,
             MissionInstance.is_cancelled == False,
-            MissionInstance.start_timestamp > datetime.datetime.utcnow()).all()
+            MissionInstance.start_timestamp > datetime.datetime.utcnow(),
+        ).all()
 
         # Update the mission_json of these mission instances
         for mission_instance in mission_instances:
@@ -449,18 +500,20 @@ def update_mission_instances_from_mission(mission_json, mission_id):
 
         # Flush the updates to DB
         db.session.flush()
-        return [
-            mission_instance.repr_name() for
-            mission_instance in mission_instances
-        ]
+        return [mission_instance.repr_name() for mission_instance in mission_instances]
     except Exception as err:
         db.session.rollback()
         capture_exception(err)
         raise
 
 
-def get_mission_metrics(start_date=None, end_date=None, robot_id_list=None,
-        property_id_list=None, is_scheduled=None):
+def get_mission_metrics(
+    start_date=None,
+    end_date=None,
+    robot_id_list=None,
+    property_id_list=None,
+    is_scheduled=None,
+):
     """get mission instance data
 
     :param str start_date: start datetime
@@ -471,9 +524,9 @@ def get_mission_metrics(start_date=None, end_date=None, robot_id_list=None,
     :return list(dict) mission_instance_data: List of mission instances
     """
     try:
-        query = MissionInstance.query.\
-        join(Robot, Robot.robot_id == MissionInstance.robot_id).\
-        join(Mission, Mission.mission_id == MissionInstance.mission_id )
+        query = MissionInstance.query.join(
+            Robot, Robot.robot_id == MissionInstance.robot_id
+        ).join(Mission, Mission.mission_id == MissionInstance.mission_id)
 
         if robot_id_list is not None:
             robot_id_set = set(robot_id_list)
@@ -483,20 +536,19 @@ def get_mission_metrics(start_date=None, end_date=None, robot_id_list=None,
         if property_id_list is not None:
             property_id_set = set(property_id_list)
             query = query.join(Property).filter(
-                Property.property_id.in_(property_id_set))   
+                Property.property_id.in_(property_id_set)
+            )
         query = query.filter(
             MissionInstance.start_timestamp >= start_date,
             MissionInstance.start_timestamp <= end_date,
-            MissionInstance.is_complete == True
+            MissionInstance.is_complete == True,
         ).order_by(MissionInstance.start_timestamp)
 
         mission_instance_data = query.all()
 
         return [
-            mission_instance.repr_name() for
-            mission_instance in mission_instance_data
+            mission_instance.repr_name() for mission_instance in mission_instance_data
         ]
     except Exception as err:
         capture_exception(err)
         raise
-

@@ -5,7 +5,7 @@ import jwt
 from flask import request
 from functools import wraps
 from flask_jwt_extended import verify_jwt_in_request, get_jwt_claims
-from flask_jwt_extended.exceptions import NoAuthorizationError
+from flask_jwt_extended.exceptions import NoAuthorizationError, InvalidHeaderError
 from pydantic import ValidationError
 from jwt import ExpiredSignatureError
 from src import db
@@ -35,7 +35,7 @@ def custom_jwt_required():
                     return {"message": "Not authorized"}, 401
             except ExpiredSignatureError:
                    return {"message":"Authorization token expired"},401
-            except NoAuthorizationError as ex:
+            except (NoAuthorizationError, InvalidHeaderError) as ex:
                 return {"message": "Not authorized"}, 401
             except jwt.exceptions.DecodeError:
                 return {"message": "Not Found JWT Header"}, 500

@@ -108,25 +108,6 @@ def upgrade():
                         sa.UniqueConstraint('username'),
                         schema='public'
                         )
-
-    # op.create_table('user_details',
-    #                 sa.Column('user_id', sa.String(128), server_default=sa.text('uuid_generate_v4()'),
-    #                           nullable=False),
-    #                 sa.Column('username', sa.String(length=256), nullable=False),
-    #                 sa.Column('email', sa.String(length=256), nullable=True),
-    #                 sa.Column('password', sa.String(length=512), nullable=True),
-    #                 sa.Column('first_name', sa.String(length=128), nullable=True),
-    #                 sa.Column('last_name', sa.String(length=128), nullable=True),
-    #                 sa.Column('default_page', sa.String(length=128), nullable=True),
-    #                 sa.Column('is_disabled', sa.Boolean(), server_default='false', nullable=True),
-    #                 sa.Column('notifications_enabled', sa.Boolean(), nullable=True),
-    #                 sa.Column('phone_number', sa.String(length=128), nullable=True),
-    #                 sa.Column('is_email_verified', sa.Boolean(), server_default='false', nullable=True),
-    #                 sa.Column('country_id', sa.String(128), nullable=True),
-    #                 sa.Column('added_at', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
-    #                 sa.PrimaryKeyConstraint('user_id'),
-    #                 sa.UniqueConstraint('username')
-    #                 )
     if 'user_permissions' not in tables:
         op.create_table('user_permissions',
                         sa.Column('permission_id', sa.String(128),
