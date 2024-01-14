@@ -27,3 +27,4 @@ dictConfig(
 logging.getLogger('sqlalchemy').setLevel(logging.ERROR)
 logging.getLogger('botocore').setLevel(logging.ERROR)
 logging.getLogger('werkzeug').setLevel(logging.ERROR)
+logging.getLogger('sentry').setLevel(logging.ERROR)

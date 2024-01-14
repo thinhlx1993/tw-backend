@@ -45,6 +45,7 @@ profile_update_model = profiles_ns2.model(
         "cookies": fields.String(example="new_cookies"),
         "notes": fields.String(example="new_notes"),
         "status": fields.String(example="new_status"),
+        "data": fields.String(example="Profile metadata")
     },
 )
 
