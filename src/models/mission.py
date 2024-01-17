@@ -24,6 +24,7 @@ class Mission(db.Model):
     )
     mission_name = db.Column(db.String(256), comment="Name of the mission")
     status = db.Column(db.String(128))
+    force_start = db.Column(db.Boolean, server_default="false")
     group_id = db.Column(db.String(128), ForeignKey("groups.group_id"), nullable=True)
     user_id = db.Column(db.String(128), nullable=False)
     mission_json = db.Column(JSONB, comment="JSON for mission")
@@ -48,6 +49,8 @@ class Mission(db.Model):
             "mission_name": self.mission_name,
             "status": self.status,
             "user_id": self.user_id,
+            "mission_json": self.mission_json,
+            "force_start": self.force_start,
             "group_id": self.group_id,
             "mission_schedule": [item.repr_name() for item in self.mission_schedule],
             "mission_tasks": [item.repr_name() for item in self.mission_tasks],

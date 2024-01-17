@@ -28,5 +28,6 @@ class MissionTask(db.Model):
     def repr_name(self):
         return {
             "mission_id": self.mission_id,
-            "tasks_id": self.tasks_id
+            "tasks_id": self.tasks_id,
+            "tasks": self.task.repr_name()
         }

@@ -16,6 +16,21 @@ def get_all_missions():
     return missions
 
 
+def get_missions_by_user_id(user_id):
+    """Retrieve all missions. by given user id"""
+    missions = [
+        item.repr_name() for item in Mission.query.filter_by(user_id=user_id).all()
+    ]
+    return missions
+
+
+def set_force_start(mission_id):
+    """Update force start flag into false"""
+    mission = Mission.query.filter_by(mission_id=mission_id).first()
+    mission.force_start = False
+    db.session.flush()
+
+
 def create_mission(data):
     """Create a new mission.
     {
@@ -65,6 +80,8 @@ def create_mission(data):
     else:
         cron = generate_crontab_schedule(start_date, mission_schedule)
     schedule_json = {"cron": cron, "loop_count": 1}
+    new_mission.mission_json = schedule_json
+    new_mission.status = "unknown"
     profile_ids = data.get("profile_ids", [])
     if len(profile_ids) == 0:
         # fetch by from group_id
