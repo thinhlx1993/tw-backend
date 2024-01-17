@@ -1,5 +1,4 @@
 from sqlalchemy import text, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from src import db
@@ -24,6 +23,7 @@ class Mission(db.Model):
         comment="Unique identifier " "for mission(Primary Key)",
     )
     mission_name = db.Column(db.String(256), comment="Name of the mission")
+    status = db.Column(db.String(128))
     group_id = db.Column(db.String(128), ForeignKey("groups.group_id"), nullable=True)
     user_id = db.Column(db.String(128), nullable=False)
     mission_json = db.Column(JSONB, comment="JSON for mission")
@@ -37,11 +37,19 @@ class Mission(db.Model):
     )
     mission_tasks = relationship("MissionTask", back_populates="mission")
 
+    def __init__(self, mission_name, group_id, user_id):
+        self.mission_name = mission_name
+        self.group_id = group_id
+        self.user_id = user_id
+
     def repr_name(self):
         return {
             "mission_id": self.mission_id,
             "mission_name": self.mission_name,
+            "status": self.status,
             "user_id": self.user_id,
             "group_id": self.group_id,
-            "mission_json": self.mission_json,
+            "mission_schedule": [item.repr_name() for item in self.mission_schedule],
+            "mission_tasks": [item.repr_name() for item in self.mission_tasks],
+            "group": self.group.repr_name() if self.group else None,
         }

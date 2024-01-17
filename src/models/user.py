@@ -22,7 +22,7 @@ class User(db.Model):
     'created_at' : Timestamp for creation of user(DATETIME)
     'default_page' : Default page to serve user(VARCHAR(128))
     'is_disabled' : Boolean check if user is disabled(BOOLEAN)
-    'notifications_enabled' : Boolean check if user has 
+    'notifications_enabled' : Boolean check if user has
     notifications enabled(BOOLEAN)
     'mfa_enabled' : Boolean check if user has multifactor auth enabled(BOOLEAN)
     'phone_number' : Phone number of user(VARCHAR(128))
@@ -30,10 +30,15 @@ class User(db.Model):
     'country_id' : Country ID of user(UUID)
     'last_active_at' : Timestamp of last login or token refresh(DATETIME)
     """
-    __tablename__ = 'user'
 
-    user_id = db.Column(db.String(128), server_default=text(
-        "uuid_generate_v4()"), primary_key=True, nullable=False)
+    __tablename__ = "user"
+
+    user_id = db.Column(
+        db.String(128),
+        server_default=text("uuid_generate_v4()"),
+        primary_key=True,
+        nullable=False,
+    )
     username = db.Column(db.String(256), nullable=False, unique=True)
     email = db.Column(db.String(256))
     password = db.Column(db.String(512))
@@ -41,12 +46,12 @@ class User(db.Model):
     last_name = db.Column(db.String(128))
     created_at = db.Column(db.DateTime, server_default=func.now())
     default_page = db.Column(db.String(128))
-    is_disabled = db.Column(db.Boolean, server_default='false')
+    is_disabled = db.Column(db.Boolean, server_default="false")
     notifications_enabled = db.Column(db.Boolean)
-    mfa_enabled = db.Column(db.Boolean, server_default='false')
+    mfa_enabled = db.Column(db.Boolean, server_default="false")
     mfa_secret = db.Column(BYTEA)
     phone_number = db.Column(db.String(128))
-    is_email_verified = db.Column(db.Boolean, server_default='false')
+    is_email_verified = db.Column(db.Boolean, server_default="false")
     country_id = db.Column(db.String(128))
     last_active_at = db.Column(db.DateTime, server_default=func.now())
     password_reset_tokens = relationship("UserPasswordResetToken", backref="user")
@@ -73,30 +78,50 @@ class User(db.Model):
         """
         String representation for results fetched from the table
         """
-        return str("{'user_id':" + str(self.user_id) + ", 'username':" +
-                   self.username + ", 'email':" + str(self.email) +
-                   ", 'first_name':" + str(self.first_name) +
-                   ", 'last_name':" + str(self.last_name) + ", 'created_at':" + str(self.created_at) +
-                   ", 'default_page':" + str(self.default_page) + ", 'is_disabled':" +
-                   str(self.is_disabled) + ", 'notifications_enabled':" +
-                   str(self.notifications_enabled) + ", 'phone_number':" +
-                   str(self.phone_number) + ", 'is_email_verified':" +
-                   str(self.is_email_verified) + ", 'country_id':" +
-                   str(self.country_id) + ", 'last_active_at':" +
-                   str(self.last_active_at) + "}")
+        return str(
+            "{'user_id':"
+            + str(self.user_id)
+            + ", 'username':"
+            + self.username
+            + ", 'email':"
+            + str(self.email)
+            + ", 'first_name':"
+            + str(self.first_name)
+            + ", 'last_name':"
+            + str(self.last_name)
+            + ", 'created_at':"
+            + str(self.created_at)
+            + ", 'default_page':"
+            + str(self.default_page)
+            + ", 'is_disabled':"
+            + str(self.is_disabled)
+            + ", 'notifications_enabled':"
+            + str(self.notifications_enabled)
+            + ", 'phone_number':"
+            + str(self.phone_number)
+            + ", 'is_email_verified':"
+            + str(self.is_email_verified)
+            + ", 'country_id':"
+            + str(self.country_id)
+            + ", 'last_active_at':"
+            + str(self.last_active_at)
+            + "}"
+        )
 
     def repr_name(self):
         """dict representation of user row"""
         return {
-            'user_id': str(self.user_id),
-            'username': str(self.username),
-            'email': str(self.email),
-            'first_name': str(self.first_name),
-            'last_name': str(self.last_name),
-            'created_at': self.created_at.strftime("%d-%m-%Y %H:%M"),
-            'is_disabled': str(self.is_disabled),
-            'phone_number': str(self.phone_number),
-            'is_email_verified': str(self.is_email_verified),
-            'last_active_at': self.last_active_at.strftime("%d-%m-%Y %H:%M"),
-            'is_admin': True if [role for role in self.user_roles if role.role_name == 'admin'] else False
+            "user_id": str(self.user_id),
+            "username": str(self.username),
+            "email": str(self.email),
+            "first_name": str(self.first_name),
+            "last_name": str(self.last_name),
+            "created_at": self.created_at.strftime("%d-%m-%Y %H:%M"),
+            "is_disabled": str(self.is_disabled),
+            "phone_number": str(self.phone_number),
+            "is_email_verified": str(self.is_email_verified),
+            "last_active_at": self.last_active_at.strftime("%d-%m-%Y %H:%M"),
+            "is_admin": True
+            if [role for role in self.user_roles if role.role_name == "admin"]
+            else False,
         }

@@ -10,21 +10,12 @@ mission_create_model = missions_ns.model(
     "MissionCreateModel",
     {
         "mission_name": fields.String(required=True, example="Mission Name"),
-        "group_id": fields.String(example="group_id", required=True),
-        "tasks": fields.List(fields.String(example="task_id"), required=True),
-        "user_id": fields.String(example="user_id", required=True),
-        "mission_schedule": fields.String(example="", required=True)
-    },
-)
-
-# Mission model for update
-mission_update_model = missions_ns.model(
-    "MissionUpdateModel",
-    {
-        "mission_name": fields.String(required=False, example="New Mission Name"),
-        "group_id": fields.String(example="new_group_id"),
-        "tasks": fields.List(fields.String(example="task_id"))
-        # Add other fields as necessary
+        "group_id": fields.String(example="80051754-c58a-4ab1-b29d-45c0e4c66dae", required=True),
+        "tasks": fields.List(fields.String(example="260a439d-0121-48c1-88e0-b09f4bfd780b"), required=True),
+        "profile_ids": fields.List(fields.String(example="ea742827-6a6f-4634-ad73-4d02df68923b"), required=True),
+        "user_id": fields.String(example="a3213c22-c8c5-4e86-aa7c-ec4a08f0a7f9", required=True),
+        "mission_schedule": fields.List(fields.String(example="Monday", required=False, default=None)),
+        "start_date": fields.String(example="2024-01-17T21:56", required=False)
     },
 )
 
@@ -47,48 +38,38 @@ class MissionsController(Resource):
     @custom_jwt_required()
     def get(self):
         """Retrieve a list of missions."""
-        try:
-            missions = mission_services.get_all_missions()
-            return {
-                "message": "Missions fetched successfully",
-                "missions": missions,
-            }, 200
-        except Exception as e:
-            return {"message": str(e)}, 500
+        missions = mission_services.get_all_missions()
+        return {
+            "message": "Missions fetched successfully",
+            "missions": missions,
+        }, 200
 
     @missions_ns.expect(mission_create_model)
     @missions_ns.response(201, "Mission Created", mission_response_model)
     @missions_ns.response(400, "Bad Request")
     @missions_ns.response(500, "Internal Server Error")
+    @custom_jwt_required()
     def post(self):
         """Create a new mission."""
-        try:
-            data = missions_ns.payload
-            mission = mission_services.create_mission(data)
-            return {"message": "Mission created successfully", "mission": mission}, 201
-        except Exception as e:
-            return {"message": str(e)}, 500
+        data = missions_ns.payload
+        mission = mission_services.create_mission(data)
+        return {"message": "Mission created successfully", "mission": mission.repr_name()}, 201
 
 
 class MissionIdController(Resource):
     """Controller for specific mission functionalities."""
 
-    @missions_ns.expect(mission_update_model)
+    @missions_ns.expect()
     @missions_ns.response(200, "Mission Updated", mission_response_model)
     @missions_ns.response(400, "Bad Request")
     @missions_ns.response(404, "Not Found")
     @missions_ns.response(500, "Internal Server Error")
     @custom_jwt_required()
-    def put(self, mission_id):
-        """Update a specific mission."""
-        try:
-            data = missions_ns.payload
-            mission = mission_services.update_mission(mission_id, data)
-            if not mission:
-                return {"message": "Mission not found"}, 404
-            return {"message": "Mission updated successfully", "mission": mission}, 200
-        except Exception as e:
-            return {"message": str(e)}, 500
+    def post(self, mission_id):
+        """Start a specific mission."""
+        # data = missions_ns.payload
+        # mission = mission_services.update_mission(mission_id, data)
+        return {"message": "Mission started successfully", "mission": mission_id}, 200
 
     @missions_ns.response(200, "Mission Deleted", mission_response_model)
     @missions_ns.response(404, "Not Found")
@@ -96,13 +77,10 @@ class MissionIdController(Resource):
     @custom_jwt_required()
     def delete(self, mission_id):
         """Delete a specific mission."""
-        try:
-            result = mission_services.delete_mission(mission_id)
-            if result:
-                return {"message": "Mission deleted successfully"}, 200
-            return {"message": "Mission not found"}, 404
-        except Exception as e:
-            return {"message": str(e)}, 500
+        result = mission_services.delete_mission(mission_id)
+        if result:
+            return {"message": "Mission deleted successfully"}, 200
+        return {"message": "Mission not found"}, 404
 
 
 # Add resources to namespace

@@ -1,6 +1,4 @@
 # Setup log for the whole app
-import src.log_config
-
 import os
 from alembic import command
 from flask import Flask
@@ -20,11 +18,11 @@ from .config import DevelopmentConfig, StagingConfig, ProductionConfig, Config
 app = Flask(__name__)
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 
-sentry_sdk.init(
-    dsn=Config.SENTRY_CONFIG,
-    integrations=[FlaskIntegration(), SqlalchemyIntegration()],
-    traces_sample_rate=1.0
-)
+# sentry_sdk.init(
+#     dsn=Config.SENTRY_CONFIG,
+#     integrations=[FlaskIntegration(), SqlalchemyIntegration()],
+#     traces_sample_rate=1.0
+# )
 
 # Config is PROD by default
 if os.environ['CONFIG'] == 'DEV':

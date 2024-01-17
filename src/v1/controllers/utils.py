@@ -2,41 +2,42 @@ import json
 from datetime import datetime
 
 
-def get_s3_folder_name(env_config):
-    """returns S3 folder name based on env_config"""
-    if env_config == 'https://dev.cognicept.systems':
-        return 'development/'
-    elif env_config == 'https://staging.cognicept.systems':
-        return 'staging/'
-    elif env_config == 'https://app.cognicept.systems':
-        return 'production/'
-    else:
-        return ''
-
-
-def process_alert_result(alert):
+def generate_crontab_schedule(time_str=None, days=None):
     """
-    extract metadata from alert, remove unused data
-    alert_type, notification_name robot_name, site, time and date, status
-    """
-    try:
-        alert['created_at'] = datetime.fromtimestamp(float(alert.get('created_at'))).isoformat()
-    except Exception as ex:
-        # ignore this one, old data, for new data, it will be in iso format
-        pass
+    Generates a crontab schedule string.
 
-    if alert.get("data", None) is not None:
-        # va data
-        va_alert = json.loads(alert["data"])
-        alert['issue'] = va_alert.get("issue")
-        alert['robot_name'] = va_alert.get("robot_name")
-    response = {
-        "alert_id": alert.get("alert_id"),
-        "robot_name": alert.get("robot_name"),
-        "created_at": alert.get("created_at"),
-        "issue": alert.get("issue"),
-        "status": alert.get("status"),
-        "site_name": alert.get("site_name"),
-        "alert_type": alert.get("alert_type"),
+    :param time_str: Time in 'YYYY-MM-DDTHH:MM' format or None.
+    :param days: List of days of the week as ['Monday', 'Tuesday', ...] or None for daily.
+    :return: Crontab schedule string.
+    """
+    # Map days to crontab format (0-6, where 0 is Sunday)
+    day_map = {
+        'Sunday': '0',
+        'Monday': '1',
+        'Tuesday': '2',
+        'Wednesday': '3',
+        'Thursday': '4',
+        'Friday': '5',
+        'Saturday': '6'
     }
-    return response
+
+    # Default time (e.g., midnight) if time_str is None
+    default_hour, default_minute = "0", "0"
+
+    # Parse time_str to get hour and minute if provided
+    if time_str:
+        time_obj = datetime.strptime(time_str, "%Y-%m-%dT%H:%M")
+        hour, minute = str(time_obj.hour), str(time_obj.minute)
+    else:
+        hour, minute = default_hour, default_minute
+
+    # Determine the day field for crontab
+    if days is None:
+        day_field = '*'
+    else:
+        day_field = ','.join([day_map[day.capitalize()] for day in days if day.capitalize() in day_map])
+
+    # Construct the crontab schedule string (minute hour day_of_month month day_of_week)
+    crontab_schedule = f"{minute} {hour} * * {day_field}"
+
+    return crontab_schedule

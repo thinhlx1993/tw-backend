@@ -18,6 +18,10 @@ class MissionTask(db.Model):
     mission = relationship("Mission", back_populates="mission_tasks")
     task = relationship("Task", back_populates="mission_tasks")
 
+    def __init__(self, mission_id, tasks_id):
+        self.tasks_id = tasks_id
+        self.mission_id = mission_id
+
     def __repr__(self):
         return f"<MissionTask mission_id={self.mission_id} tasks_id={self.tasks_id}>"
 

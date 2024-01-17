@@ -39,9 +39,6 @@ def custom_jwt_required():
                 return {"message": "Not authorized"}, 401
             except jwt.exceptions.DecodeError:
                 return {"message": "Not Found JWT Header"}, 500
-            except Exception as ex:
-                _logger.exception(ex)
-                return {"message": str(ex)}, 500
         return decorator
     return wrapper
 

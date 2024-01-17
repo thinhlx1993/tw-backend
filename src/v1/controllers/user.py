@@ -11,8 +11,7 @@ from flask_jwt_extended import create_access_token, get_jwt_identity, get_jti
 from flask_jwt_extended import create_refresh_token, jwt_refresh_token_required
 
 from src.config import Config
-from src import app, db
-from src import custom_exceptions
+from src import db
 from src.enums.role_permissions import RoleName
 from src.enums.user_type import UserTypeEnums, UserRoleEnums
 from src.services import user_services, teams_services, migration_services
@@ -566,63 +565,53 @@ class UserLogin(Resource):
     @user_ns2.response(500, "Internal Server Error", internal_server_error_model)
     def post(self):
         """Used for logging in user"""
-        try:
-            request_data = user_ns2.payload
-            input_username = request_data["username"]
-            input_password = request_data["password"]
-        except Exception as e:
-            _logger.debug(f"Request validation failed: {e}")
-            return {"message": "Bad request. Invalid input"}, 400
-        try:
-            user_details = user_services.check_user_exists(username=input_username)
-            if not user_details:
-                return {
-                    "message": "Username and password combination not valid".format(
-                        input_username
-                    )
-                }, 200
-            if not user_services.validate_password(input_username, input_password):
-                return {"message": "Username and password combination not valid"}, 200
-            user_services.update_user_last_active_at(user_details.user_id)
-            """
-            Handle orphan user
-            @Author: Thinh Le
-            """
-            default_teams = user_services.get_default_org(user_details.user_id)
-            user_teams = teams_services.get_user_org_list(user_details.user_id)
-            if not default_teams:
-                org_list = user_teams.get("org_list", [])
-                if len(org_list) == 0:
-                    # Try to create user default org
-                    if user_details.first_name and user_details.last_name:
-                        profile_name = (
-                            user_details.first_name + " " + user_details.last_name
-                        )
-                    else:
-                        profile_name = "User"
-                    (
-                        org_id,
-                        err_data,
-                        err_code,
-                    ) = user_services.create_default_user_teams(
-                        current_app,
-                        user_details,
-                        profile_name,
-                    )
-                    if not org_id:
-                        return err_data, err_code
-                else:
-                    set_user_default_teams(
-                        user_details.user_id, org_list[0]["teams_id"]
-                    )
+        request_data = user_ns2.payload
+        input_username = request_data["username"]
+        input_password = request_data["password"]
 
-            return user_services.get_user_auth_tokens(user_details), 200
-        except custom_exceptions.DatabaseQueryException as err:
-            _logger.exception(err)
-            return {"message": "Error querying the DB"}, 400
-        except Exception as err:
-            _logger.exception(err)
-            return {"message": str(err)}, 400
+        user_details = user_services.check_user_exists(username=input_username)
+        if not user_details:
+            return {
+                "message": "Username and password combination not valid".format(
+                    input_username
+                )
+            }, 200
+        if not user_services.validate_password(input_username, input_password):
+            return {"message": "Username and password combination not valid"}, 200
+        user_services.update_user_last_active_at(user_details.user_id)
+        """
+        Handle orphan user
+        @Author: Thinh Le
+        """
+        default_teams = user_services.get_default_org(user_details.user_id)
+        user_teams = teams_services.get_user_org_list(user_details.user_id)
+        if not default_teams:
+            org_list = user_teams.get("org_list", [])
+            if len(org_list) == 0:
+                # Try to create user default org
+                if user_details.first_name and user_details.last_name:
+                    profile_name = (
+                        user_details.first_name + " " + user_details.last_name
+                    )
+                else:
+                    profile_name = "User"
+                (
+                    org_id,
+                    err_data,
+                    err_code,
+                ) = user_services.create_default_user_teams(
+                    current_app,
+                    user_details,
+                    profile_name,
+                )
+                if not org_id:
+                    return err_data, err_code
+            else:
+                set_user_default_teams(
+                    user_details.user_id, org_list[0]["teams_id"]
+                )
+
+        return user_services.get_user_auth_tokens(user_details), 200
 
 
 class UserRefresh(Resource):
@@ -765,23 +754,16 @@ class UserGet(Resource):
     @user_ns2.response(500, "Internal Server Error", internal_server_error_model)
     def get(self, username):
         """Used to retrive a user from username"""
-        try:
-            user_details = user_services.get_user_details(username=username)
-            claims = get_jwt_claims()
-            teams_id = claims["teams_id"]
-            if not user_details:
-                return {"message": "User {} does not exist".format(username)}, 200
-            user_details = user_services.row_to_dict(user_details)
-            del user_details["password"]
-            roles = user_services.get_user_roles(username, teams_id)
-            user_details["roles"] = roles
-            return user_details, 200
-        except custom_exceptions.DatabaseQueryException as err:
-            _logger.exception(err)
-            return {"message": "Error querying the DB"}, 400
-        except Exception as err:
-            _logger.exception(err)
-            return {"message": str(err)}, 400
+        user_details = user_services.get_user_details(username=username)
+        claims = get_jwt_claims()
+        teams_id = claims["teams_id"]
+        if not user_details:
+            return {"message": "User {} does not exist".format(username)}, 200
+        user_details = user_services.row_to_dict(user_details)
+        del user_details["password"]
+        roles = user_services.get_user_roles(username, teams_id)
+        user_details["roles"] = roles
+        return user_details, 200
 
 
 class UserOperations(Resource):
@@ -799,38 +781,28 @@ class UserOperations(Resource):
     @user_ns2.response(500, "Internal Server Error", internal_server_error_model)
     def post(self):
         """Used to create a user"""
-        try:
-            request_data = user_ns2.payload
-            username = request_data["username"]
-            password = request_data["password"]
-            first_name = request_data.get("first_name", None)
-            last_name = request_data.get("last_name", None)
-            role_id = request_data.get("role_id", None)
-        except Exception as e:
-            _logger.debug(f"Request validation failed: {e}")
-            return {"message": "Bad request. Invalid input"}, 400
+        request_data = user_ns2.payload
+        username = request_data["username"]
+        password = request_data["password"]
+        first_name = request_data.get("first_name", None)
+        last_name = request_data.get("last_name", None)
+        role_id = request_data.get("role_id", None)
 
         if user_services.check_user_exists(username=username):
             return {"message": "User {} already exists.".format(username)}, 400
         if password == "":
             return {"message": "Password cannot be empty"}, 401
-        try:
-            new_user = user_services.create_user(
-                username, password, first_name, last_name
-            )
-            user_claims = get_jwt_claims()
-            teams_id = user_claims["teams_id"]
-            user_services.update_user_email_verification(new_user.user_id)
-            db.session.execute("SET search_path TO public, 'cs_" + str(teams_id) + "'")
-            user_services.create_user_role_mapping(new_user.user_id, role_id, teams_id)
-            user_services.create_user_teams_mapping(new_user.user_id, teams_id)
-            return {"user_id": str(new_user.user_id)}, 200
-        except custom_exceptions.DatabaseQueryException as err:
-            _logger.exception(err)
-            return {"message": "Error querying the DB"}, 400
-        except Exception as err:
-            _logger.exception(err)
-            return {"message": str(err)}, 400
+
+        new_user = user_services.create_user(
+            username, password, first_name, last_name
+        )
+        user_claims = get_jwt_claims()
+        teams_id = user_claims["teams_id"]
+        user_services.update_user_email_verification(new_user.user_id)
+        db.session.execute("SET search_path TO public, 'cs_" + str(teams_id) + "'")
+        user_services.create_user_role_mapping(new_user.user_id, role_id, teams_id)
+        user_services.create_user_teams_mapping(new_user.user_id, teams_id)
+        return {"user_id": str(new_user.user_id)}, 200
 
     @custom_jwt_required()
     @user_ns2.expect(user_update_model)
@@ -854,35 +826,29 @@ class UserOperations(Resource):
         except Exception as e:
             _logger.debug(f"Request validation failed: {e}")
             return {"message": "Bad request. Invalid input"}, 400
-        try:
-            claims = get_jwt_claims()
-            teams_id = claims["teams_id"]
-            user = user_services.check_user_exists(username=username)
-            if not user:
-                return {"message": "User {} does not exist".format(username)}, 400
-            is_admin = True
-            if not any(
-                role["role_name"] == RoleName.Administrator.value
-                for role in claims["role"]
-            ):
-                is_admin = False
-                if username != get_jwt_identity():
-                    return {"message": "User not authorized for this operation"}, 403
-            if is_admin:
-                user_details = user_services.update_user(
-                    username, first_name, last_name, role_id, password, teams_id
-                )
-            else:
-                user_details = user_services.update_user(
-                    username, first_name, last_name, "", password, teams_id
-                )
-            return user_details, 200
-        except custom_exceptions.DatabaseQueryException as err:
-            _logger.exception(err)
-            return {"message": "Error querying the DB"}, 400
-        except Exception as err:
-            _logger.exception(err)
-            return {"message": str(err)}, 400
+
+        claims = get_jwt_claims()
+        teams_id = claims["teams_id"]
+        user = user_services.check_user_exists(username=username)
+        if not user:
+            return {"message": "User {} does not exist".format(username)}, 400
+        is_admin = True
+        if not any(
+            role["role_name"] == RoleName.Administrator.value
+            for role in claims["role"]
+        ):
+            is_admin = False
+            if username != get_jwt_identity():
+                return {"message": "User not authorized for this operation"}, 403
+        if is_admin:
+            user_details = user_services.update_user(
+                username, first_name, last_name, role_id, password, teams_id
+            )
+        else:
+            user_details = user_services.update_user(
+                username, first_name, last_name, "", password, teams_id
+            )
+        return user_details, 200
 
     @custom_jwt_required()
     @user_ns2.expect(user_id_parser)
@@ -935,36 +901,28 @@ class UserOperations(Resource):
     @user_ns2.response(500, "Internal Server Error", internal_server_error_model)
     def get(self):
         """Used to retrieve list of users"""
-        try:
-            claims = get_jwt_claims()
-            teams_id = claims["teams_id"]
-            is_administrator = user_services.check_is_administrator_user(
-                claims.get("role")
-            )
-            result = []
-            if is_administrator:
-                users = user_services.get_user_list()
-                for each_user in users:
-                    roles = user_services.get_user_roles(
-                        each_user["username"], teams_id
-                    )
-                    is_administrator = user_services.check_is_administrator_user(roles)
-                    each_user["roles"] = (
-                        UserRoleEnums.Admin.value
-                        if is_administrator
-                        else UserRoleEnums.User.value
-                    )
-                    result.append(each_user)
-                return {"user_list": result}, 200
-            # client does not have permissions to get user list
-            return {"user_list": []}, 200
-
-        except custom_exceptions.DatabaseQueryException as err:
-            _logger.exception(err)
-            return {"message": "Error querying the DB"}, 400
-        except Exception as err:
-            _logger.exception(err)
-            return {"message": str(err)}, 400
+        claims = get_jwt_claims()
+        teams_id = claims["teams_id"]
+        is_administrator = user_services.check_is_administrator_user(
+            claims.get("role")
+        )
+        result = []
+        if is_administrator:
+            users = user_services.get_user_list()
+            for each_user in users:
+                roles = user_services.get_user_roles(
+                    each_user["username"], teams_id
+                )
+                is_administrator = user_services.check_is_administrator_user(roles)
+                each_user["roles"] = (
+                    UserRoleEnums.Admin.value
+                    if is_administrator
+                    else UserRoleEnums.User.value
+                )
+                result.append(each_user)
+            return {"user_list": result}, 200
+        # client does not have permissions to get user list
+        return {"user_list": []}, 200
 
 
 class UserSwitchTeams(Resource):

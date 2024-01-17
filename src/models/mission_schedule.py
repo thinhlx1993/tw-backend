@@ -61,11 +61,11 @@ class MissionSchedule(db.Model):
     )
 
     # Constructor initializing values
-    # def __init__(self, robot_id, mission_id, schedule_json, timezone):
-    #     self.robot_id = robot_id
-    #     self.mission_id = mission_id
-    #     self.schedule_json = schedule_json
-    #     self.timezone = timezone
+    def __init__(self, group_id, profile_id, mission_id, schedule_json):
+        self.group_id = group_id
+        self.profile_id = profile_id
+        self.mission_id = mission_id
+        self.schedule_json = schedule_json
 
     def repr_name(self):
         """Custom representation of the model."""

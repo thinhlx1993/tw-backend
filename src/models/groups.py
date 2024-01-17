@@ -24,6 +24,7 @@ class Groups(db.Model):
     created_at = db.Column(db.DateTime(), nullable=False, server_default=func.now())
     modified_at = db.Column(db.DateTime(), nullable=False, server_default=func.now())
     profiles = db.relationship("Profiles", backref="group", lazy=True)
+    missions = db.relationship("Mission", backref="group", lazy=True)
     # Constructor initializing values
 
     def repr_name(self):

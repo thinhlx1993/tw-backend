@@ -25,14 +25,8 @@ from sendgrid.helpers.mail import Mail
 from src import models
 from src import jwt
 from src import app, db
-from src.custom_exceptions import (
-    DatabaseQueryException,
-    UserUpdateException,
-    UserRoleMappingCreateException,
-    InvalidJWTToken,
-)
+
 from src.enums.user_type import UserRoleEnums
-from src.models import UserTeamsMapping
 from src.services import teams_services, migration_services
 from src.config import Config
 
@@ -258,43 +252,38 @@ def get_user_permissions(username):
     :return: Permissions for username as list containing list of permissions
     and descriptions
     """
-    try:
-        # SELECT user_role_mapping.role_id FROM user_role_mapping
-        # INNER JOIN user ON user_role_mapping.user_id == user.user_id
-        # WHERE user.username =: username
-        sub_sub_query = (
-            models.UserRoleMapping.query.join(
-                models.UserDetails,
-                models.UserDetails.user_id == models.UserRoleMapping.user_id,
-            )
-            .filter(func.lower(models.UserDetails.username) == func.lower(username))
-            .with_entities(models.UserRoleMapping.role_id)
-            .subquery()
+    # SELECT user_role_mapping.role_id FROM user_role_mapping
+    # INNER JOIN user ON user_role_mapping.user_id == user.user_id
+    # WHERE user.username =: username
+    sub_sub_query = (
+        models.UserRoleMapping.query.join(
+            models.UserDetails,
+            models.UserDetails.user_id == models.UserRoleMapping.user_id,
         )
+        .filter(func.lower(models.UserDetails.username) == func.lower(username))
+        .with_entities(models.UserRoleMapping.role_id)
+        .subquery()
+    )
 
-        # SELECT role_permission_mapping.permission_id FROM role_permission_mapping
-        # WHERE role_permission_mapping.role_id IN sub_sub_query
-        sub_query = (
-            models.RolePermissionMapping.query.filter(
-                models.RolePermissionMapping.role_id.in_(sub_sub_query)
-            )
-            .with_entities(models.RolePermissionMapping.permission_id)
-            .subquery()
+    # SELECT role_permission_mapping.permission_id FROM role_permission_mapping
+    # WHERE role_permission_mapping.role_id IN sub_sub_query
+    sub_query = (
+        models.RolePermissionMapping.query.filter(
+            models.RolePermissionMapping.role_id.in_(sub_sub_query)
         )
+        .with_entities(models.RolePermissionMapping.permission_id)
+        .subquery()
+    )
 
-        # SELECT user_permissions.permission_name, user_permissions.description FROM
-        # user_permissions WHERE user_permissions.permission_id IN sub_query
-        result = (
-            models.UserPermissions.query.filter(
-                models.UserPermissions.permission_id.in_(sub_query)
-            )
-            .with_entities(models.UserPermissions.permission_name)
-            .all()
+    # SELECT user_permissions.permission_name, user_permissions.description FROM
+    # user_permissions WHERE user_permissions.permission_id IN sub_query
+    result = (
+        models.UserPermissions.query.filter(
+            models.UserPermissions.permission_id.in_(sub_query)
         )
-        db.session.flush()
-    except Exception as ex:
-        db.session.rollback()
-        raise DatabaseQueryException
+        .with_entities(models.UserPermissions.permission_name)
+        .all()
+    )
 
     # Changing query result to a dict of lists containing permission_name
     # and permission description
@@ -376,14 +365,9 @@ def create_user(username, password, first_name, last_name):
     # except Exception as e:
     #     capture_exception(e)
     #     raise
-    try:
-        user = models.User(username, password, first_name, last_name)
-        db.session.add(user)
-        db.session.flush()
-    except Exception as e:
-        db.session.rollback()
-        capture_exception(e)
-        raise DatabaseQueryException
+    user = models.User(username, password, first_name, last_name)
+    db.session.add(user)
+    db.session.flush()
 
     return user
 
@@ -451,35 +435,28 @@ def update_user(
     :param str password: password of the user
     :return User user: Updated user object
     """
-    try:
-        user = models.User.query.filter_by(username=username).first()
-        if first_name:
-            user.first_name = first_name
-        if last_name:
-            user.last_name = last_name
-        if role_id:
-            user.role_id = role_id
-        if password:
-            user.password = password
+    user = models.User.query.filter_by(username=username).first()
+    if first_name:
+        user.first_name = first_name
+    if last_name:
+        user.last_name = last_name
+    if role_id:
+        user.role_id = role_id
+    if password:
+        user.password = password
 
-        db.session.flush()
-        # Only map the new role, if it doesn't exist.
-        if role_id:
-            if not user.user_roles:
-                create_user_role_mapping(user.user_id, role_id, teams_id)
-            else:
-                user.user_roles.clear()
-                create_user_role_mapping(user.user_id, role_id, teams_id)
-                db.session.flush()
+    db.session.flush()
+    # Only map the new role, if it doesn't exist.
+    if role_id:
+        if not user.user_roles:
+            create_user_role_mapping(user.user_id, role_id, teams_id)
+        else:
+            user.user_roles.clear()
+            create_user_role_mapping(user.user_id, role_id, teams_id)
+            db.session.flush()
 
-        db.session.flush()
-        return user.repr_name()
-    # This exception comes from create_user_role_mapping()
-    except DatabaseQueryException:
-        raise UserRoleMappingCreateException
-    except Exception as e:
-        db.session.rollback()
-        raise UserUpdateException
+    db.session.flush()
+    return user.repr_name()
 
 
 def delete_user(user_id, new_teams_owner):
@@ -570,19 +547,14 @@ def get_user_list():
     Gets a list of users
     :return list: List of users
     """
-    try:
-        # SELECT user_id, username, email, first_name, last_name,
-        # (first_name||' '||last_name) profile_name, default_page,
-        # is_disabled, notifications_enabled order_by username
-        result = (
-            db.session.query(models.User)
-            .join(models.UserDetails, models.UserDetails.user_id == models.User.user_id)
-            .all()
-        )
-    except Exception as ex:
-        _logger.exception(ex)
-        raise DatabaseQueryException
-
+    # SELECT user_id, username, email, first_name, last_name,
+    # (first_name||' '||last_name) profile_name, default_page,
+    # is_disabled, notifications_enabled order_by username
+    result = (
+        db.session.query(models.User)
+        .join(models.UserDetails, models.UserDetails.user_id == models.User.user_id)
+        .all()
+    )
     users = []
     for row in result:
         users.append(row.repr_name())
@@ -595,21 +567,16 @@ def get_user_role_list():
     :param: role_name list [string,], contains list of user role
     :return list of UserRole roles: List of roles
     """
-    try:
-        # SELECT role_name, role_id, role_description FROM user_role
-        result = (
-            models.UserRole.query.with_entities(
-                models.UserRole.role_name,
-                models.UserRole.role_id,
-                models.UserRole.role_description,
-            )
-            .order_by(models.UserRole.role_name)
-            .all()
+    # SELECT role_name, role_id, role_description FROM user_role
+    result = (
+        models.UserRole.query.with_entities(
+            models.UserRole.role_name,
+            models.UserRole.role_id,
+            models.UserRole.role_description,
         )
-        db.session.flush()
-    except:
-        db.session.rollback()
-        raise DatabaseQueryException
+        .order_by(models.UserRole.role_name)
+        .all()
+    )
 
     if not result:
         roles = None
@@ -649,25 +616,6 @@ def reset_password(username, password):
         raise
 
     return True
-
-
-def list_user_permissions(filters=None):
-    """
-    List all user permissions
-    :param filters : filters to be applied for the query
-
-    :return status: status of the query
-    :return data or error : returns list of user permissions or error
-    """
-    query = models.UserPermissions.query
-    status, query = update_query(query, models.UserPermissions, filters)
-    if not status:
-        return status, query
-    query = query.all()
-    data = []
-    if query:
-        data = [i.repr_name() for i in query]
-    return True, data
 
 
 def create_user_role(role_name, role_description, permission_ids, is_deletable=None):
@@ -1312,18 +1260,12 @@ def deserialize_token(token):
     :param token: Token
     :return token data
     """
-    try:
-        if token:
-            salt = app.config["TOKEN_SALT"] if "TOKEN_SALT" in app.config else None
-            token_serializer = Serializer(app.config["JWT_SECRET_KEY"])
-            token_data = token_serializer.loads(token, salt)
-            return token_data
-        else:
-            return None
-    except BadData as ex:
-        raise InvalidJWTToken(f"Invalid token: {ex}")
-    except Exception as e:
-        capture_exception(e)
+    if token:
+        salt = app.config["TOKEN_SALT"] if "TOKEN_SALT" in app.config else None
+        token_serializer = Serializer(app.config["JWT_SECRET_KEY"])
+        token_data = token_serializer.loads(token, salt)
+        return token_data
+    else:
         return None
 
 
@@ -1716,19 +1658,15 @@ def get_notifications_enabled_user_mails():
     :return user_mails: list of user emails in the org with
                         notifications enabled
     """
-    try:
-        result = (
-            models.UserDetails.query.filter(
-                models.UserDetails.notifications_enabled == True,
-                models.UserDetails.is_disabled == False,
-            )
-            .with_entities(models.UserDetails.email)
-            .all()
+    result = (
+        models.UserDetails.query.filter(
+            models.UserDetails.notifications_enabled == True,
+            models.UserDetails.is_disabled == False,
         )
-        db.session.flush()
-    except:
-        db.session.rollback()
-        raise DatabaseQueryException
+        .with_entities(models.UserDetails.email)
+        .all()
+    )
+    db.session.flush()
 
     if not result:
         user_mails = []
