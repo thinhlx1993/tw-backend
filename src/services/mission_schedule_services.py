@@ -11,7 +11,7 @@ from sqlalchemy import or_, and_
 
 from src import db
 from src.custom_exceptions import NotFoundException
-from src.models import MissionSchedule, Mission, Robot
+from src.models import MissionSchedule, Mission
 from src.models.mission_instance import MissionInstance
 from src.services import mission_instance_services, mission_services
 from src.utilities.model_helper import copy_entity_row

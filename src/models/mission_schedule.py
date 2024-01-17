@@ -15,7 +15,7 @@ class MissionSchedule(db.Model):
 
     Attributes:
     'schedule_id': UUID for the schedule(UUID) Primary Key
-    'robot_id': UUID for the robot owning the mission(UUID) Foreign Key
+    'group_id': UUID for the groups owning the mission(UUID) Foreign Key
     'mission_id': UUID for the mission(UUID) Foreign Key
     'schedule_json': JSON for the mission(JSONB)
     'timezone': Timezone for schedule(TEXT)
@@ -24,18 +24,17 @@ class MissionSchedule(db.Model):
 
     __tablename__ = "mission_schedule"
 
-    # Query class to handle soft deletion
-    query_class = QueryWithSoftDelete
-
     schedule_id = db.Column(
         db.String(128), server_default=text("uuid_generate_v4()"),
         primary_key=True,
         comment='Unique identifier for schedule(Primary Key)')
-    robot_id = db.Column(
-        db.String(128), ForeignKey('robot.robot_id'),
-        comment='Unique identifier for robot '
-                'owning the schedule(Foreign Key)',
+    group_id = db.Column(
+        db.String(128), ForeignKey('groups.group_id'),
         nullable=False)
+    profile_id = db.Column(
+        db.String(128),
+        ForeignKey('profiles.profile_id'),
+        nullable=True)
     mission_id = db.Column(
         db.String(128), ForeignKey('mission.mission_id'),
         comment='Unique identifier for mission(Foreign Key)',
@@ -50,7 +49,6 @@ class MissionSchedule(db.Model):
         server_default=func.now(),  # give some value for existing rwos, it will help us in querying the db
         comment='Schedule will be available for fetch or search after this date',
         nullable=False)
-    mission_instances = relationship('MissionInstance')
     end_timestamp = db.Column(
         db.DateTime(),
         nullable=True,
@@ -63,33 +61,30 @@ class MissionSchedule(db.Model):
     )
 
     # Constructor initializing values
-    def __init__(self, robot_id, mission_id, schedule_json, timezone):
-        self.robot_id = robot_id
-        self.mission_id = mission_id
-        self.schedule_json = schedule_json
-        self.timezone = timezone
+    # def __init__(self, robot_id, mission_id, schedule_json, timezone):
+    #     self.robot_id = robot_id
+    #     self.mission_id = mission_id
+    #     self.schedule_json = schedule_json
+    #     self.timezone = timezone
 
     def repr_name(self):
         """Custom representation of the model."""
         return {
-            "schedule_id": str(self.schedule_id),
-            "robot_id": str(self.robot_id),
-            "mission_id": str(self.mission_id),
+            "schedule_id": self.schedule_id,
+            "group_id": self.group_id,
+            "profile_id": self.profile_id,
+            "mission_id": self.mission_id,
             "schedule_json": self.schedule_json,
-            "timezone": self.timezone,
-            "last_updated_at": str(self.last_updated_at.isoformat()),
-            "start_timestamp": str(self.start_timestamp.isoformat()) if self.start_timestamp else ""
+            "start_timestamp": self.start_timestamp.strftime("%d-%m-%Y %H:%M") if self.start_timestamp else None
         }
 
     def repr_schedule_with_mission(self):
         """Custom representation of the model with mission name."""
         return {
-            "schedule_id": str(self.schedule_id),
-            "robot_id": str(self.robot_id),
-            "mission_id": str(self.mission_id),
+            "schedule_id": self.schedule_id,
+            "group_id": self.group_id,
+            "profile_id": self.profile_id,
+            "mission_id": self.mission_id,
             "schedule_json": self.schedule_json,
-            "timezone": self.timezone,
-            "last_updated_at": str(self.last_updated_at.isoformat()),
-            "mission_name": str(self.mission.mission_name),
-            "start_timestamp": str(self.start_timestamp.isoformat()) if self.start_timestamp else ""
+            "start_timestamp": self.start_timestamp.strftime("%d-%m-%Y %H:%M") if self.start_timestamp else None
         }

@@ -25,12 +25,10 @@ class Mission(db.Model):
     )
     mission_name = db.Column(db.String(256), comment="Name of the mission")
     group_id = db.Column(db.String(128), ForeignKey("groups.group_id"), nullable=True)
+    user_id = db.Column(db.String(128), nullable=False)
     mission_json = db.Column(JSONB, comment="JSON for mission")
     mission_schedule = relationship(
         "MissionSchedule", cascade="all,delete", backref="mission"
-    )
-    mission_instances = relationship(
-        "MissionInstance", cascade="all,delete", backref="mission"
     )
     deleted_at = db.Column(
         db.DateTime(),
@@ -41,8 +39,9 @@ class Mission(db.Model):
 
     def repr_name(self):
         return {
-            "mission_id": str(self.mission_id),
-            "mission_name": str(self.mission_name),
-            "robot_id": str(self.robot_id),
+            "mission_id": self.mission_id,
+            "mission_name": self.mission_name,
+            "user_id": self.user_id,
+            "group_id": self.group_id,
             "mission_json": self.mission_json,
         }

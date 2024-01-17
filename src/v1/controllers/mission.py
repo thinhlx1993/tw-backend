@@ -10,8 +10,10 @@ mission_create_model = missions_ns.model(
     "MissionCreateModel",
     {
         "mission_name": fields.String(required=True, example="Mission Name"),
-        "group_id": fields.String(example="group_id"),
-        "tasks": fields.List(fields.String(example="task_id"))
+        "group_id": fields.String(example="group_id", required=True),
+        "tasks": fields.List(fields.String(example="task_id"), required=True),
+        "user_id": fields.String(example="user_id", required=True),
+        "mission_schedule": fields.String(example="", required=True)
     },
 )
 
