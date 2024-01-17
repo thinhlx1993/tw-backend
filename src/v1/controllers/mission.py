@@ -19,6 +19,13 @@ mission_create_model = missions_ns.model(
     },
 )
 
+mission_update_model = missions_ns.model(
+    "MissionUpdateModel",
+    {
+        "force_start": fields.Boolean(required=True, example=True)
+    }
+)
+
 # Mission response model
 mission_response_model = missions_ns.model(
     "MissionResponseModel",
@@ -60,7 +67,7 @@ class MissionIdController(Resource):
     """Controller for specific mission functionalities."""
 
     @missions_ns.expect()
-    @missions_ns.response(200, "Mission Updated", mission_response_model)
+    @missions_ns.response(200, "Mission Started", mission_response_model)
     @missions_ns.response(400, "Bad Request")
     @missions_ns.response(404, "Not Found")
     @missions_ns.response(500, "Internal Server Error")
@@ -70,6 +77,18 @@ class MissionIdController(Resource):
         # data = missions_ns.payload
         # mission = mission_services.update_mission(mission_id, data)
         return {"message": "Mission started successfully", "mission": mission_id}, 200
+
+    @missions_ns.expect(mission_update_model)
+    @missions_ns.response(200, "Mission Updated", mission_response_model)
+    @missions_ns.response(400, "Bad Request")
+    @missions_ns.response(404, "Not Found")
+    @missions_ns.response(500, "Internal Server Error")
+    @custom_jwt_required()
+    def put(self, mission_id):
+        """Start a specific mission."""
+        data = missions_ns.payload
+        mission = mission_services.update_mission(mission_id, data)
+        return {"message": "Mission is updated", "mission": mission.repr_name()}, 200
 
     @missions_ns.response(200, "Mission Deleted", mission_response_model)
     @missions_ns.response(404, "Not Found")

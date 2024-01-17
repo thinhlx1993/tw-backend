@@ -12,6 +12,8 @@ _logger = logging.getLogger(__name__)
 
 def should_start_job(cron_expression):
     try:
+        if not cron_expression:
+            return False
         # Get the current local time
         now = datetime.datetime.utcnow()
 
