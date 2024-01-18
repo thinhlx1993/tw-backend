@@ -15,3 +15,4 @@ from src.models.mission import Mission
 from src.models.mission_schedule import MissionSchedule
 from src.models.tasks import Task
 from src.models.mission_tasks import MissionTask
+from src.models.settings import Settings

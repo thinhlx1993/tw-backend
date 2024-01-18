@@ -25,7 +25,8 @@ def create_profile(data):
         if hasattr(new_profile, key):
             if isinstance(val, str):
                 val = val.strip()
-            new_profile.__setattr__(key, val)
+            if val:
+                new_profile.__setattr__(key, val)
 
     db.session.add(new_profile)
     db.session.flush()

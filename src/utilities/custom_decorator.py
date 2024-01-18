@@ -23,23 +23,18 @@ def custom_jwt_required():
     def wrapper(fn):
         @wraps(fn)
         def decorator(*args, **kwargs):
-            try:
-                verify_jwt_in_request()
-                user = get_jwt_claims()
-                if user['authorized']:
-                    db.session.execute(
-                        "SET search_path TO public, 'cs_" +
-                        str(user['teams_id']) + "'")
-                    return fn(*args, **kwargs)
-                else:
-                    return {"message": "Not authorized"}, 401
-            except ExpiredSignatureError:
-                   return {"message":"Authorization token expired"},401
-            except (NoAuthorizationError, InvalidHeaderError) as ex:
+            verify_jwt_in_request()
+            user = get_jwt_claims()
+            if user["authorized"]:
+                db.session.execute(
+                    "SET search_path TO public, 'cs_" + str(user["teams_id"]) + "'"
+                )
+                return fn(*args, **kwargs)
+            else:
                 return {"message": "Not authorized"}, 401
-            except jwt.exceptions.DecodeError:
-                return {"message": "Not Found JWT Header"}, 500
+
         return decorator
+
     return wrapper
 
 
@@ -51,23 +46,26 @@ def any_jwt_required():
                 verify_jwt_in_request()
                 user = get_jwt_claims()
                 db.session.execute(
-                    "SET search_path TO public, 'cs_" +
-                    str(user['teams_id']) + "'")
+                    "SET search_path TO public, 'cs_" + str(user["teams_id"]) + "'"
+                )
                 return fn(*args, **kwargs)
             except:
                 return {"message": "Not authorized"}, 401
+
         return decorator
+
     return wrapper
 
 
 def requires_apikey(f):
-    """ Decorator function that require an API Key """
+    """Decorator function that require an API Key"""
+
     @wraps(f)
     def decorated(*args, **kwargs):
-        """ Decorator function that does the checking """
+        """Decorator function that does the checking"""
         try:
-            api_key = os.environ.get('API_KEY')
-            if f'Bearer {api_key}' == request.headers.get('Authorization'):
+            api_key = os.environ.get("API_KEY")
+            if f"Bearer {api_key}" == request.headers.get("Authorization"):
                 return f(*args, **kwargs)
         except ValidationError as ex:
             return {"message": "Validation error", "data": str(ex)}, 400
@@ -75,4 +73,5 @@ def requires_apikey(f):
             _logger.exception(ex)
 
         return {"message": "Not authorized"}, 401
+
     return decorated
