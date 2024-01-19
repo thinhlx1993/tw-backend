@@ -31,8 +31,10 @@ class Profiles(db.Model):
     status = db.Column(db.String(128), nullable=True)
     created_at = db.Column(db.DateTime(), nullable=False, server_default=func.now())
     modified_at = db.Column(db.DateTime(), nullable=False, server_default=func.now())
-    # Constructor initializing values
-    # def __init__(self):
+    hma_profile_id = db.Column(db.String(128), nullable=True)
+    emails = db.Column(db.String(128), nullable=True)
+    pass_emails = db.Column(db.String(128), nullable=True)
+    phone_number = db.Column(db.String(128), nullable=True)
 
     def repr_name(self):
         return {
@@ -44,6 +46,10 @@ class Profiles(db.Model):
             "proxy": self.proxy,
             "gpt_key": self.gpt_key,
             "cookies": self.cookies,
+            "hma_profile_id": self.hma_profile_id,
+            "emails": self.emails,
+            "pass_emails": self.pass_emails,
+            "phone_number": self.phone_number,
             "notes": self.notes,
             "created_at": self.created_at.strftime("%d-%m-%Y %H:%M"),
             "modified_at": self.modified_at.strftime("%d-%m-%Y %H:%M"),

@@ -9,6 +9,7 @@ from src.utilities.custom_decorator import custom_jwt_required
 from src.v1.controllers.teams import org_fetch_parser
 from src.version_handler import api_version_1_web
 from src.parsers import profile_page_parser
+
 # Create module log
 _logger = logging.getLogger(__name__)
 
@@ -45,7 +46,7 @@ profile_update_model = profiles_ns2.model(
         "cookies": fields.String(example="new_cookies"),
         "notes": fields.String(example="new_notes"),
         "status": fields.String(example="new_status"),
-        "data": fields.String(example="Profile metadata")
+        "data": fields.String(example="Profile metadata"),
     },
 )
 
@@ -104,7 +105,8 @@ class ProfilesController(Resource):
 
         """Used to retrieve list of profiles"""
         profiles = profiles_services.get_all_profiles(
-            page, per_page, sort_by, sort_order, search, group_id)
+            page, per_page, sort_by, sort_order, search, group_id
+        )
 
         return profiles, 200
 
@@ -122,10 +124,13 @@ class ProfilesController(Resource):
         """Used to create teams"""
         try:
             data = profiles_ns2.payload
+            claims = get_jwt_claims()
+            device_id = claims.get("device_id")
+            user_id = claims.get("user_id")
         except Exception as e:
             _logger.debug(f"Data not valid: {e}")
             return {"message": "Data not valid"}, 400
-        profile = profiles_services.create_profile(data)
+        profile = profiles_services.create_profile(data, device_id, user_id)
         return {"profile_id": profile.profile_id}, 200
 
 

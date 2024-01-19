@@ -116,6 +116,7 @@ user_password_model = user_ns2.model(
     {
         "username": fields.String(example="thinhle.ict", required=True),
         "password": fields.String(example="Admin@1234", required=True),
+        "device_id": fields.String(example="UUID Device ID", required=False),
     },
 )
 user_register_model = user_ns2.model("user_register_model", register_user_model)
@@ -568,6 +569,7 @@ class UserLogin(Resource):
         request_data = user_ns2.payload
         input_username = request_data["username"]
         input_password = request_data["password"]
+        input_device_id = request_data.get("device_id", "")
 
         user_details = user_services.check_user_exists(username=input_username)
         if not user_details:
@@ -607,11 +609,9 @@ class UserLogin(Resource):
                 if not org_id:
                     return err_data, err_code
             else:
-                set_user_default_teams(
-                    user_details.user_id, org_list[0]["teams_id"]
-                )
+                set_user_default_teams(user_details.user_id, org_list[0]["teams_id"])
 
-        return user_services.get_user_auth_tokens(user_details), 200
+        return user_services.get_user_auth_tokens(user_details, input_device_id), 200
 
 
 class UserRefresh(Resource):
@@ -793,9 +793,7 @@ class UserOperations(Resource):
         if password == "":
             return {"message": "Password cannot be empty"}, 401
 
-        new_user = user_services.create_user(
-            username, password, first_name, last_name
-        )
+        new_user = user_services.create_user(username, password, first_name, last_name)
         user_claims = get_jwt_claims()
         teams_id = user_claims["teams_id"]
         user_services.update_user_email_verification(new_user.user_id)
@@ -834,8 +832,7 @@ class UserOperations(Resource):
             return {"message": "User {} does not exist".format(username)}, 400
         is_admin = True
         if not any(
-            role["role_name"] == RoleName.Administrator.value
-            for role in claims["role"]
+            role["role_name"] == RoleName.Administrator.value for role in claims["role"]
         ):
             is_admin = False
             if username != get_jwt_identity():
@@ -903,16 +900,12 @@ class UserOperations(Resource):
         """Used to retrieve list of users"""
         claims = get_jwt_claims()
         teams_id = claims["teams_id"]
-        is_administrator = user_services.check_is_administrator_user(
-            claims.get("role")
-        )
+        is_administrator = user_services.check_is_administrator_user(claims.get("role"))
         result = []
         if is_administrator:
             users = user_services.get_user_list()
             for each_user in users:
-                roles = user_services.get_user_roles(
-                    each_user["username"], teams_id
-                )
+                roles = user_services.get_user_roles(each_user["username"], teams_id)
                 is_administrator = user_services.check_is_administrator_user(roles)
                 each_user["roles"] = (
                     UserRoleEnums.Admin.value

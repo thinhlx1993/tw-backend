@@ -14,12 +14,14 @@ from src.models.groups import Groups
 from src.models.teams import Teams
 from src.models.user_teams_mapping import UserTeamsMapping
 from src.services import user_services, migration_services
+from src.services import hma_services
 
 # Create module log
 _logger = logging.getLogger(__name__)
+hma_service = hma_services.HMAService()
 
 
-def create_profile(data):
+def create_profile(data, device_id, user_id):
     new_profile = Profiles()
     for key, val in data.items():
         if hasattr(new_profile, key):
@@ -27,7 +29,9 @@ def create_profile(data):
                 val = val.strip()
             if val:
                 new_profile.__setattr__(key, val)
-
+    username = data.get('username', "").strip()
+    hma_profile_id = hma_service.create_hma_profile(username, device_id, user_id)
+    new_profile.hma_profile_id = hma_profile_id
     db.session.add(new_profile)
     db.session.flush()
     return new_profile
@@ -41,7 +45,9 @@ def get_profile_by_username(username):
     return Profiles.query.filter_by(username=username).first()
 
 
-def get_all_profiles(page=0, per_page=20, sort_by="created_at", sort_order="asc", search="", group_id=""):
+def get_all_profiles(
+        page=0, per_page=20, sort_by="created_at", sort_order="asc", search="", group_id=""
+):
     column = getattr(Teams, sort_by, None)
     if not column:
         return False, {"Message": "Invalid sort_by Key provided"}
@@ -52,7 +58,7 @@ def get_all_profiles(page=0, per_page=20, sort_by="created_at", sort_order="asc"
         if sorting_order:
             query = query.order_by(text(sorting_order))
         if search:
-            query = query.filter(Profiles.username.ilike(f'%{search}%'))
+            query = query.filter(Profiles.username.ilike(f"%{search}%"))
         if group_id and group_id != "All":
             query = query.filter(Profiles.group_id == group_id)
         # Apply pagination
@@ -68,7 +74,7 @@ def get_all_profiles(page=0, per_page=20, sort_by="created_at", sort_order="asc"
         return {
             "profiles": formatted_result,
             "result_count": count,
-            "max_pages": math.ceil(count/per_page)
+            "max_pages": math.ceil(count / per_page),
         }
     except Exception as err:
         _logger.exception(err)

@@ -34,6 +34,23 @@ settings_response_model = settings_ns.model(
 class SettingsController(Resource):
     """Controller for settings functionalities."""
 
+    @settings_ns.expect()
+    @settings_ns.response(200, "OK", settings_response_model)
+    @settings_ns.response(500, "Internal Server Error")
+    @custom_jwt_required()
+    def get(self):
+        """Retrieve a list of settings."""
+        claims = get_jwt_claims()
+        user_id = claims["user_id"]
+        device_id = claims["device_id"]
+        settings_records = setting_services.get_settings_by_user_device(
+            user_id, device_id
+        )
+        return {
+            "message": "Settings fetched successfully",
+            "settings": settings_records,
+        }, 200
+
     @settings_ns.expect(settings_model)
     @settings_ns.response(201, "Settings Updated/Created", settings_response_model)
     @settings_ns.response(400, "Bad Request")
@@ -44,48 +61,29 @@ class SettingsController(Resource):
         data = settings_ns.payload
         claims = get_jwt_claims()
         user_id = claims["user_id"]
+        device_id = claims["device_id"]
         settings_record = setting_services.create_or_update_settings(
-            user_id, data["device_id"], data["settings"]
+            user_id, device_id, data["settings"]
         )
         return {
             "message": "Settings updated/created successfully",
             "settings": settings_record,
         }, 201
 
-
-class SettingsIdController(Resource):
-    """Controller for specific settings functionalities."""
-
     @settings_ns.response(200, "Settings Deleted", settings_response_model)
     @settings_ns.response(404, "Not Found")
     @settings_ns.response(500, "Internal Server Error")
     @custom_jwt_required()
-    def delete(self, device_id):
+    def delete(self):
         """Delete specific settings."""
         claims = get_jwt_claims()
         user_id = claims["user_id"]
+        device_id = claims["device_id"]
         result = setting_services.delete_settings(user_id, device_id)
         if result:
             return {"message": "Settings deleted successfully"}, 200
         return {"message": "Settings not found"}, 404
 
-    @settings_ns.expect()
-    @settings_ns.response(200, "OK", settings_response_model)
-    @settings_ns.response(500, "Internal Server Error")
-    @custom_jwt_required()
-    def get(self, device_id):
-        """Retrieve a list of settings."""
-        claims = get_jwt_claims()
-        user_id = claims["user_id"]
-        settings_records = setting_services.get_settings_by_user_device(
-            user_id, device_id
-        )
-        return {
-            "message": "Settings fetched successfully",
-            "settings": settings_records,
-        }, 200
-
 
 # Add resources to namespace
 settings_ns.add_resource(SettingsController, "/")
-settings_ns.add_resource(SettingsIdController, "/<string:device_id>")

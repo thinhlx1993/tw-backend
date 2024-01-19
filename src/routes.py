@@ -25,7 +25,7 @@ def log_request_info():
                 "method": request.method,
                 "scheme": request.scheme,
                 "full_path": request.full_path,
-                "data": request.get_data()
+                "data": request.get_data(),
             }
         }
     )
@@ -95,6 +95,7 @@ def add_claims_to_access_token(payload):
     if payload["type"] == "access":
         return {
             "user_id": payload["user_id"],
+            "device_id": payload["device_id"],
             "user": payload["user"],
             "role": payload["role"],
             "permissions": payload["permissions"],

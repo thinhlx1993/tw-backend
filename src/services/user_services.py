@@ -1722,7 +1722,7 @@ def send_va_alert_email(
         raise
 
 
-def get_user_auth_tokens(user):
+def get_user_auth_tokens(user, input_device_id):
     """
     Common function to  set claims and fetch auth tokens
     :user the user object fetched from db
@@ -1754,27 +1754,25 @@ def get_user_auth_tokens(user):
         "permissions": permissions,
         "default_page": user_details.get("default_page", ""),
         "profile_name": profile_name,
-        "company_id": user_details.get("company_id", ""),
         "teams_id": str(teams_id),
         "teams_code": str(teams_code).lower(),
         "authorized": not is_mfa_enabled,
         "refresh_jti": None,
     }
-    if not is_mfa_enabled:
-        refresh_token = create_refresh_token({**user_payload, "type": "refresh"})
-        refresh_jti = get_jti(refresh_token)
-        token = {
-            "access_token": create_access_token(
-                {**user_payload, "refresh_jti": refresh_jti, "type": "access"}
-            ),
-            "refresh_token": refresh_token,
-        }
-        return token
-    else:
-        token = {
-            "access_token": create_access_token({**user_payload, "type": "access"})
-        }
-        return token
+    refresh_token = create_refresh_token({**user_payload, "type": "refresh"})
+    refresh_jti = get_jti(refresh_token)
+    token = {
+        "access_token": create_access_token(
+            identity={
+                **user_payload,
+                "device_id": input_device_id,
+                "refresh_jti": refresh_jti,
+                "type": "access",
+            }
+        ),
+        "refresh_token": refresh_token,
+    }
+    return token
 
 
 def validate_email(email):

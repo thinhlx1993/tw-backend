@@ -31,6 +31,17 @@ class Settings(db.Model):
         return f"<Settings(user_id={self.user_id}, device_id={self.device_id}, settings={self.settings})>"
 
     def repr_name(self):
+        """
+        browserPath: '',
+        browserType: 'HideMyAcc',
+        browserVersion: '',
+        hideMyAccAccount: '',
+        hideMyAccPassword: '',
+        chatGptKey: '',
+        defaultCaptchaResolve: '',
+        antiCaptchaKey: '',
+        textSolveKey: ''
+        """
         return {
             "user_id": self.user_id,
             "device_id": self.device_id,
