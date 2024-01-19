@@ -2,23 +2,17 @@
 import datetime
 import logging
 import math
-import re
 
 from sentry_sdk import capture_exception
-from sqlalchemy import func, text, and_
-from sqlalchemy.exc import MultipleResultsFound
+from sqlalchemy import text
 
 from src import db
 from src.models.profiles import Profiles
-from src.models.groups import Groups
 from src.models.teams import Teams
-from src.models.user_teams_mapping import UserTeamsMapping
-from src.services import user_services, migration_services
 from src.services import hma_services
 
 # Create module log
 _logger = logging.getLogger(__name__)
-hma_service = hma_services.HMAService()
 
 
 def create_profile(data, device_id, user_id):
@@ -30,7 +24,9 @@ def create_profile(data, device_id, user_id):
             if val:
                 new_profile.__setattr__(key, val)
     username = data.get('username', "").strip()
-    hma_profile_id = hma_service.create_hma_profile(username, device_id, user_id)
+    hma_profile_id = hma_services.create_hma_profile(username, device_id, user_id)
+    if not hma_profile_id:
+        raise Exception("Can not create HMA profiles, check your settings or HMA account")
     new_profile.hma_profile_id = hma_profile_id
     db.session.add(new_profile)
     db.session.flush()
@@ -97,10 +93,11 @@ def update_profile(profile_id, data):
     return None
 
 
-def delete_profile(profile_id):
+def delete_profile(profile_id, user_id, device_id):
+    hma_services.delete_browser_profile(profile_id, user_id, device_id)
     profile = Profiles.query.get(profile_id)
     if profile:
         db.session.delete(profile)
-        db.session.commit()
+        db.session.flush()
         return True
     return False

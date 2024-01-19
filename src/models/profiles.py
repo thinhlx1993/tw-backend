@@ -28,6 +28,7 @@ class Profiles(db.Model):
     cookies = db.Column(db.String(128), nullable=True)
     notes = db.Column(db.Text(), nullable=True)
     profile_data = db.Column(db.JSON(), nullable=True)
+    browser_data = db.Column(db.Text(), nullable=True)
     status = db.Column(db.String(128), nullable=True)
     created_at = db.Column(db.DateTime(), nullable=False, server_default=func.now())
     modified_at = db.Column(db.DateTime(), nullable=False, server_default=func.now())

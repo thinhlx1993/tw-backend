@@ -52,7 +52,7 @@ def exceptions(e):
         request.full_path,
         tb,
     )
-    data = {"message": "Internal server error"}
+    data = {"message": str(e)}
     response = app.response_class(
         response=json.dumps(data), status=500, mimetype="application/json"
     )

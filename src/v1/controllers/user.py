@@ -116,7 +116,7 @@ user_password_model = user_ns2.model(
     {
         "username": fields.String(example="thinhle.ict", required=True),
         "password": fields.String(example="Admin@1234", required=True),
-        "device_id": fields.String(example="UUID Device ID", required=False),
+        "device_id": fields.String(example="ad26a5fd-b0ac-4a85-98ef-37c495c18012", required=False),
     },
 )
 user_register_model = user_ns2.model("user_register_model", register_user_model)

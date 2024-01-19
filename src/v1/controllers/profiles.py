@@ -3,10 +3,9 @@ import json
 import logging
 from flask_restx import fields, Resource
 from flask_jwt_extended import get_jwt_claims
-from src.services import profiles_services
-from src.services import migration_services
+from src.services import profiles_services, setting_services
+from src.services import hma_services
 from src.utilities.custom_decorator import custom_jwt_required
-from src.v1.controllers.teams import org_fetch_parser
 from src.version_handler import api_version_1_web
 from src.parsers import profile_page_parser
 
@@ -178,7 +177,10 @@ class ProfilesIdController(Resource):
     def delete(self, profile_id):
         """Delete a profile by ID"""
         try:
-            result = profiles_services.delete_profile(profile_id)
+            claims = get_jwt_claims()
+            device_id = claims.get("device_id")
+            user_id = claims.get("user_id")
+            result = profiles_services.delete_profile(profile_id, user_id, device_id)
             if result:
                 return {"message": "Profile deleted successfully"}, 200
             return {"message": "Profile not found"}, 404
@@ -187,5 +189,44 @@ class ProfilesIdController(Resource):
             return {"message": "Internal error"}, 500
 
 
+class ProfilesBrowserController(Resource):
+    @profiles_ns2.expect()
+    @profiles_ns2.response(
+        401,
+        "Authorization information is missing or invalid.",
+        unauthorized_response_model,
+    )
+    @profiles_ns2.response(500, "Internal Server Error", internal_server_error_model)
+    @custom_jwt_required()
+    def get(self, profile_id):
+        """Used to retrieve profile's data"""
+        profile = profiles_services.get_profile_by_id(profile_id)
+        if not profile:
+            return {"message": "profile not found"}, 400
+
+        claims = get_jwt_claims()
+        user_id = claims.get("user_id")
+        device_id = claims.get("device_id")
+        settings = setting_services.get_settings_by_user_device(user_id, device_id)
+        settings = settings["settings"]
+        browser_data = ""
+        if settings["browserType"] == "HideMyAcc":
+            hma_account = settings.get("hideMyAccAccount")
+            hma_password = settings.get("hideMyAccPassword")
+            hma_token = hma_services.get_hma_access_token(hma_account, hma_password)
+            tz_data = hma_services.get_tz_data(profile)
+            hma_result = hma_services.get_browser_data(
+                hma_token, profile.hma_profile_id, tz_data
+            )
+            browser_data = hma_result["result"]
+            profile.browser_data = browser_data
+
+        return_data = profile.repr_name()
+        return_data["browser_data"] = browser_data
+        return_data["settings"] = settings
+        return return_data, 200
+
+
 profiles_ns2.add_resource(ProfilesController, "/")
 profiles_ns2.add_resource(ProfilesIdController, "/<string:profile_id>")
+profiles_ns2.add_resource(ProfilesBrowserController, "/<string:profile_id>/browserdata")
