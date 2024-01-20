@@ -8,11 +8,20 @@ page_parser.add_argument(
     "per_page", type=int, default=50, help="per_page value to be added", location="args"
 )
 page_parser.add_argument(
-    "sort_by", type=str, help="Field to be sorted", location="args"
+    "sort_by",
+    type=str,
+    help="Field to be sorted",
+    location="args",
+    default="created_at",
 )
 page_parser.add_argument("search", type=str, help="Search username", location="args")
 page_parser.add_argument(
-    "sort_order", type=str, choices=("asc", "desc"), help="asc or desc", location="args"
+    "sort_order",
+    type=str,
+    choices=("asc", "desc"),
+    default="desc",
+    help="asc or desc",
+    location="args",
 )
 page_parser.add_argument(
     "filter", type=str, help="The filters to be applied to function", location="args"

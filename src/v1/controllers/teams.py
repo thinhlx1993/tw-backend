@@ -192,12 +192,12 @@ class Teams(Resource):
     def get(self):
         """Used to retrieve list of teams"""
         try:
-            user_identity = get_jwt_identity()
             user_claims = get_jwt_claims()
             user_id = user_claims['user_id']
         except Exception as e:
             _logger.debug(f"Not authorized: {e}")
             return {"Message", "Not authorized"}, 400
+
         try:
             args = org_fetch_parser.parse_args()
             # Pagination settings
@@ -246,6 +246,9 @@ class Teams(Resource):
         try:
             data = org_ns2.payload
             user_claims = get_jwt_claims()
+            user_identity = get_jwt_identity()
+            if user_identity != 'thinhle.ict':
+                return {"message": "You don't have access to this data"}, 403
             user_id = user_claims['user_id']
         except Exception as e:
             _logger.debug(f"Data not valid: {e}")
@@ -337,6 +340,11 @@ class Teams(Resource):
     def put(self):
         """Used to update a teams"""
         request_data = org_ns2.payload
+
+        user_identity = get_jwt_identity()
+        if user_identity != 'thinhle.ict':
+            return {"message": "You don't have access to this data"}, 403
+
         # Only mandatory field
         try:
             teams_id = request_data['teams_id']
@@ -400,6 +408,11 @@ class TeamsByIDOperations(Resource):
     def delete(self, teams_id):
         """Used to delete a teams"""
         # Optional fields
+
+        user_identity = get_jwt_identity()
+        if user_identity != 'thinhle.ict':
+            return {"message": "You don't have access to this data"}, 403
+
         exist_teams = teams_services.get_teams(teams_id)
         user_claims = get_jwt_claims()
         user_id = user_claims['user_id']

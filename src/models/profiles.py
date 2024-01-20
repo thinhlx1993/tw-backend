@@ -19,29 +19,33 @@ class Profiles(db.Model):
         db.String(128), server_default=text("uuid_generate_v4()"), primary_key=True
     )
     group_id = db.Column(db.String(128), ForeignKey("groups.group_id"), nullable=True)
-    username = db.Column(db.String(128), nullable=True, unique=True)
-    name = db.Column(db.String(128), nullable=True)
-    password = db.Column(db.String(128), nullable=True)
-    fa = db.Column(db.String(128), nullable=True)
-    proxy = db.Column(db.String(128), nullable=True)
-    gpt_key = db.Column(db.String(128), nullable=True)
-    cookies = db.Column(db.String(128), nullable=True)
-    notes = db.Column(db.Text(), nullable=True)
+    username = db.Column(db.String(128), nullable=True, unique=True, server_default="")
+    user_access = db.Column(
+        db.String(128), nullable=True, unique=False, server_default=""
+    )
+    name = db.Column(db.String(128), nullable=True, server_default="")
+    password = db.Column(db.String(128), nullable=True, server_default="")
+    fa = db.Column(db.String(128), nullable=True, server_default="")
+    proxy = db.Column(db.String(128), nullable=True, server_default="")
+    gpt_key = db.Column(db.String(128), nullable=True, server_default="")
+    cookies = db.Column(db.String(128), nullable=True, server_default="")
+    notes = db.Column(db.Text(), nullable=True, server_default="")
     profile_data = db.Column(db.JSON(), nullable=True)
-    browser_data = db.Column(db.Text(), nullable=True)
-    status = db.Column(db.String(128), nullable=True)
+    browser_data = db.Column(db.Text(), nullable=True, server_default="")
+    status = db.Column(db.String(128), nullable=True, server_default="")
     created_at = db.Column(db.DateTime(), nullable=False, server_default=func.now())
     modified_at = db.Column(db.DateTime(), nullable=False, server_default=func.now())
-    hma_profile_id = db.Column(db.String(128), nullable=True)
-    emails = db.Column(db.String(128), nullable=True)
-    pass_emails = db.Column(db.String(128), nullable=True)
-    phone_number = db.Column(db.String(128), nullable=True)
+    hma_profile_id = db.Column(db.String(128), nullable=True, server_default="")
+    emails = db.Column(db.String(128), nullable=True, server_default="")
+    pass_emails = db.Column(db.String(128), nullable=True, server_default="")
+    phone_number = db.Column(db.String(128), nullable=True, server_default="")
 
     def repr_name(self):
         return {
             "profile_id": self.profile_id,
             "group_id": self.group_id,
             "username": self.username,
+            "user_access": self.user_access,
             "password": self.password,
             "fa": self.fa,
             "proxy": self.proxy,
@@ -55,5 +59,4 @@ class Profiles(db.Model):
             "notes": self.notes,
             "created_at": self.created_at.strftime("%d-%m-%Y %H:%M"),
             "modified_at": self.modified_at.strftime("%d-%m-%Y %H:%M"),
-            "group": self.group.repr_name() if self.group else None,
         }

@@ -29,6 +29,7 @@ class Teams(db.Model):
     teams_name = db.Column(db.String(256), nullable=False)
     teams_code = db.Column(db.String(256))
     owner = db.Column(db.String(128))
+    teams_plan = db.Column(db.Integer, server_default='100')
     created_at = db.Column(db.DateTime, server_default=func.now())
     updated_at = db.Column(db.DateTime, server_default=func.now())
     is_disabled = db.Column(db.Boolean, server_default='false')

@@ -54,5 +54,4 @@ class Mission(db.Model):
             "group_id": self.group_id,
             "mission_schedule": [item.repr_name() for item in self.mission_schedule],
             "mission_tasks": [item.repr_name() for item in self.mission_tasks],
-            "group": self.group.repr_name() if self.group else None,
         }

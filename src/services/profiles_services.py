@@ -4,7 +4,7 @@ import logging
 import math
 
 from sentry_sdk import capture_exception
-from sqlalchemy import text
+from sqlalchemy import text, or_
 
 from src import db
 from src.models.profiles import Profiles
@@ -23,7 +23,7 @@ def create_profile(data, device_id, user_id):
                 val = val.strip()
             if val:
                 new_profile.__setattr__(key, val)
-    username = data.get('username', "").strip()
+    username = data.get("username", "").strip()
     hma_profile_id = hma_services.create_hma_profile(username, device_id, user_id)
     # if not hma_profile_id:
     #     raise Exception("Can not create HMA profiles, check your settings or HMA account")
@@ -41,8 +41,12 @@ def get_profile_by_username(username):
     return Profiles.query.filter_by(username=username).first()
 
 
+def get_total_profiles():
+    return Profiles.query.filter_by().count()
+
+
 def get_all_profiles(
-        page=0, per_page=20, sort_by="created_at", sort_order="asc", search="", group_id=""
+    page=0, per_page=20, sort_by="created_at", sort_order="desc", search="", group_id=""
 ):
     column = getattr(Teams, sort_by, None)
     if not column:
@@ -54,9 +58,12 @@ def get_all_profiles(
         if sorting_order:
             query = query.order_by(text(sorting_order))
         if search:
-            query = query.filter(Profiles.username.ilike(f"%{search}%"))
-        if group_id and group_id != "All":
-            query = query.filter(Profiles.group_id == group_id)
+            query = query.filter(
+                or_(
+                    Profiles.username.ilike(f"%{search}%"),
+                    Profiles.user_access.ilike(f"%{search}%"),
+                )
+            )
         # Apply pagination
         count = query.count()
 
@@ -77,6 +84,13 @@ def get_all_profiles(
         db.session.rollback()
         capture_exception(err)
         raise err
+
+
+def get_user_profiles(user_detail):
+    username = user_detail.username
+    profiles = Profiles.query.filter_by(user_access=username).all()
+    formatted_result = [profile.repr_name() for profile in profiles]
+    return {"profiles": formatted_result}
 
 
 def update_profile(profile_id, data):

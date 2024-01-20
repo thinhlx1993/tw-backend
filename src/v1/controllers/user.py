@@ -589,27 +589,28 @@ class UserLogin(Resource):
         user_teams = teams_services.get_user_org_list(user_details.user_id)
         if not default_teams:
             org_list = user_teams.get("org_list", [])
-            if len(org_list) == 0:
-                # Try to create user default org
-                if user_details.first_name and user_details.last_name:
-                    profile_name = (
-                        user_details.first_name + " " + user_details.last_name
-                    )
-                else:
-                    profile_name = "User"
-                (
-                    org_id,
-                    err_data,
-                    err_code,
-                ) = user_services.create_default_user_teams(
-                    current_app,
-                    user_details,
-                    profile_name,
-                )
-                if not org_id:
-                    return err_data, err_code
-            else:
+            if len(org_list) > 0:
                 set_user_default_teams(user_details.user_id, org_list[0]["teams_id"])
+            else:
+                return {'message': 'Vui lòng liên hệ admin để thêm bạn vào Teams'}, 400
+                # Try to create user default org
+                # if user_details.first_name and user_details.last_name:
+                #     profile_name = (
+                #         user_details.first_name + " " + user_details.last_name
+                #     )
+                # else:
+                #     profile_name = "User"
+                # (
+                #     org_id,
+                #     err_data,
+                #     err_code,
+                # ) = user_services.create_default_user_teams(
+                #     current_app,
+                #     user_details,
+                #     profile_name,
+                # )
+                # if not org_id:
+                #     return err_data, err_code
 
         return user_services.get_user_auth_tokens(user_details, input_device_id), 200
 
@@ -936,8 +937,10 @@ class UserSwitchTeams(Resource):
         try:
             request_data = user_ns2.payload
             teams_id = request_data["teams_id"]
+
             claims = get_jwt_claims()
             username = get_jwt_identity()
+            device_id = claims["device_id"]
             user_id = claims["user_id"]
         except Exception as e:
             _logger.debug(f"Request validation failed: {e}")
@@ -963,6 +966,7 @@ class UserSwitchTeams(Resource):
                     "user": username,
                     "user_id": user_id,
                     "role": claims.get("role"),
+                    "device_id": device_id,
                     "permissions": claims.get("permissions"),
                     "default_page": claims.get("default_page", ""),
                     "profile_name": claims.get("profile_name", ""),
@@ -992,6 +996,7 @@ class UserSwitchTeams(Resource):
                     "user": username,
                     "user_id": user_id,
                     "role": roles,
+                    "device_id": device_id,
                     "permissions": permissions,
                     "default_page": claims.get("default_page", ""),
                     "profile_name": claims.get("profile_name", ""),
@@ -1144,20 +1149,23 @@ class UserRegistration(Resource):
                 if "last_name" in request_data
                 else None
             )
-            org_name = request_data["teams_name"].strip()
-            profile_name = (
-                "User" if first_name and last_name else f"{first_name} {last_name}"
-            )
+            # org_name = request_data["teams_name"].strip()
+            # profile_name = (
+            #     "User" if first_name and last_name else f"{first_name} {last_name}"
+            # )
         except Exception as e:
             _logger.debug(f"Request validation failed: {e}")
             return {"message": "Bad request. Invalid input"}, 400
         valid_password = user_services.check_user_password_criteria(password)
+        valid_username = user_services.is_valid_username(username)
         if not valid_password:
-            return {"message": "Password does not match criteria"}, 400
+            return {"message": "Mật khẩu quá ngắn"}, 400
+        if not valid_username:
+            return {"message": "Username không phù hợp"}, 400
         try:
             # If username exists, abort.
             if user_services.check_user_exists(username=username):
-                return {"message": "User {} already exists".format(username)}, 400
+                return {"message": "Tài khoản {} đã tồn tại".format(username)}, 400
 
             # Create user in user table
             new_user = user_services.create_user(
@@ -1165,23 +1173,18 @@ class UserRegistration(Resource):
             )
 
             # Create user's default organization
-            teams_id, err_data, err_code = user_services.create_default_user_teams(
-                current_app,
-                new_user,
-                profile_name,
-                org_name,
-            )
-            if not teams_id:
-                teams_services.rollback_teams_creation(teams_id, new_user.user_id)
-                return err_data, err_code
-            return {"teams_id": str(teams_id)}, 200
-        except custom_exceptions.DatabaseQueryException as err:
-            _logger.exception(err)
-            teams_services.rollback_teams_creation(teams_id, new_user.user_id)
-            return {"message": "Error querying the DB"}, 400
+            # teams_id, err_data, err_code = user_services.create_default_user_teams(
+            #     current_app,
+            #     new_user,
+            #     profile_name,
+            #     org_name,
+            # )
+            # if not teams_id:
+            #     teams_services.rollback_teams_creation(teams_id, new_user.user_id)
+            #     return err_data, err_code
+            return {"message": "Tạo thành công, vui lòng liên hệ admin để bắt đầu sử dụng tools"}, 200
         except Exception as err:
             _logger.exception(err)
-            teams_services.rollback_teams_creation(teams_id, new_user.user_id)
             return {"message": str(err)}, 500
 
 

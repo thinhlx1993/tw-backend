@@ -123,6 +123,8 @@ def delete_team_member(token, team_name, member_email):
 
 def create_hma_profile(username, device_id, user_id):
     settings = setting_services.get_settings_by_user_device(user_id, device_id)
+    if not settings or 'settings' not in settings.keys():
+        raise Exception("Vui lòng cài đặt hệ thống")
     settings = settings["settings"]
     browser_type = settings.get("browserType")
     if browser_type != "hideMyAcc" or username == "":

@@ -4,7 +4,7 @@ import logging
 from flask_restx import fields, Resource
 from flask_jwt_extended import get_jwt_claims
 from src.services import profiles_services, setting_services
-from src.services import hma_services
+from src.services import hma_services, teams_services, user_services
 from src.utilities.custom_decorator import custom_jwt_required
 from src.version_handler import api_version_1_web
 from src.parsers import profile_page_parser
@@ -19,9 +19,8 @@ profiles_ns2 = api_version_1_web.namespace(
     "profiles", description="Profiles Functionalities"
 )
 
-# username, password, fa, proxy, gpt_key, cookies, notes, status
-profile_create_model = profiles_ns2.model(
-    "profile_create_model",
+profile_create_data = profiles_ns2.model(
+    "create_model",
     {
         "username": fields.String(example="username"),
         "password": fields.String(example="password"),
@@ -33,11 +32,18 @@ profile_create_model = profiles_ns2.model(
         "status": fields.String(example="status"),
     },
 )
+# username, password, fa, proxy, gpt_key, cookies, notes, status
+profile_create_model = profiles_ns2.model(
+    "profile_create_model",
+    {"profiles": fields.List(fields.Nested(profile_create_data))},
+)
 
 profile_update_model = profiles_ns2.model(
     "profile_update_model",
     {
-        "group_id": fields.String(example="group_id"),
+        "group_id": fields.String(example="group_id", require=False),
+        "user_id": fields.String(example="user_id", require=False),
+        "user_access": fields.String(example="user_access", require=False),
         "username": fields.String(example="new_username"),
         "password": fields.String(example="new_password"),
         "fa": fields.String(example="new_fa"),
@@ -83,8 +89,6 @@ class ProfilesController(Resource):
     """Class for / functionalities."""
 
     @profiles_ns2.expect(profile_page_parser)
-    # @profiles_ns2.response(200, "OK", org_fetch_response_ok_model)
-    # @profiles_ns2.response(400, "Bad Request", bad_response_model)
     @profiles_ns2.response(
         401,
         "Authorization information is missing or invalid.",
@@ -102,7 +106,7 @@ class ProfilesController(Resource):
             sort_by = str(args.get("sort_by")) if args.get("sort_by") else "created_at"
             # Sorts ascending by default
             sort_order = (
-                str(args.get("sort_order")) if args.get("sort_order") else "asc"
+                str(args.get("sort_order")) if args.get("sort_order") else "desc"
             )
             if sort_order.lower() not in ["asc", "desc"]:
                 return {"message": "Invalid sort order"}, 400
@@ -132,15 +136,31 @@ class ProfilesController(Resource):
     def post(self):
         """Used to create teams"""
         try:
-            data = profiles_ns2.payload
+            request_data = profiles_ns2.payload
             claims = get_jwt_claims()
             device_id = claims.get("device_id")
             user_id = claims.get("user_id")
+            teams_id = claims.get("teams_id")
         except Exception as e:
             _logger.debug(f"Data not valid: {e}")
             return {"message": "Data not valid"}, 400
-        profile = profiles_services.create_profile(data, device_id, user_id)
-        return {"profile_id": profile.profile_id}, 200
+        total_profiles = profiles_services.get_total_profiles()
+        teams = teams_services.get_teams(teams_id)
+        if total_profiles >= teams.teams_plan:
+            return {
+                "message": "Không thể tạo thêm profile do vượt quá số lượng cho phép, vui lòng liên hệ admin"
+            }, 500
+
+        success_number = 0
+        for data in request_data.get("profiles"):
+            try:
+                profile = profiles_services.create_profile(data, device_id, user_id)
+                success_number += 1
+            except Exception as ex:
+                _logger.error(ex)
+                continue
+
+        return {"message": f"Tạo thành công {success_number} profiles"}, 200
 
 
 class ProfilesIdController(Resource):
@@ -161,18 +181,14 @@ class ProfilesIdController(Resource):
     @custom_jwt_required()
     def put(self, profile_id):
         """Update a profile by ID"""
-        try:
-            data = profiles_ns2.payload
-            profile = profiles_services.update_profile(profile_id, data)
-            if not profile:
-                return {"message": "Profile not found"}, 404
-            return {
-                "message": "Profile updated successfully",
-                "profile": profile.repr_name(),
-            }, 200
-        except Exception as e:
-            _logger.debug(f"Error updating profile: {e}")
-            return {"message": "Data not valid or internal error"}, 400
+        data = profiles_ns2.payload
+        profile = profiles_services.update_profile(profile_id, data)
+        if not profile:
+            return {"message": "Profile not found"}, 404
+        return {
+            "message": "Profile updated successfully",
+            "profile": profile.repr_name(),
+        }, 200
 
     @profiles_ns2.response(
         200, "Profile deleted successfully", profile_operation_response_model
@@ -240,6 +256,40 @@ class ProfilesBrowserController(Resource):
         return return_data, 200
 
 
+class ProfilesByUserController(Resource):
+    @profiles_ns2.expect()
+    @profiles_ns2.response(
+        401,
+        "Authorization information is missing or invalid.",
+        unauthorized_response_model,
+    )
+    @profiles_ns2.response(500, "Internal Server Error", internal_server_error_model)
+    @custom_jwt_required()
+    def get(self, user_id):
+        user_detail = user_services.get_user_details(user_id=user_id)
+        profiles = profiles_services.get_user_profiles(user_detail)
+        return profiles, 200
+
+
+class ProfilesOfUserController(Resource):
+    @profiles_ns2.expect()
+    @profiles_ns2.response(
+        401,
+        "Authorization information is missing or invalid.",
+        unauthorized_response_model,
+    )
+    @profiles_ns2.response(500, "Internal Server Error", internal_server_error_model)
+    @custom_jwt_required()
+    def get(self):
+        claims = get_jwt_claims()
+        user_id = claims["user_id"]
+        user_detail = user_services.get_user_details(user_id=user_id)
+        profiles = profiles_services.get_user_profiles(user_detail)
+        return profiles, 200
+
+
 profiles_ns2.add_resource(ProfilesController, "/")
 profiles_ns2.add_resource(ProfilesIdController, "/<string:profile_id>")
+profiles_ns2.add_resource(ProfilesByUserController, "/user/<string:user_id>")
+profiles_ns2.add_resource(ProfilesOfUserController, "/user")
 profiles_ns2.add_resource(ProfilesBrowserController, "/<string:profile_id>/browserdata")

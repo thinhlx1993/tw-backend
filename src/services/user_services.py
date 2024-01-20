@@ -1771,6 +1771,7 @@ def get_user_auth_tokens(user, input_device_id):
             }
         ),
         "refresh_token": refresh_token,
+        "message": "Đăng nhập thành công"
     }
     return token
 
@@ -1827,6 +1828,11 @@ def check_user_password_criteria(password):
     #     return True
     return True if len(password.strip()) > 8 else False
 
+
+def is_valid_username(username):
+    # Regular expression for validating the username
+    pattern = r"^[A-Za-z][A-Za-z0-9_.]{3,14}$"
+    return bool(re.match(pattern, username))
 
 def check_kabam_users(username):
     """
