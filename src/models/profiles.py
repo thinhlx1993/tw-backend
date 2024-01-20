@@ -49,6 +49,7 @@ class Profiles(db.Model):
             "cookies": self.cookies,
             "hma_profile_id": self.hma_profile_id,
             "emails": self.emails,
+            "status": self.status,
             "pass_emails": self.pass_emails,
             "phone_number": self.phone_number,
             "notes": self.notes,

@@ -24,7 +24,7 @@ def get_missions_by_user_id(user_id):
     return missions
 
 
-def set_force_start(mission_id):
+def set_force_start_false(mission_id):
     """Update force start flag into false"""
     mission = Mission.query.filter_by(mission_id=mission_id).first()
     mission.force_start = False

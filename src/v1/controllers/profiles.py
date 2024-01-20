@@ -8,6 +8,7 @@ from src.services import hma_services
 from src.utilities.custom_decorator import custom_jwt_required
 from src.version_handler import api_version_1_web
 from src.parsers import profile_page_parser
+from src.v1.enums.config import SettingsEnums
 
 # Create module log
 _logger = logging.getLogger(__name__)
@@ -46,6 +47,15 @@ profile_update_model = profiles_ns2.model(
         "notes": fields.String(example="new_notes"),
         "status": fields.String(example="new_status"),
         "data": fields.String(example="Profile metadata"),
+    },
+)
+
+profile_hma_data_model = profiles_ns2.model(
+    "profile_hma_data_model",
+    {
+        "tz": fields.Raw(
+            required=False, example={"key": "value"}, description="JSON for tz"
+        )
     },
 )
 
@@ -190,7 +200,7 @@ class ProfilesIdController(Resource):
 
 
 class ProfilesBrowserController(Resource):
-    @profiles_ns2.expect()
+    @profiles_ns2.expect(profile_hma_data_model)
     @profiles_ns2.response(
         401,
         "Authorization information is missing or invalid.",
@@ -198,8 +208,10 @@ class ProfilesBrowserController(Resource):
     )
     @profiles_ns2.response(500, "Internal Server Error", internal_server_error_model)
     @custom_jwt_required()
-    def get(self, profile_id):
+    def post(self, profile_id):
         """Used to retrieve profile's data"""
+        body_data = profiles_ns2.payload
+        _logger.info(body_data)
         profile = profiles_services.get_profile_by_id(profile_id)
         if not profile:
             return {"message": "profile not found"}, 400
@@ -210,13 +222,14 @@ class ProfilesBrowserController(Resource):
         settings = setting_services.get_settings_by_user_device(user_id, device_id)
         settings = settings["settings"]
         browser_data = ""
-        if settings["browserType"] == "HideMyAcc":
+        if settings["browserType"] == SettingsEnums.hideMyAcc.value and body_data:
+            tz_data = hma_services.get_tz_data(profile)
+            _logger.info(tz_data)
             hma_account = settings.get("hideMyAccAccount")
             hma_password = settings.get("hideMyAccPassword")
             hma_token = hma_services.get_hma_access_token(hma_account, hma_password)
-            tz_data = hma_services.get_tz_data(profile)
             hma_result = hma_services.get_browser_data(
-                hma_token, profile.hma_profile_id, tz_data
+                hma_token, profile.hma_profile_id, body_data
             )
             browser_data = hma_result["result"]
             profile.browser_data = browser_data

@@ -46,10 +46,15 @@ def get_user_schedule(username):
     for mission in missions:
         mission_json = mission.get("mission_json")
         cron_job = mission_json.get("cron")
-        if should_start_job(cron_job) or mission['force_start']:
-            mission_should_start.append(mission)
+        if should_start_job(cron_job) or mission["force_start"]:
+            mission_schedule = mission["mission_schedule"]
+            mission_tasks = mission["mission_tasks"]
+            for item in mission_schedule:
+                item["tasks"] = mission_tasks
+            mission_should_start.extend(mission_schedule)
             mission_force_start.append(mission["mission_id"])
+
     for mission_id in mission_force_start:
-        mission_services.set_force_start(mission_id)
+        mission_services.set_force_start_false(mission_id)
 
     return mission_should_start

@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '328d488b9103'
-down_revision = '9a0b7cc179aa'
+revision = "328d488b9103"
+down_revision = "9a0b7cc179aa"
 branch_labels = None
 depends_on = None
 
@@ -21,18 +21,16 @@ def upgrade():
     # (other migration commands)
 
     # Insert default tasks
-    task_names = [
-        "Login", "Lấy cookie", "Giải captra", "Check follow", "Check tích xanh",
-        "Check bật kiếm tiền", "Lấy link bài viết", "Thay số điện thoại", "Thay emails"
-    ]
+    task_names = ["Login", "Lấy cookie"]
 
-    tasks_table = sa.table('tasks',
-        sa.column('tasks_id', sa.String(length=128)),
-        sa.column('tasks_name', sa.String(length=256))
+    tasks_table = sa.table(
+        "tasks",
+        sa.column("tasks_id", sa.String(length=128)),
+        sa.column("tasks_name", sa.String(length=256)),
     )
 
     for name in task_names:
-        op.bulk_insert(tasks_table, [{'tasks_name': name}])
+        op.bulk_insert(tasks_table, [{"tasks_name": name}])
     # ### end Alembic commands ###
 
 
