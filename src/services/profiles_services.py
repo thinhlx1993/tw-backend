@@ -25,8 +25,8 @@ def create_profile(data, device_id, user_id):
                 new_profile.__setattr__(key, val)
     username = data.get('username', "").strip()
     hma_profile_id = hma_services.create_hma_profile(username, device_id, user_id)
-    if not hma_profile_id:
-        raise Exception("Can not create HMA profiles, check your settings or HMA account")
+    # if not hma_profile_id:
+    #     raise Exception("Can not create HMA profiles, check your settings or HMA account")
     new_profile.hma_profile_id = hma_profile_id
     db.session.add(new_profile)
     db.session.flush()

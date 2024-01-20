@@ -125,7 +125,7 @@ def create_hma_profile(username, device_id, user_id):
     settings = setting_services.get_settings_by_user_device(user_id, device_id)
     settings = settings["settings"]
     browser_type = settings.get("browserType")
-    if browser_type != "HideMyAcc" or username == "":
+    if browser_type != "hideMyAcc" or username == "":
         return ""
 
     browser_version = settings.get("browserVersion")
