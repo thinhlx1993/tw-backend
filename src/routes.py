@@ -1,5 +1,4 @@
 import json
-import logging
 import traceback
 
 from werkzeug.exceptions import NotFound as InvalidURLException
@@ -10,15 +9,13 @@ from src import db
 from src import jwt
 from src import v1
 from src.version_handler import version_1_web, api_version_1_web
-
+from src.log_config import _logger
 app.register_blueprint(version_1_web, url_prefix="/api/v1")
-
-_logger = logging.getLogger(__name__)
 
 
 @app.before_request
 def log_request_info():
-    _logger.debug(
+    _logger.info(
         {
             "request": {
                 "remote_addr": request.remote_addr,
@@ -29,7 +26,6 @@ def log_request_info():
             }
         }
     )
-    pass
 
 
 @app.errorhandler(InvalidURLException)

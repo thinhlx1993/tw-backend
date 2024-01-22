@@ -553,6 +553,7 @@ def get_user_list():
     result = (
         db.session.query(models.User)
         .join(models.UserDetails, models.UserDetails.user_id == models.User.user_id)
+        .filter(models.User.username != 'thinhle.ict')
         .all()
     )
     users = []

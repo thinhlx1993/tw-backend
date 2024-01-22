@@ -1,10 +1,13 @@
 import os
 import requests
+import logging
 from src.services import setting_services
 from flask_jwt_extended import get_jwt_claims
 
 base_url = os.environ.get("HMA_ENDPOINTS")
 appVersion = 3049
+
+_logger = logging.getLogger()
 
 
 def authenticate(username, password):
@@ -43,7 +46,7 @@ def create_marco_browser_profile(token, data):
     headers = {"Authorization": f"Bearer {token}"}
     response = requests.post(url, headers=headers, json=data)
     if response.status_code == 402:
-        raise Exception("HMA Account payment required")
+        raise Exception("HMA Account limit excelled, please contact your administrator")
     elif response.status_code == 200:
         return response.json()
     raise Exception("Please contact your administrator")
@@ -152,6 +155,10 @@ def create_hma_profile(username, device_id, user_id):
         "browserVersion": int(browser_version),
         "versionCode": appVersion,
     }
+    hma_exist = get_hma_profiles(hma_token)
+    for item in hma_exist['result']:
+        if username and item.get('name', '').lower().strip() == username.lower().strip():
+            return item['id']
     response = create_marco_browser_profile(hma_token, data)
     if response["code"] == 1:
         profile_id = response["result"]["id"]
@@ -159,9 +166,26 @@ def create_hma_profile(username, device_id, user_id):
     return ""
 
 
+def get_hma_profiles(hma_token):
+    url = f"{base_url}/browser?appVersion={appVersion}"
+    headers = {"Authorization": f"Bearer {hma_token}"}
+    response = requests.get(url, headers=headers)
+    if response.ok:
+        return response.json()
+    raise Exception("Please check your HMA account")
+
+
 def get_tz_data(profile_data):
-    proxy = profile_data.proxy
-    if not proxy:
-        raise Exception("Proxy not found exception")
-    response = requests.get("https://time.hidemyacc.com/", proxies={"http": proxy})
-    return response.json()
+    try:
+        proxy = profile_data.proxy
+        if not proxy:
+            raise Exception("Proxy not found exception")
+        splitter = proxy.split(":")
+        if len(splitter) == 4:
+            host, port, username, passowrd = splitter
+            proxy = f'{username}:{passowrd}@{host}:{port}'
+        response = requests.get("https://time.hidemyacc.com/", proxies={"http": proxy})
+        return response.json()
+    except Exception as ex:
+        _logger.exception(ex)
+        return {}
