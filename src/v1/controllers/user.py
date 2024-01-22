@@ -1149,10 +1149,10 @@ class UserRegistration(Resource):
                 if "last_name" in request_data
                 else None
             )
-            # org_name = request_data["teams_name"].strip()
-            # profile_name = (
-            #     "User" if first_name and last_name else f"{first_name} {last_name}"
-            # )
+            org_name = request_data["teams_name"].strip()
+            profile_name = (
+                "User" if first_name and last_name else f"{first_name} {last_name}"
+            )
         except Exception as e:
             _logger.debug(f"Request validation failed: {e}")
             return {"message": "Bad request. Invalid input"}, 400
@@ -1173,15 +1173,15 @@ class UserRegistration(Resource):
             )
 
             # Create user's default organization
-            # teams_id, err_data, err_code = user_services.create_default_user_teams(
-            #     current_app,
-            #     new_user,
-            #     profile_name,
-            #     org_name,
-            # )
-            # if not teams_id:
-            #     teams_services.rollback_teams_creation(teams_id, new_user.user_id)
-            #     return err_data, err_code
+            teams_id, err_data, err_code = user_services.create_default_user_teams(
+                current_app,
+                new_user,
+                profile_name,
+                org_name,
+            )
+            if not teams_id:
+                teams_services.rollback_teams_creation(teams_id, new_user.user_id)
+                return err_data, err_code
             return {"message": "Tạo thành công, vui lòng liên hệ admin để bắt đầu sử dụng tools"}, 200
         except Exception as err:
             _logger.exception(err)

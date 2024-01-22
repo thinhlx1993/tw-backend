@@ -17,8 +17,10 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column('teams', sa.Column('teams_plan', sa.Integer, server_default="100", nullable=True), schema="public")
+    pass
+    # op.add_column('teams', sa.Column('teams_plan', sa.Integer, server_default="100", nullable=True), schema="public")
 
 
 def downgrade():
-    op.drop_column('teams', 'teams_plan', schema="public")
+    pass
+    # op.drop_column('teams', 'teams_plan', schema="public")
