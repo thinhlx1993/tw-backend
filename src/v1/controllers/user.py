@@ -1173,15 +1173,15 @@ class UserRegistration(Resource):
             )
 
             # Create user's default organization
-            teams_id, err_data, err_code = user_services.create_default_user_teams(
-                current_app,
-                new_user,
-                profile_name,
-                org_name,
-            )
-            if not teams_id:
-                teams_services.rollback_teams_creation(teams_id, new_user.user_id)
-                return err_data, err_code
+            # teams_id, err_data, err_code = user_services.create_default_user_teams(
+            #     current_app,
+            #     new_user,
+            #     profile_name,
+            #     org_name,
+            # )
+            # if not teams_id:
+            #     teams_services.rollback_teams_creation(teams_id, new_user.user_id)
+            #     return err_data, err_code
             return {"message": "Tạo thành công, vui lòng liên hệ admin để bắt đầu sử dụng tools"}, 200
         except Exception as err:
             _logger.exception(err)
