@@ -114,7 +114,7 @@ callback_parser.add_argument("scope", type=str, help="scope", location="args")
 user_password_model = user_ns2.model(
     "login_model",
     {
-        "username": fields.String(example="thinhle.ict", required=True),
+        "username": fields.String(example="", required=True),
         "password": fields.String(example="Admin@1234", required=True),
         "device_id": fields.String(
             example="ad26a5fd-b0ac-4a85-98ef-37c495c18012", required=False
@@ -566,7 +566,6 @@ class UserLogin(Resource):
         unauthorized_response_model,
     )
     @user_ns2.response(500, "Internal Server Error", internal_server_error_model)
-    @limiter.limit("10 per second")
     def post(self):
         """Used for logging in user"""
         request_data = user_ns2.payload
