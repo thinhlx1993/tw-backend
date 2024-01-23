@@ -7,6 +7,7 @@ from src.utilities.custom_decorator import custom_jwt_required
 from src.version_handler import api_version_1_web
 from src.parsers import profile_page_parser
 from src.v1.enums.config import SettingsEnums
+
 # Create module log
 from src.log_config import _logger
 
@@ -226,7 +227,7 @@ class ProfilesBrowserController(Resource):
     def post(self, profile_id):
         """Used to retrieve profile's data"""
         body_data = profiles_ns2.payload
-        _logger.info(f'tz info Client request data: {body_data}')
+        _logger.info(f"tz info Client request data: {body_data}")
         profile = profiles_services.get_profile_by_id(profile_id)
         if not profile:
             return {"message": "profile not found"}, 400
@@ -238,8 +239,8 @@ class ProfilesBrowserController(Resource):
         settings = settings["settings"]
         browser_data = ""
         if settings["browserType"] == SettingsEnums.hideMyAcc.value and body_data:
-            tz_data = hma_services.get_tz_data(profile)
-            _logger.info(f"tz info server request data: {tz_data}")
+            # tz_data = hma_services.get_tz_data(profile)
+            # _logger.info(f"tz info server request data: {tz_data}")
             hma_account = settings.get("hideMyAccAccount")
             hma_password = settings.get("hideMyAccPassword")
             hma_token = hma_services.get_hma_access_token(hma_account, hma_password)

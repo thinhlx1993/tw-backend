@@ -8,6 +8,8 @@ from flask_jwt_extended import JWTManager
 from flask_script import Manager
 from flask_caching import Cache
 from flask_migrate import Migrate, MigrateCommand
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
@@ -16,7 +18,7 @@ from .config import DevelopmentConfig, StagingConfig, ProductionConfig, Config
 
 # Initialize Flask app and set config
 app = Flask(__name__)
-cache = Cache(app, config={'CACHE_TYPE': 'simple'})
+cache = Cache(app, config={"CACHE_TYPE": "simple"})
 
 # sentry_sdk.init(
 #     dsn=Config.SENTRY_CONFIG,
@@ -25,42 +27,38 @@ cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 # )
 
 # Config is PROD by default
-if os.environ['CONFIG'] == 'DEV':
+if os.environ["CONFIG"] == "DEV":
     app.config.from_object(DevelopmentConfig)
 else:
     app.config.from_object(ProductionConfig)
 
 
 # Set CORS config
-CORS(app=app, origins=app.config['CORS_ORIGIN'], supports_credentials=True)
+CORS(app=app, origins=app.config["CORS_ORIGIN"], supports_credentials=True)
 
 # Set configuration for DB
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 
 migrate = Migrate(app, db, compare_type=True)
 
-if os.environ['CONFIG'] == 'PROD':
+if os.environ["CONFIG"] == "PROD":
     manager = Manager(app)
-    manager.add_command('db', MigrateCommand)
+    manager.add_command("db", MigrateCommand)
     with app.app_context():
-        command.upgrade(migrate.get_config(), 'head')
+        command.upgrade(migrate.get_config(), "head")
 
 # Set JWT Config
 jwt = JWTManager(app)
 
-"""Setting up celery config
-broker_url: Sets the broker URL for Celery, which is used for communication
-between the Flask app and the Celery worker.
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    default_limits=["200 per minute"],
+    storage_uri="memory://",
+)
 
-result_backend: Specifies the result backend to be used, with "rpc://"
-indicating the use of RPC (Remote Procedure Call) as the result backend.
-
-task_ignore_result: Controls whether the Flask app should ignore the
-results of Celery tasks or not. Setting it to False ensures that task
-results are not ignored
-"""
 
 from src import routes
 
-app.config['SWAGGER_DEFAULT_MODELS_EXPANSION_DEPTH'] = -1
+app.config["SWAGGER_DEFAULT_MODELS_EXPANSION_DEPTH"] = -1

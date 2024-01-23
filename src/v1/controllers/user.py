@@ -3,7 +3,7 @@
 import logging
 import uuid
 
-from flask import current_app
+from src import limiter
 from flask import request, jsonify
 from flask_restx import Resource, reqparse, fields
 from flask_jwt_extended import get_raw_jwt, get_jwt_claims
@@ -116,7 +116,9 @@ user_password_model = user_ns2.model(
     {
         "username": fields.String(example="thinhle.ict", required=True),
         "password": fields.String(example="Admin@1234", required=True),
-        "device_id": fields.String(example="ad26a5fd-b0ac-4a85-98ef-37c495c18012", required=False),
+        "device_id": fields.String(
+            example="ad26a5fd-b0ac-4a85-98ef-37c495c18012", required=False
+        ),
     },
 )
 user_register_model = user_ns2.model("user_register_model", register_user_model)
@@ -564,6 +566,7 @@ class UserLogin(Resource):
         unauthorized_response_model,
     )
     @user_ns2.response(500, "Internal Server Error", internal_server_error_model)
+    @limiter.limit("10 per second")
     def post(self):
         """Used for logging in user"""
         request_data = user_ns2.payload
@@ -592,7 +595,7 @@ class UserLogin(Resource):
             if len(org_list) > 0:
                 set_user_default_teams(user_details.user_id, org_list[0]["teams_id"])
             else:
-                return {'message': 'Vui lòng liên hệ admin để thêm bạn vào Teams'}, 400
+                return {"message": "Vui lòng liên hệ admin để thêm bạn vào Teams"}, 400
                 # Try to create user default org
                 # if user_details.first_name and user_details.last_name:
                 #     profile_name = (
@@ -1182,7 +1185,9 @@ class UserRegistration(Resource):
             # if not teams_id:
             #     teams_services.rollback_teams_creation(teams_id, new_user.user_id)
             #     return err_data, err_code
-            return {"message": "Tạo thành công, vui lòng liên hệ admin để bắt đầu sử dụng tools"}, 200
+            return {
+                "message": "Tạo thành công, vui lòng liên hệ admin để bắt đầu sử dụng tools"
+            }, 200
         except Exception as err:
             _logger.exception(err)
             return {"message": str(err)}, 500
