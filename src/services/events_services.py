@@ -32,7 +32,12 @@ def get_all_events(
     if event_type:
         query.filter(Events.event_type == event_type)
     if search:
-        query = query.filter(Events.issue.ilike(f"%{search}%"))
+        query = query.filter(
+            or_(
+                Events.issue.ilike(f"%{search}%"),
+                Events.event_type.ilike(f"%{search}%")
+            )
+        )
     if profile_id:
         query.filter(Events.profile_id == profile_id)
     # Apply pagination

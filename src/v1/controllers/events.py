@@ -1,5 +1,7 @@
 """Controller for events."""
 from flask_restx import fields, Resource
+
+from src.parsers import page_parser
 from src.services import events_services  # Import your events services
 from src.version_handler import api_version_1_web
 from src.utilities.custom_decorator import custom_jwt_required
@@ -30,11 +32,32 @@ event_update_model = events_ns.model(
 class EventsController(Resource):
     """Class for /events functionalities."""
 
+    @events_ns.expect(page_parser)
     @events_ns.response(200, "Success")
     @custom_jwt_required()
     def get(self):
         """Retrieve list of events"""
-        events = events_services.get_all_events()
+        args = page_parser.parse_args()
+        # Pagination settings
+        page = args.get("page", 1) if args.get("page") else None
+        per_page = args.get("per_page") if args.get("per_page") else None
+        # Sorts by 'teams_name' by default
+        sort_by = str(args.get("sort_by")) if args.get("sort_by") else "created_at"
+        # Sorts ascending by default
+        sort_order = (
+            str(args.get("sort_order")) if args.get("sort_order") else "desc"
+        )
+        if sort_order.lower() not in ["asc", "desc"]:
+            return {"message": "Invalid sort order"}, 400
+        # Read any filters specified
+        search = args.get("search", "")
+        events = events_services.get_all_events(
+            page,
+            per_page,
+            sort_by,
+            sort_order,
+            search
+        )
         return events, 200
 
     @events_ns.expect(event_model)
