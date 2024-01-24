@@ -86,9 +86,9 @@ def get_all_profiles(
         raise err
 
 
-def get_user_profiles(user_detail):
-    username = user_detail.username
-    profiles = Profiles.query.filter_by(user_access=username).all()
+def get_user_profiles(user_id):
+    # username = user_detail.user_id
+    profiles = Profiles.query.filter_by(owner=user_id).all()
     formatted_result = [profile.repr_name() for profile in profiles]
     return {"profiles": formatted_result}
 

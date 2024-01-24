@@ -35,7 +35,7 @@ def get_all_events(
         query = query.filter(
             or_(
                 Events.issue.ilike(f"%{search}%"),
-                Events.event_type.ilike(f"%{search}%")
+                Events.event_type.ilike(f"%{search}%"),
             )
         )
     if profile_id:
@@ -82,6 +82,6 @@ def delete_event(event_id):
     event_record = Events.query.filter_by(event_id=event_id).first()
     if event_record:
         db.session.delete(event_record)
-        db.session.commit()
+        db.session.flush()
         return True
     return False

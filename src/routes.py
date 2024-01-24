@@ -105,7 +105,11 @@ def add_claims_to_access_token(payload):
             "refresh_jti": payload["refresh_jti"],
         }
     elif payload["type"] == "refresh":
-        return {"teams_id": payload["teams_id"], "teams_code": payload["teams_code"]}
+        return {
+            "teams_id": payload["teams_id"],
+            "teams_code": payload["teams_code"],
+            "device_id": payload["device_id"]
+        }
 
 
 @jwt.user_identity_loader

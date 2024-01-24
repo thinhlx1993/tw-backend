@@ -1,7 +1,6 @@
 from src import db
 from sqlalchemy import text, ForeignKey, func
 from sqlalchemy.orm import relationship
-from src.models.profiles import Profiles
 
 
 class Events(db.Model):

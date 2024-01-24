@@ -1756,6 +1756,7 @@ def get_user_auth_tokens(user, input_device_id):
         "default_page": user_details.get("default_page", ""),
         "profile_name": profile_name,
         "teams_id": str(teams_id),
+        "device_id": input_device_id,
         "teams_code": str(teams_code).lower(),
         "authorized": not is_mfa_enabled,
         "refresh_jti": None,
@@ -1766,7 +1767,6 @@ def get_user_auth_tokens(user, input_device_id):
         "access_token": create_access_token(
             identity={
                 **user_payload,
-                "device_id": input_device_id,
                 "refresh_jti": refresh_jti,
                 "type": "access",
             }

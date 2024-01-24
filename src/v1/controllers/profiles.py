@@ -271,8 +271,8 @@ class ProfilesByUserController(Resource):
     @profiles_ns2.response(500, "Internal Server Error", internal_server_error_model)
     @custom_jwt_required()
     def get(self, user_id):
-        user_detail = user_services.get_user_details(user_id=user_id)
-        profiles = profiles_services.get_user_profiles(user_detail)
+        # user_detail = user_services.get_user_details(user_id=user_id)
+        profiles = profiles_services.get_user_profiles(user_id)
         return profiles, 200
 
 
@@ -288,8 +288,8 @@ class ProfilesOfUserController(Resource):
     def get(self):
         claims = get_jwt_claims()
         user_id = claims["user_id"]
-        user_detail = user_services.get_user_details(user_id=user_id)
-        profiles = profiles_services.get_user_profiles(user_detail)
+        # user_detail = user_services.get_user_details(user_id=user_id)
+        profiles = profiles_services.get_user_profiles(user_id)
         return profiles, 200
 
 

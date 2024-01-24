@@ -11,8 +11,9 @@ def get_all_missions():
     missions = [item.repr_name() for item in Mission.query.all()]
     for mission in missions:
         user_id = mission["user_id"]
-        user_info = user_services.check_user_exists(user_id=user_id)
-        mission["username"] = user_info.username
+        if user_id:
+            user_info = user_services.check_user_exists(user_id=user_id)
+            mission["username"] = user_info.username
     return missions
 
 
