@@ -3,13 +3,14 @@ import traceback
 
 from werkzeug.exceptions import NotFound as InvalidURLException
 from flask import jsonify, request
-
+from sentry_sdk import capture_exception
 from src import app
 from src import db
 from src import jwt
 from src import v1
-from src.version_handler import version_1_web, api_version_1_web
+from src.version_handler import version_1_web
 from src.log_config import _logger
+
 app.register_blueprint(version_1_web, url_prefix="/api/v1")
 
 
@@ -48,6 +49,7 @@ def exceptions(e):
         request.full_path,
         tb,
     )
+    capture_exception(e)
     data = {"message": str(e)}
     response = app.response_class(
         response=json.dumps(data), status=500, mimetype="application/json"

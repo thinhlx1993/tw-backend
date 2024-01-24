@@ -114,11 +114,9 @@ callback_parser.add_argument("scope", type=str, help="scope", location="args")
 user_password_model = user_ns2.model(
     "login_model",
     {
-        "username": fields.String(example="", required=True),
-        "password": fields.String(example="Admin@1234", required=True),
-        "device_id": fields.String(
-            example="ad26a5fd-b0ac-4a85-98ef-37c495c18012", required=False
-        ),
+        "username": fields.String(example="username", required=True),
+        "password": fields.String(example="password", required=True),
+        "device_id": fields.String(example="device_id", required=False),
     },
 )
 user_register_model = user_ns2.model("user_register_model", register_user_model)

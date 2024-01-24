@@ -1,7 +1,7 @@
 # mission_schedule_controller.py
 from flask_restx import Resource
 from flask_jwt_extended import get_jwt_identity, get_jwt_claims
-from src.services import mission_schedule_services
+from src.services import mission_schedule_services, user_services
 from src.utilities.custom_decorator import custom_jwt_required
 from src.version_handler import api_version_1_web
 
@@ -28,6 +28,9 @@ class MissionScheduleUserController(Resource):
     @custom_jwt_required()
     def get(self):
         username = get_jwt_identity()
+        claims = get_jwt_claims()
+        user_id = claims['user_id']
+        user_services.update_user_last_active_at(user_id)
         schedule = mission_schedule_services.get_user_schedule(username)
         return {"schedule": schedule}, 200
 
