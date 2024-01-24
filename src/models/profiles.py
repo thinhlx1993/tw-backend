@@ -39,24 +39,26 @@ class Profiles(db.Model):
     emails = db.Column(db.String(128), nullable=True, server_default="")
     pass_emails = db.Column(db.String(128), nullable=True, server_default="")
     phone_number = db.Column(db.String(128), nullable=True, server_default="")
+    owner = db.Column(db.String(128), nullable=True, unique=False, server_default="")
 
     def repr_name(self):
         return {
             "profile_id": self.profile_id,
             "group_id": self.group_id,
-            "username": self.username if self.username else '',
-            "user_access": self.user_access if self.user_access else '',
-            "password": self.password if self.password else '',
-            "fa": self.fa if self.fa else '',
-            "proxy": self.proxy if self.proxy else '',
-            "gpt_key": self.gpt_key if self.gpt_key else '',
-            "cookies": self.cookies if self.cookies else '',
-            "hma_profile_id": self.hma_profile_id if self.hma_profile_id else '',
-            "emails": self.emails if self.emails else '',
-            "status": self.status if self.status else '',
-            "pass_emails": self.pass_emails if self.pass_emails else '',
-            "phone_number": self.phone_number if self.phone_number else '',
-            "notes": self.notes if self.notes else '',
+            "owner": self.owner,
+            "username": self.username if self.username else "",
+            "user_access": self.user_access if self.user_access else "",
+            "password": self.password if self.password else "",
+            "fa": self.fa if self.fa else "",
+            "proxy": self.proxy if self.proxy else "",
+            "gpt_key": self.gpt_key if self.gpt_key else "",
+            "cookies": self.cookies if self.cookies else "",
+            "hma_profile_id": self.hma_profile_id if self.hma_profile_id else "",
+            "emails": self.emails if self.emails else "",
+            "status": self.status if self.status else "",
+            "pass_emails": self.pass_emails if self.pass_emails else "",
+            "phone_number": self.phone_number if self.phone_number else "",
+            "notes": self.notes if self.notes else "",
             "created_at": self.created_at.strftime("%d-%m-%Y %H:%M"),
             "modified_at": self.modified_at.strftime("%d-%m-%Y %H:%M"),
         }

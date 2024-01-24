@@ -1,8 +1,7 @@
 import os
 import requests
 import logging
-from src.services import setting_services
-from flask_jwt_extended import get_jwt_claims
+from src.services import setting_services, profiles_services
 
 base_url = os.environ.get("HMA_ENDPOINTS")
 appVersion = 3049
@@ -126,7 +125,7 @@ def delete_team_member(token, team_name, member_email):
 
 def create_hma_profile(username, device_id, user_id):
     settings = setting_services.get_settings_by_user_device(user_id, device_id)
-    if not settings or 'settings' not in settings.keys():
+    if not settings or "settings" not in settings.keys():
         raise Exception("Vui lòng cài đặt hệ thống")
     settings = settings["settings"]
     browser_type = settings.get("browserType")
@@ -156,14 +155,42 @@ def create_hma_profile(username, device_id, user_id):
         "versionCode": appVersion,
     }
     hma_exist = get_hma_profiles(hma_token)
-    for item in hma_exist['result']:
-        if username and item.get('name', '').lower().strip() == username.lower().strip():
-            return item['id']
+    for item in hma_exist["result"]:
+        if (
+            username
+            and item.get("name", "").lower().strip() == username.lower().strip()
+        ):
+            return item["id"]
     response = create_marco_browser_profile(hma_token, data)
     if response["code"] == 1:
         profile_id = response["result"]["id"]
         return profile_id
     return ""
+
+
+def clear_unused_resourced(device_id, user_id):
+    try:
+        settings = setting_services.get_settings_by_user_device(user_id, device_id)
+        if not settings or "settings" not in settings.keys():
+            return False
+
+        hma_account = settings.get("hideMyAccAccount")
+        hma_password = settings.get("hideMyAccPassword")
+        hma_token = authenticate(hma_account, hma_password)
+
+        profiles = profiles_services.get_all_profiles()
+        profiles = profiles.get("profiles", [])
+        hma_profile_ids = [profile["hma_profile_id"] for profile in profiles]
+        hma_exist = get_hma_profiles(hma_token)
+        for item in hma_exist["result"]:
+            if item["id"] not in hma_profile_ids:
+                url = f"{base_url}/browser/{item['id']}"
+                headers = {"Authorization": f"Bearer {hma_token}"}
+                name = item["name"]
+                print(f"found unused profile: {name}")
+                # requests.delete(url, headers=headers)
+    except Exception as ex:
+        _logger.exception(ex)
 
 
 def get_hma_profiles(hma_token):
@@ -183,7 +210,7 @@ def get_tz_data(profile_data):
         splitter = proxy.split(":")
         if len(splitter) == 4:
             host, port, username, passowrd = splitter
-            proxy = f'{username}:{passowrd}@{host}:{port}'
+            proxy = f"{username}:{passowrd}@{host}:{port}"
         response = requests.get("https://time.hidemyacc.com/", proxies={"http": proxy})
         return response.json()
     except Exception as ex:

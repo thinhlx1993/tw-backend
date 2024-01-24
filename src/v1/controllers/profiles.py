@@ -152,6 +152,7 @@ class ProfilesController(Resource):
         success_number = 0
         for data in request_data.get("profiles"):
             try:
+                data["owner"] = user_id  # set owner
                 profile = profiles_services.create_profile(data, device_id, user_id)
                 success_number += 1
             except Exception as ex:
@@ -159,7 +160,7 @@ class ProfilesController(Resource):
                 return {
                     "message": f"Thất bại: {data['username']}, Đã tạo {success_number}"
                 }, 200
-
+        hma_services.clear_unused_resourced(device_id, user_id)
         return {"message": f"Tạo thành công {success_number} profiles"}, 200
 
 
