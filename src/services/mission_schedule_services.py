@@ -38,6 +38,9 @@ def get_mission_schedule(schedule_id):
 
 def get_user_schedule(username):
     user_info = User.query.filter_by(username=username).first()
+    if not user_info:
+        return []
+
     user_id = user_info.user_id
 
     mission_should_start = []

@@ -234,8 +234,12 @@ class ProfilesBrowserController(Resource):
             return {"message": "profile not found"}, 400
 
         claims = get_jwt_claims()
-        user_id = claims.get("user_id")
         device_id = claims.get("device_id")
+        if profile['owner']:
+            user_id = profile['owner']
+        else:
+            user_id = claims.get("user_id")
+
         settings = setting_services.get_settings_by_user_device(user_id, device_id)
         settings = settings["settings"]
         browser_data = ""
