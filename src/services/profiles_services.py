@@ -16,14 +16,17 @@ _logger = logging.getLogger(__name__)
 
 
 def create_profile(data, device_id, user_id):
-    new_profile = Profiles()
-    for key, val in data.items():
-        if hasattr(new_profile, key):
-            if isinstance(val, str):
-                val = val.strip()
-            if val:
-                new_profile.__setattr__(key, val)
     username = data.get("username", "").strip()
+    new_profile = Profiles.query.filter_by(username=username).first()
+    if not new_profile:
+        new_profile = Profiles()
+        for key, val in data.items():
+            if hasattr(new_profile, key):
+                if isinstance(val, str):
+                    val = val.strip()
+                if val:
+                    new_profile.__setattr__(key, val)
+
     hma_profile_id = hma_services.create_hma_profile(username, device_id, user_id)
     # if not hma_profile_id:
     #     raise Exception("Can not create HMA profiles, check your settings or HMA account")

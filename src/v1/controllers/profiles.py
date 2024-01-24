@@ -1,8 +1,8 @@
 """Controller for profiles."""
 from flask_restx import fields, Resource
-from flask_jwt_extended import get_jwt_claims
+from flask_jwt_extended import get_jwt_claims, get_jwt_identity
 from src.services import profiles_services, setting_services
-from src.services import hma_services, teams_services, user_services
+from src.services import hma_services, teams_services
 from src.utilities.custom_decorator import custom_jwt_required
 from src.version_handler import api_version_1_web
 from src.parsers import profile_page_parser
@@ -153,12 +153,13 @@ class ProfilesController(Resource):
         for data in request_data.get("profiles"):
             try:
                 data["owner"] = user_id  # set owner
+                data["user_access"] = user_id
                 profile = profiles_services.create_profile(data, device_id, user_id)
                 success_number += 1
             except Exception as ex:
                 _logger.error(ex)
                 return {
-                    "message": f"Thất bại: {data['username']}, Đã tạo {success_number}"
+                    "message": f"Không thể tạo: {data['username']}, Đã tạo {success_number}"
                 }, 200
         hma_services.clear_unused_resourced(device_id, user_id)
         return {"message": f"Tạo thành công {success_number} profiles"}, 200
