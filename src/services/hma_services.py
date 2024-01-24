@@ -173,7 +173,7 @@ def clear_unused_resourced(device_id, user_id):
         settings = setting_services.get_settings_by_user_device(user_id, device_id)
         if not settings or "settings" not in settings.keys():
             return False
-
+        settings = settings.get('settings')
         hma_account = settings.get("hideMyAccAccount")
         hma_password = settings.get("hideMyAccPassword")
         hma_token = authenticate(hma_account, hma_password)
