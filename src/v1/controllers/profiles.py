@@ -235,8 +235,8 @@ class ProfilesBrowserController(Resource):
 
         claims = get_jwt_claims()
         device_id = claims.get("device_id")
-        if profile['owner']:
-            user_id = profile['owner']
+        if profile.owner:
+            user_id = profile.owner
         else:
             user_id = claims.get("user_id")
 
