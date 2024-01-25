@@ -158,6 +158,10 @@ class ProfilesController(Resource):
                     success_number += 1
             except Exception as ex:
                 _logger.error(ex)
+                if "HMA Account limit excelled" in str(ex):
+                    return {
+                        "message": str(ex)
+                    }, 500
                 error_number += 1
                 # return {
                 #     "message": f"Không thể tạo: {data['username']}, Đã tạo {success_number}"
