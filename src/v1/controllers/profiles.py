@@ -162,6 +162,10 @@ class ProfilesController(Resource):
                     return {
                         "message": str(ex)
                     }, 500
+                if "Vui lòng cài đặt hệ thống" in str(ex):
+                    return {
+                        "message": str(ex)
+                    }, 500
                 error_number += 1
                 # return {
                 #     "message": f"Không thể tạo: {data['username']}, Đã tạo {success_number}"
