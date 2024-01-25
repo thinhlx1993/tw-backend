@@ -86,7 +86,7 @@ def create_mission(data):
     profile_ids = data.get("profile_ids", [])
     if len(profile_ids) == 0:
         # fetch by from group_id
-        profiles = profiles_services.get_all_profiles(group_id=group_id)
+        profiles = profiles_services.get_all_profiles(user_id=user_id)
         profile_ids = [item["profile_id"] for item in profiles["profiles"]]
 
     for profile_id in profile_ids:

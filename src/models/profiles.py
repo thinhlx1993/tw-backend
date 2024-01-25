@@ -59,6 +59,7 @@ class Profiles(db.Model):
             "pass_emails": self.pass_emails if self.pass_emails else "",
             "phone_number": self.phone_number if self.phone_number else "",
             "notes": self.notes if self.notes else "",
+            "profile_data": self.profile_data,
             "created_at": self.created_at.strftime("%d-%m-%Y %H:%M"),
             "modified_at": self.modified_at.strftime("%d-%m-%Y %H:%M"),
         }

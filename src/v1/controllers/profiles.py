@@ -50,7 +50,7 @@ profile_update_model = profiles_ns2.model(
         "cookies": fields.String(example="new_cookies"),
         "notes": fields.String(example="new_notes"),
         "status": fields.String(example="new_status"),
-        "data": fields.String(example="Profile metadata"),
+        "profile_data": fields.String(example="Profile metadata"),
     },
 )
 
@@ -95,28 +95,26 @@ class ProfilesController(Resource):
     @profiles_ns2.response(500, "Internal Server Error", internal_server_error_model)
     @custom_jwt_required()
     def get(self):
-        try:
-            args = profile_page_parser.parse_args()
-            # Pagination settings
-            page = args.get("page", 1) if args.get("page") else None
-            per_page = args.get("per_page") if args.get("per_page") else None
-            # Sorts by 'teams_name' by default
-            sort_by = str(args.get("sort_by")) if args.get("sort_by") else "created_at"
-            # Sorts ascending by default
-            sort_order = (
-                str(args.get("sort_order")) if args.get("sort_order") else "desc"
-            )
-            if sort_order.lower() not in ["asc", "desc"]:
-                return {"message": "Invalid sort order"}, 400
-            # Read any filters specified
-            search = args.get("search", "")
-            group_id = args.get("group_id", "")
-        except Exception as ex:
-            return {"message": "Query data error"}, 500
-
+        claims = get_jwt_claims()
+        user_id = claims['user_id']
+        args = profile_page_parser.parse_args()
+        # Pagination settings
+        page = args.get("page", 1) if args.get("page") else None
+        per_page = args.get("per_page") if args.get("per_page") else None
+        # Sorts by 'teams_name' by default
+        sort_by = str(args.get("sort_by")) if args.get("sort_by") else "created_at"
+        # Sorts ascending by default
+        sort_order = (
+            str(args.get("sort_order")) if args.get("sort_order") else "desc"
+        )
+        if sort_order.lower() not in ["asc", "desc"]:
+            return {"message": "Invalid sort order"}, 400
+        # Read any filters specified
+        search = args.get("search", "")
+        group_id = args.get("group_id", "")
         """Used to retrieve list of profiles"""
         profiles = profiles_services.get_all_profiles(
-            page, per_page, sort_by, sort_order, search, group_id
+            page, per_page, sort_by, sort_order, search, user_id
         )
 
         return profiles, 200
@@ -155,7 +153,8 @@ class ProfilesController(Resource):
                 data["owner"] = user_id  # set owner
                 data["user_access"] = user_id
                 profile = profiles_services.create_profile(data, device_id, user_id)
-                success_number += 1
+                if profile:
+                    success_number += 1
             except Exception as ex:
                 _logger.error(ex)
                 return {

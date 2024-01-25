@@ -20,6 +20,7 @@ post_model = posts_ns.model(
         "view": fields.String(required=False, example="New Post Content"),
         "tw_post_id": fields.String(required=False, example="tw_post_id"),
         "profile_id": fields.String(required=True, example="profile_id"),
+        "post_date": fields.String(required=True, example="post_date"),
     },
 )
 
@@ -32,6 +33,7 @@ post_update_model = posts_ns.model(
         "comment": fields.String(example="New Post Content"),
         "share": fields.String(example="New Post Content"),
         "view": fields.String(example="New Post Content"),
+        "post_date": fields.String(example="New Post date content"),
     },
 )
 

@@ -10,6 +10,7 @@ from src import db
 from src.models.profiles import Profiles
 from src.models.teams import Teams
 from src.services import hma_services
+from src.models import Events, Posts
 
 # Create module log
 _logger = logging.getLogger(__name__)
@@ -17,15 +18,16 @@ _logger = logging.getLogger(__name__)
 
 def create_profile(data, device_id, user_id):
     username = data.get("username", "").strip()
-    new_profile = Profiles.query.filter_by(username=username).first()
-    if not new_profile:
-        new_profile = Profiles()
-        for key, val in data.items():
-            if hasattr(new_profile, key):
-                if isinstance(val, str):
-                    val = val.strip()
-                if val:
-                    new_profile.__setattr__(key, val)
+    existed = Profiles.query.filter_by(username=username).first()
+    if existed:
+        return False
+    new_profile = Profiles()
+    for key, val in data.items():
+        if hasattr(new_profile, key):
+            if isinstance(val, str):
+                val = val.strip()
+            if val:
+                new_profile.__setattr__(key, val)
 
     hma_profile_id = hma_services.create_hma_profile(username, device_id, user_id)
     # if not hma_profile_id:
@@ -49,7 +51,7 @@ def get_total_profiles():
 
 
 def get_all_profiles(
-    page=0, per_page=20, sort_by="created_at", sort_order="desc", search="", group_id=""
+    page=0, per_page=20, sort_by="created_at", sort_order="desc", search="", user_id=""
 ):
     column = getattr(Teams, sort_by, None)
     if not column:
@@ -67,6 +69,8 @@ def get_all_profiles(
                     Profiles.user_access.ilike(f"%{search}%"),
                 )
             )
+        if user_id:
+            query = query.filter(Profiles.owner == user_id)
         # Apply pagination
         count = query.count()
 
@@ -114,6 +118,9 @@ def delete_profile(profile_id, user_id, device_id):
     hma_services.delete_browser_profile(profile_id, user_id, device_id)
     profile = Profiles.query.get(profile_id)
     if profile:
+        Events.query.filter_by(profile_id=profile_id).delete()
+        Events.query.filter_by(profile_id_interact=profile_id).delete()
+        Posts.query.filter_by(profile_id=profile_id).delete()
         db.session.delete(profile)
         db.session.flush()
         return True

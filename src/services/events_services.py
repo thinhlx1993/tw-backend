@@ -20,6 +20,7 @@ def get_all_events(
     search="",
     profile_id="",
     event_type="",
+    user_id=""
 ):
     column = getattr(Events, sort_by, None)
     if not column:
@@ -30,7 +31,7 @@ def get_all_events(
     if sorting_order:
         query = query.order_by(text(sorting_order))
     if event_type:
-        query.filter(Events.event_type == event_type)
+        query = query.filter(Events.event_type == event_type)
     if search:
         query = query.filter(
             or_(
@@ -39,7 +40,11 @@ def get_all_events(
             )
         )
     if profile_id:
-        query.filter(Events.profile_id == profile_id)
+        query = query.filter(Events.profile_id == profile_id)
+
+    if user_id:
+        query = query.filter(Events.user_id == user_id)
+
     # Apply pagination
     count = query.count()
 

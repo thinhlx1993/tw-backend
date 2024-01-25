@@ -187,8 +187,8 @@ def clear_unused_resourced(device_id, user_id):
                 url = f"{base_url}/browser/{item['id']}"
                 headers = {"Authorization": f"Bearer {hma_token}"}
                 name = item["name"]
-                print(f"found unused profile: {name}")
-                # requests.delete(url, headers=headers)
+                _logger.info(f"found unused profile: {name}")
+                requests.delete(url, headers=headers)
     except Exception as ex:
         _logger.exception(ex)
 

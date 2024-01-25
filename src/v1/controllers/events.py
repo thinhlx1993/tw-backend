@@ -1,4 +1,5 @@
 """Controller for events."""
+from flask_jwt_extended import get_jwt_claims
 from flask_restx import fields, Resource
 
 from src.parsers import page_parser

@@ -19,12 +19,13 @@ class Posts(db.Model):
     profile_id = db.Column(
         db.String(128), ForeignKey("profiles.profile_id"), nullable=False
     )
-    crawl_by = db.Column(db.String(128), ForeignKey("user.user_id"), nullable=False)
+    crawl_by = db.Column(db.String(128), ForeignKey("user.user_id"), nullable=True)
     created_at = db.Column(db.DateTime(), server_default=func.now())
     like = db.Column(db.String(128), nullable=True)
     comment = db.Column(db.String(128), nullable=True)
     share = db.Column(db.String(128), nullable=True)
     view = db.Column(db.String(128), nullable=True)
+    post_date = db.Column(db.String(128), nullable=True)
     # Relationships
     profile = relationship("Profiles", foreign_keys=[profile_id])
     user = relationship("User", foreign_keys=[crawl_by])
