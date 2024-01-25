@@ -348,13 +348,12 @@ def get_user_roles(username, teams_id):
     return roles
 
 
-def create_user(username, password, first_name, last_name):
+def create_user(username, password, email):
     """
     Creates a user
     :param str username: Username for the user
     :param str password: Password for the user
-    :param str first_name : First name of the user
-    :param str last_name : Last name of the user
+    :param str email : Email of the user
     :return object user: User object created from the params
     """
 
@@ -365,7 +364,7 @@ def create_user(username, password, first_name, last_name):
     # except Exception as e:
     #     capture_exception(e)
     #     raise
-    user = models.User(username, password, first_name, last_name)
+    user = models.User(username, password, email)
     db.session.add(user)
     db.session.flush()
 

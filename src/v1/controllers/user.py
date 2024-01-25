@@ -62,6 +62,7 @@ user_model = {
 create_user_model = {
     "username": fields.String(example="someone"),
     "first_name": fields.String(example="John"),
+    "email": fields.String(example="email@email.com"),
     "last_name": fields.String(example="Doe"),
     "phone_number": fields.String(example="+916655928947"),
     "password": fields.String(example="123#"),
@@ -73,9 +74,13 @@ create_user_model = {
 register_user_model = {
     "username": fields.String(example="new account", required=True),
     "first_name": fields.String(example="John"),
+    "email": fields.String(example="youemail@google.com"),
     "last_name": fields.String(example="Doe"),
     "role_id": fields.String(
-        example="b40ee1ae-5a12-487a-98cc-b6d07238e17a", required=True
+        example="b40ee1ae-5a12-487a-98cc-b6d07238e17a", required=False
+    ),
+    "device_id": fields.String(
+        example="b40ee1ae-5a12-487a-98cc-b6d07238e17a", required=False
     ),
     "password": fields.String(example="12345#", required=True),
     "teams_name": fields.String(example="Default team", required=True),
@@ -787,6 +792,7 @@ class UserOperations(Resource):
         password = request_data["password"]
         first_name = request_data.get("first_name", None)
         last_name = request_data.get("last_name", None)
+        email = request_data.get("email", None)
         role_id = request_data.get("role_id", None)
 
         if user_services.check_user_exists(username=username):
@@ -794,7 +800,7 @@ class UserOperations(Resource):
         if password == "":
             return {"message": "Password cannot be empty"}, 401
 
-        new_user = user_services.create_user(username, password, first_name, last_name)
+        new_user = user_services.create_user(username, password, email)
         user_claims = get_jwt_claims()
         teams_id = user_claims["teams_id"]
         user_services.update_user_email_verification(new_user.user_id)
@@ -1139,16 +1145,18 @@ class UserRegistration(Resource):
             request_data = user_ns2.payload
             username = request_data["username"].strip()
             password = request_data["password"].strip()
-            first_name = (
-                request_data["first_name"].strip()
-                if "first_name" in request_data
-                else None
-            )
-            last_name = (
-                request_data["last_name"].strip()
-                if "last_name" in request_data
-                else None
-            )
+            email = request_data["email"].strip()
+            device_id = request_data["device_id"].strip()
+            # first_name = (
+            #     request_data["first_name"].strip()
+            #     if "first_name" in request_data
+            #     else None
+            # )
+            # last_name = (
+            #     request_data["last_name"].strip()
+            #     if "last_name" in request_data
+            #     else None
+            # )
             # org_name = request_data["teams_name"].strip()
             # profile_name = (
             #     "User" if first_name and last_name else f"{first_name} {last_name}"
@@ -1169,7 +1177,7 @@ class UserRegistration(Resource):
 
             # Create user in user table
             new_user = user_services.create_user(
-                username, password, first_name, last_name
+                username, password, email
             )
 
             # Create user's default organization

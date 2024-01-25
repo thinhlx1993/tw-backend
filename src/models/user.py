@@ -66,11 +66,10 @@ class User(db.Model):
     )
 
     # Constructor initializing values.
-    def __init__(self, username, password, first_name, last_name):
+    def __init__(self, username, password, email):
         self.username = username
         self.password = password
-        self.first_name = first_name
-        self.last_name = last_name
+        self.email = email
 
     # String representation of the model. Can be edited to show whatever
     # attributes we want to see.
