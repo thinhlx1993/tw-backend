@@ -141,13 +141,14 @@ class ProfilesController(Resource):
             _logger.debug(f"Data not valid: {e}")
             return {"message": "Data not valid"}, 400
         total_profiles = profiles_services.get_total_profiles()
-        teams = teams_services.get_teams(teams_id)
-        if total_profiles >= teams.teams_plan:
-            return {
-                "message": "Không thể tạo thêm profile do vượt quá số lượng cho phép, vui lòng liên hệ admin"
-            }, 500
+        # teams = teams_services.get_teams(teams_id)
+        # if total_profiles >= teams.teams_plan:
+        #     return {
+        #         "message": "Không thể tạo thêm profile do vượt quá số lượng cho phép, vui lòng liên hệ admin"
+        #     }, 500
 
         success_number = 0
+        error_number = 0
         for data in request_data.get("profiles"):
             try:
                 data["owner"] = user_id  # set owner
@@ -157,11 +158,12 @@ class ProfilesController(Resource):
                     success_number += 1
             except Exception as ex:
                 _logger.error(ex)
-                return {
-                    "message": f"Không thể tạo: {data['username']}, Đã tạo {success_number}"
-                }, 200
+                error_number += 1
+                # return {
+                #     "message": f"Không thể tạo: {data['username']}, Đã tạo {success_number}"
+                # }, 200
         hma_services.clear_unused_resourced(device_id, user_id)
-        return {"message": f"Tạo thành công {success_number} profiles"}, 200
+        return {"message": f"Tạo thành công {success_number}, Thất bại: {error_number}"}, 200
 
 
 class ProfilesIdController(Resource):
