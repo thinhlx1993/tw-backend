@@ -1,0 +1,267 @@
+"""add tasks
+
+Revision ID: 3b0ae7459be3
+Revises: 3d1d9d8d6279
+Create Date: 2024-01-26 22:09:15.378217
+
+"""
+from alembic import op
+import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
+
+# revision identifiers, used by Alembic.
+revision = "3b0ae7459be3"
+down_revision = "3d1d9d8d6279"
+branch_labels = None
+depends_on = None
+
+
+def upgrade():
+    # Create a temporary table structure
+    tasks_table = sa.table(
+        "tasks",
+        sa.column("tasks_id", sa.String),
+        sa.column("tasks_name", sa.String),
+        sa.column("tasks_json", postgresql.JSONB),
+    )
+
+    # Prepare data for insertion
+    data_to_insert = []
+    json_data = [
+        {
+            "task_id": "b5d71b32-6da4-4fd0-ae4f-d4dfa44de3ac",
+            "profileId": "",
+            "type": "buffViews",
+            "enable": True,
+            "profiles": "",
+            "mixRandomProfiles": False,
+            "intervalTimeCheckNewPost": None,
+            "timesReUp": "",
+            "reUpWithImage": None,
+            "reUpWithVideo": None,
+            "randomTotalPostsReUp": "",
+            "randomDelayTimesReUp": "",
+            "randomTotalPostsForInteractAds": "",
+            "chatOpenAIPrefix": "",
+            "randomTotalFollowProfiles": "",
+            "entryDetailUrls": "asdsa",
+            "mixRandomEntryDetailUrls": False,
+            "totalViews": 100,
+            "totalPosts": None,
+            "fairInteractOptions": None,
+            "randomDelayTimeProfiles": None,
+            "randomDelayTimeActions": None,
+            "allowLikeAction": None,
+            "allowCommentAction": None,
+            "stopAction": None,
+            "stopActionTimeout": None,
+            "stopActionRandomTotalPosts": None,
+            "replayAction": None,
+            "replayActionTimeout": None,
+        },
+        {
+            "task_id": "cc1ad605-4f5d-4112-9f95-4751b3d444f1",
+            "profileId": "",
+            "type": "followProfiles",
+            "enable": False,
+            "profiles": "",
+            "mixRandomProfiles": False,
+            "intervalTimeCheckNewPost": None,
+            "timesReUp": "",
+            "reUpWithImage": None,
+            "reUpWithVideo": None,
+            "randomTotalPostsReUp": "",
+            "randomDelayTimesReUp": "",
+            "randomTotalPostsForInteractAds": "",
+            "chatOpenAIPrefix": "",
+            "randomTotalFollowProfiles": "",
+            "entryDetailUrls": None,
+            "mixRandomEntryDetailUrls": None,
+            "totalViews": None,
+            "totalPosts": None,
+            "fairInteractOptions": None,
+            "randomDelayTimeProfiles": None,
+            "randomDelayTimeActions": None,
+            "allowLikeAction": None,
+            "allowCommentAction": None,
+            "stopAction": None,
+            "stopActionTimeout": None,
+            "stopActionRandomTotalPosts": None,
+            "replayAction": None,
+            "replayActionTimeout": None,
+        },
+        {
+            "task_id": "25d4520a-d236-411c-b8da-d560c8d94c3d",
+            "profileId": "",
+            "type": "reUpPost",
+            "enable": True,
+            "profiles": "",
+            "mixRandomProfiles": True,
+            "intervalTimeCheckNewPost": None,
+            "timesReUp": "",
+            "reUpWithImage": True,
+            "reUpWithVideo": True,
+            "randomTotalPostsReUp": "1,5",
+            "randomDelayTimesReUp": "",
+            "randomTotalPostsForInteractAds": "",
+            "chatOpenAIPrefix": "haHA",
+            "randomTotalFollowProfiles": "",
+            "entryDetailUrls": None,
+            "mixRandomEntryDetailUrls": None,
+            "totalViews": None,
+            "totalPosts": None,
+            "fairInteractOptions": None,
+            "randomDelayTimeProfiles": None,
+            "randomDelayTimeActions": None,
+            "allowLikeAction": None,
+            "allowCommentAction": None,
+            "stopAction": None,
+            "stopActionTimeout": None,
+            "stopActionRandomTotalPosts": None,
+            "replayAction": None,
+            "replayActionTimeout": None,
+        },
+        {
+            "task_id": "11b39610-3e5b-4bfb-9b89-815097a674ea",
+            "profileId": "",
+            "type": "newsFeed",
+            "enable": True,
+            "profiles": "",
+            "mixRandomProfiles": False,
+            "intervalTimeCheckNewPost": None,
+            "timesReUp": "",
+            "reUpWithImage": None,
+            "reUpWithVideo": None,
+            "randomTotalPostsReUp": "",
+            "randomDelayTimesReUp": "",
+            "randomTotalPostsForInteractAds": "",
+            "chatOpenAIPrefix": "",
+            "randomTotalFollowProfiles": "",
+            "entryDetailUrls": None,
+            "mixRandomEntryDetailUrls": None,
+            "totalViews": None,
+            "totalPosts": None,
+            "fairInteractOptions": None,
+            "randomDelayTimeProfiles": None,
+            "randomDelayTimeActions": "5,10",
+            "allowLikeAction": [False],
+            "allowCommentAction": [False],
+            "stopAction": "timeout",
+            "stopActionTimeout": 5,
+            "stopActionRandomTotalPosts": "5,10",
+            "replayAction": "off",
+            "replayActionTimeout": 5,
+        },
+        {
+            "task_id": "50007de2-1322-4cdb-a4a7-ef9ed5a4ebf6",
+            "profileId": "",
+            "type": "interactSpecialization",
+            "enable": False,
+            "profiles": "",
+            "mixRandomProfiles": False,
+            "intervalTimeCheckNewPost": None,
+            "timesReUp": "",
+            "reUpWithImage": None,
+            "reUpWithVideo": None,
+            "randomTotalPostsReUp": "",
+            "randomDelayTimesReUp": "",
+            "randomTotalPostsForInteractAds": "",
+            "chatOpenAIPrefix": "",
+            "randomTotalFollowProfiles": "",
+            "entryDetailUrls": "",
+            "mixRandomEntryDetailUrls": False,
+            "totalViews": None,
+            "totalPosts": None,
+            "fairInteractOptions": None,
+            "randomDelayTimeProfiles": None,
+            "randomDelayTimeActions": "5,10",
+            "allowLikeAction": [False],
+            "allowCommentAction": [False],
+            "stopAction": None,
+            "stopActionTimeout": None,
+            "stopActionRandomTotalPosts": None,
+            "replayAction": None,
+            "replayActionTimeout": None,
+        },
+        {
+            "task_id": "be5816a1-dd7d-4730-8808-ffedbad9ef7b",
+            "profileId": "",
+            "type": "interactAds",
+            "enable": True,
+            "profiles": "",
+            "mixRandomProfiles": True,
+            "intervalTimeCheckNewPost": None,
+            "timesReUp": "",
+            "reUpWithImage": None,
+            "reUpWithVideo": None,
+            "randomTotalPostsReUp": "",
+            "randomDelayTimesReUp": "",
+            "randomTotalPostsForInteractAds": "1,2",
+            "chatOpenAIPrefix": "",
+            "randomTotalFollowProfiles": "",
+            "entryDetailUrls": None,
+            "mixRandomEntryDetailUrls": None,
+            "totalViews": None,
+            "totalPosts": None,
+            "fairInteractOptions": None,
+            "randomDelayTimeProfiles": "1,2",
+            "randomDelayTimeActions": "1,2",
+            "allowLikeAction": [False],
+            "allowCommentAction": [False],
+            "stopAction": None,
+            "stopActionTimeout": None,
+            "stopActionRandomTotalPosts": None,
+            "replayAction": "timeout",
+            "replayActionTimeout": 6,
+        },
+        {
+            "task_id": "0f1c03e1-8cf2-4d8f-b0ea-236fee6d85ed",
+            "profileId": "",
+            "type": "fairInteract",
+            "enable": False,
+            "profiles": "",
+            "mixRandomProfiles": False,
+            "intervalTimeCheckNewPost": None,
+            "timesReUp": "",
+            "reUpWithImage": None,
+            "reUpWithVideo": None,
+            "randomTotalPostsReUp": "",
+            "randomDelayTimesReUp": "",
+            "randomTotalPostsForInteractAds": "",
+            "chatOpenAIPrefix": "",
+            "randomTotalFollowProfiles": "",
+            "entryDetailUrls": "",
+            "mixRandomEntryDetailUrls": False,
+            "totalViews": None,
+            "totalPosts": 0,
+            "fairInteractOptions": None,
+            "randomDelayTimeProfiles": None,
+            "randomDelayTimeActions": None,
+            "allowLikeAction": None,
+            "allowCommentAction": None,
+            "stopAction": None,
+            "stopActionTimeout": None,
+            "stopActionRandomTotalPosts": None,
+            "replayAction": None,
+            "replayActionTimeout": None,
+        },
+    ]
+    for item in json_data:
+        data_to_insert.append(
+            {
+                "tasks_id": str(
+                    item["task_id"]
+                ),  # Generate or convert IDs as necessary
+                "tasks_name": item.get("type", ""),
+                "tasks_json": item,  # Storing the entire item as JSON
+            }
+        )
+
+    # Insert data
+    op.bulk_insert(tasks_table, data_to_insert)
+
+
+def downgrade():
+    # Assuming 'tasks_id' or 'tasks_name' can be used to identify the rows to remove
+    # Example: Delete tasks where 'tasks_id' matches the IDs we inserted
+    pass

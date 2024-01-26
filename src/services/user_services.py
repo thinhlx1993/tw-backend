@@ -1993,12 +1993,7 @@ def update_user_last_active_at(user_id):
     """
     Function to update user's last_active_at
     """
-    try:
-        user = models.User.query.filter_by(user_id=user_id).first()
-        user.last_active_at = datetime.datetime.now()
-        db.session.flush()
-        return True
-    except Exception as e:
-        db.session.rollback()
-        capture_exception(e)
-        raise
+    user = models.User.query.filter_by(user_id=user_id).first()
+    user.last_active_at = datetime.datetime.now()
+    db.session.flush()
+    return True

@@ -170,7 +170,7 @@ class ProfilesController(Resource):
                 # return {
                 #     "message": f"Không thể tạo: {data['username']}, Đã tạo {success_number}"
                 # }, 200
-        hma_services.clear_unused_resourced(device_id, user_id)
+        # hma_services.clear_unused_resourced(device_id, user_id)
         return {"message": f"Tạo thành công {success_number}, Thất bại: {error_number}"}, 200
 
 
@@ -251,6 +251,9 @@ class ProfilesBrowserController(Resource):
             user_id = claims.get("user_id")
 
         settings = setting_services.get_settings_by_user_device(user_id, device_id)
+        if not settings:
+            return {"message": "Please setup your settings first"}, 400
+
         settings = settings["settings"]
         browser_data = ""
         if settings["browserType"] == SettingsEnums.hideMyAcc.value and body_data:
