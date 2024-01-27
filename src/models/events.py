@@ -30,10 +30,6 @@ class Events(db.Model):
     created_at = db.Column(db.DateTime(), nullable=False, server_default=func.now())
     issue = db.Column(db.Text(), nullable=True)
 
-    # Relationships
-    # receiver = relationship("Profiles", foreign_keys=[profile_id])
-    # giver = relationship("Profiles", foreign_keys=[profile_id_interact])
-
     def repr_name(self):
         return {
             "event_id": self.event_id,

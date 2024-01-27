@@ -42,10 +42,13 @@ class Profiles(db.Model):
     owner = db.Column(db.String(128), nullable=True, unique=False, server_default="")
 
     interactions_given = db.relationship(
-        "Events", foreign_keys="Events.profile_id_interact", backref="giver", lazy=True
+        "Events", foreign_keys="Events.profile_id", backref="giver", lazy=True
     )
     interactions_received = db.relationship(
-        "Events", foreign_keys="Events.profile_id", backref="receiver", lazy=True
+        "Events",
+        foreign_keys="Events.profile_id_interact",
+        backref="receiver",
+        lazy=True,
     )
 
     def repr_name(self):
