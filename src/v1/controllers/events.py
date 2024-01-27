@@ -12,12 +12,12 @@ events_ns = api_version_1_web.namespace("events", description="Events Functional
 event_model = events_ns.model(
     "EventModel",
     {
-        "schedule_id": fields.String(required=False, example="event_id"),
-        "mission_id": fields.String(required=False, example="mission_id"),
-        "user_id": fields.String(required=False, example="user_id"),
         "issue": fields.String(required=False, example="issue"),
         "event_type": fields.String(required=True, example="event_type"),
         "profile_id": fields.String(required=True, example="profile_id"),
+        "profile_id_interact": fields.String(required=True, example="profile_id"),
+        "schedule_id": fields.String(required=False, example="event_id"),
+        "mission_id": fields.String(required=False, example="mission_id"),
     },
 )
 
@@ -45,19 +45,13 @@ class EventsController(Resource):
         # Sorts by 'teams_name' by default
         sort_by = str(args.get("sort_by")) if args.get("sort_by") else "created_at"
         # Sorts ascending by default
-        sort_order = (
-            str(args.get("sort_order")) if args.get("sort_order") else "desc"
-        )
+        sort_order = str(args.get("sort_order")) if args.get("sort_order") else "desc"
         if sort_order.lower() not in ["asc", "desc"]:
             return {"message": "Invalid sort order"}, 400
         # Read any filters specified
         search = args.get("search", "")
         events = events_services.get_all_events(
-            page,
-            per_page,
-            sort_by,
-            sort_order,
-            search
+            page, per_page, sort_by, sort_order, search
         )
         return events, 200
 

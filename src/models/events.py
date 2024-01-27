@@ -31,20 +31,18 @@ class Events(db.Model):
     issue = db.Column(db.Text(), nullable=True)
 
     # Relationships
-    profile = relationship("Profiles", foreign_keys=[profile_id])
-    profile_interact = relationship("Profiles", foreign_keys=[profile_id_interact])
+    # receiver = relationship("Profiles", foreign_keys=[profile_id])
+    # giver = relationship("Profiles", foreign_keys=[profile_id_interact])
 
     def repr_name(self):
         return {
             "event_id": self.event_id,
             "event_type": self.event_type,
-            "profile_id": self.profile_id,
-            "profile_data": self.profile.username if self.profile else None,
-            "profile_interact": self.profile_id_interact,
-            "profile_interact_data": self.profile_interact.username if self.profile_id_interact else None,
+            "receiver": self.receiver.repr_name(),
+            "giver": self.giver.repr_name(),
             "schedule_id": self.schedule_id,
             "mission_id": self.mission_id,
             "user_id": self.user_id,
             "issue": self.issue,
-            "created_at": self.created_at.strftime("%d-%m-%Y %H:%M")
+            "created_at": self.created_at.strftime("%d-%m-%Y %H:%M"),
         }
