@@ -8,7 +8,11 @@ from src.v1.controllers.utils import generate_crontab_schedule
 
 def get_all_missions():
     """Retrieve all missions."""
-    missions = [item.repr_name() for item in Mission.query.all()]
+    sorting_order = "mission_name asc"
+    missions = [
+        item.repr_name()
+        for item in Mission.query.order_by(db.text(sorting_order)).all()
+    ]
     for mission in missions:
         user_id = mission["user_id"]
         if user_id:
