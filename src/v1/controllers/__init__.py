@@ -9,6 +9,7 @@ from src.v1.controllers import mission_schedule
 from src.v1.controllers import settings
 from src.v1.controllers import events
 from src.v1.controllers import posts
+from src.v1.controllers import dashboard
 
 # from src.v1.controllers import schedule
 # from src.v1.controllers import mission

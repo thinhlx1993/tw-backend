@@ -1,11 +1,5 @@
-from sqlalchemy import text, ForeignKey, func
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import relationship
-
-
 from src import db
-from src.query.query_with_soft_delete import QueryWithSoftDelete
+from sqlalchemy import text, ForeignKey, func
 
 
 class Profiles(db.Model):
