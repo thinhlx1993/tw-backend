@@ -14,7 +14,7 @@ from src.models import (
     Events,
     Profiles,
 )
-from src.services import mission_services
+from src.services import mission_services, user_services
 import datetime
 from croniter import croniter
 import logging
@@ -104,42 +104,50 @@ def get_user_schedule(username):
     event_type = random.choice(["comment", "like", "clickAds"])
     claims = get_jwt_claims()
     current_user_id = claims["user_id"]
+
+    # user should be online within 5 minutes
     profile_id_receiver = get_profile_with_event_count_below_limit(
         event_type
-    )  # user receiver
-    if profile_id_receiver:
-        # Find a unique interaction partner from current user profiles
-        days_limit = calculate_days_for_unique_interactions(event_type)
-        # user giver
-        unique_partner_id = find_unique_interaction_partner(
-            profile_id_receiver, event_type, days_limit, current_user_id
-        )
-        if unique_partner_id:
-            tasks = Task.query.filter(Task.tasks_name == event_type).first()
-            if tasks:
-                mission_should_start.append(
+    )
+
+    # Not found any user receiver
+    if not profile_id_receiver:
+        return mission_should_start
+
+    # Find a unique interaction partner from current user profiles
+    days_limit = calculate_days_for_unique_interactions(event_type)
+    # user giver
+    unique_partner_id = find_unique_interaction_partner(
+        profile_id_receiver, event_type, days_limit, current_user_id
+    )
+    if not unique_partner_id:
+        return mission_should_start
+
+    tasks = Task.query.filter(Task.tasks_name == event_type).first()
+    if tasks:
+        mission_should_start.append(
+            {
+                "schedule_id": "",
+                "profile_id": unique_partner_id,
+                "profile_id_receiver": profile_id_receiver,
+                "mission_id": "",
+                "schedule_json": "",
+                "start_timestamp": datetime.datetime.now().strftime(
+                    "%d-%m-%Y %H:%M"
+                ),
+                "tasks": [
                     {
-                        "schedule_id": "",
-                        "profile_id": unique_partner_id,
-                        "profile_id_receiver": profile_id_receiver,
                         "mission_id": "",
-                        "schedule_json": "",
-                        "start_timestamp": datetime.datetime.now().strftime(
-                            "%d-%m-%Y %H:%M"
-                        ),
-                        "tasks": [
-                            {
-                                "mission_id": "",
-                                "tasks_id": tasks.tasks_id,
-                                "tasks": {
-                                    "tasks_id": tasks.tasks_id,
-                                    "tasks_name": event_type,
-                                    "tasks_json": None,
-                                },
-                            }
-                        ],
+                        "tasks_id": tasks.tasks_id,
+                        "tasks": {
+                            "tasks_id": tasks.tasks_id,
+                            "tasks_name": event_type,
+                            "tasks_json": None,
+                        },
                     }
-                )
+                ],
+            }
+        )
     return mission_should_start
 
 
@@ -244,7 +252,7 @@ def get_profile_with_event_count_below_limit(event_type):
     # Query to find a profile with event count below the specified limit for today
     # or profiles without event records
     profile = (
-        db.session.query(Profiles.profile_id)
+        db.session.query(Profiles.profile_id, Profiles.owner)
         .outerjoin(
             event_count_subquery,
             Profiles.profile_id == event_count_subquery.c.profile_id,
@@ -262,4 +270,20 @@ def get_profile_with_event_count_below_limit(event_type):
         .first()
     )
 
-    return profile.profile_id if profile else None
+    # check last activate date
+    if not profile:
+        return None
+
+    profile_id = profile.profile_id
+    owner = profile.owner
+    user_data = user_services.check_user_exists(user_id=owner)
+    if not user_data:
+        return None
+
+    last_active_at = user_data.last_active_at
+    current_time = datetime.datetime.utcnow()
+    time_difference = current_time - last_active_at
+    if time_difference > datetime.timedelta(minutes=5):
+        return None
+
+    return profile_id
