@@ -196,7 +196,8 @@ def find_unique_interaction_partner(
 
     # Query to find a profile that has not interacted, not reached the daily limit,
     # and has the lowest number of clicks
-    account = (
+    # Query to find the top 10 profiles with the lowest number of clicks
+    top_accounts = (
         Profiles.query.outerjoin(
             clicks_count_subquery,
             Profiles.profile_id == clicks_count_subquery.c.profile_id_interact,
@@ -210,11 +211,18 @@ def find_unique_interaction_partner(
             if event_type in ["like", "comment"]
             else True,
         )
-        .order_by(clicks_count_subquery.c.clicks_count.asc(), func.random())
-        .first()
+        .order_by(clicks_count_subquery.c.clicks_count.asc())
+        .limit(10)
+        .all()
     )
 
-    return account.profile_id if account else None
+    # Randomly select one account from the top 10
+    account = random.choice(top_accounts) if top_accounts else None
+
+    # Retrieve the profile ID of the selected account
+    selected_profile_id = account.profile_id if account else None
+
+    return selected_profile_id
 
 
 # Function to calculate days for unique interactions
