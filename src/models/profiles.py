@@ -35,13 +35,13 @@ class Profiles(db.Model):
     phone_number = db.Column(db.String(128), nullable=True, server_default="")
     owner = db.Column(db.String(128), nullable=True, unique=False, server_default="")
 
-    interactions_given = db.relationship(
-        "Events", foreign_keys="Events.profile_id", backref="giver", lazy=True
+    interactions_giver = db.relationship(
+        "Events", foreign_keys="Events.profile_id", backref="receiver", lazy=True
     )
-    interactions_received = db.relationship(
+    interactions_interact = db.relationship(
         "Events",
         foreign_keys="Events.profile_id_interact",
-        backref="receiver",
+        backref="giver",
         lazy=True,
     )
 
@@ -69,6 +69,4 @@ class Profiles(db.Model):
         }
 
     def event_data(self):
-        return {
-            "username": self.username if self.username else ""
-        }
+        return {"username": self.username if self.username else ""}

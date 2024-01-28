@@ -23,6 +23,7 @@ _logger = logging.getLogger(__name__)
 
 daily_limits = {"comment": 5, "like": 5, "clickAds": 350}
 
+
 def should_start_job(cron_expression):
     try:
         if not cron_expression:
@@ -144,14 +145,19 @@ def get_user_schedule(username):
 
 # Function to find a unique interaction partner
 def find_unique_interaction_partner(
-    profile_id, event_type, days_limit, current_user_id
+    profile_receiver, event_type, days_limit, current_user_id
 ):
     # Calculate the start date based on days_limit
-    start_date = datetime.datetime.now() - datetime.timedelta(days=int(days_limit))
+    if days_limit < 1:
+        start_date = datetime.datetime.now() - datetime.timedelta(
+            hours=int(days_limit * 24)
+        )
+    else:
+        start_date = datetime.datetime.now() - datetime.timedelta(days=int(days_limit))
 
     # Subquery to find profiles that have already interacted with the given profile
     interacted_subquery = db.session.query(Events.profile_id_interact).filter(
-        Events.profile_id == profile_id,
+        Events.profile_id == profile_receiver,
         Events.event_type == event_type,
         db.func.date(Events.created_at) >= start_date,
     )
@@ -189,7 +195,7 @@ def find_unique_interaction_partner(
         )
         .filter(
             Profiles.owner == current_user_id,
-            Profiles.profile_id != profile_id,
+            Profiles.profile_id != profile_receiver,
             ~Profiles.profile_id.in_(interacted_subquery),
             ~Profiles.profile_id.in_(reached_limit_subquery),
         )
@@ -225,6 +231,7 @@ def get_profile_with_event_count_below_limit(event_type):
         db.session.query(Events.profile_id, db.func.count().label("event_count"))
         .filter(
             Events.event_type == event_type,
+            Events.issue == "OK",
             db.func.date(Events.created_at) == today,  # Filter for today's events
         )
         .group_by(Events.profile_id)

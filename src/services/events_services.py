@@ -1,9 +1,10 @@
 import math
 
-from sqlalchemy import text, or_
+from sqlalchemy import text, or_, func
 
 from src import db
-from src.models.events import Events  # Importing the Events model
+from src.models import Profiles, Events
+from sqlalchemy.orm import aliased
 
 
 def get_event_by_id(event_id):
@@ -20,41 +21,70 @@ def get_all_events(
     search="",
     profile_id="",
     event_type="",
-    user_id=""
+    user_id="",
+    receiver_username="",
+    giver_username="",
 ):
-    column = getattr(Events, sort_by, None)
+    # Aliases for Profiles table for giver and receiver
+    giver_profile = aliased(Profiles)
+    receiver_profile = aliased(Profiles)
+
+    # Specify the column from Events for sorting
+    if sort_by == "created_at":
+        column = Events.created_at
+    else:
+        column = getattr(Events, sort_by, None)
+
     if not column:
         return False, {"Message": "Invalid sort_by Key provided"}
-    sorting_order = sort_by + " " + sort_order
-    query = Events.query
+
+    sorting_order = f"{column} {sort_order}"
+    query = (
+        db.session.query(Events)
+        .join(giver_profile, Events.profile_id_interact == giver_profile.profile_id)
+        .join(receiver_profile, Events.profile_id == receiver_profile.profile_id)
+    )
+
     # Apply sorting
     if sorting_order:
         query = query.order_by(text(sorting_order))
+
+    # Apply filters
     if event_type:
-        query = query.filter(Events.event_type == event_type)
+        query = query.filter(func.lower(Events.event_type) == func.lower(event_type))
     if search:
+        search = search.lower()
         query = query.filter(
             or_(
-                Events.issue.ilike(f"%{search}%"),
-                Events.event_type.ilike(f"%{search}%"),
+                func.lower(Events.issue).ilike(f"%{search}%"),
+                func.lower(Events.event_type).ilike(f"%{search}%"),
             )
         )
     if profile_id:
         query = query.filter(Events.profile_id == profile_id)
-
     if user_id:
         query = query.filter(Events.user_id == user_id)
+    if receiver_username:
+        query = query.filter(
+            func.lower(receiver_profile.username) == func.lower(receiver_username)
+        )
+    if giver_username:
+        query = query.filter(
+            func.lower(giver_profile.username) == func.lower(giver_username)
+        )
 
     # Apply pagination
     count = query.count()
-
     if per_page:
         query = query.limit(per_page)
     if page:
         query = query.offset(per_page * (page - 1))
+
     events = query.all()
+
     # Formatting the result
     formatted_result = [event.repr_name() for event in events]
+
     return {
         "data": formatted_result,
         "result_count": count,

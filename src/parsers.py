@@ -27,6 +27,23 @@ page_parser.add_argument(
     "filter", type=str, help="The filters to be applied to function", location="args"
 )
 
+event_page_parser = page_parser.copy()
+event_page_parser.add_argument(
+    "receiver",
+    type=str,
+    required=False,
+    help="user receiver",
+    location="args",
+)
+
+event_page_parser.add_argument(
+    "giver",
+    type=str,
+    required=False,
+    help="user giver",
+    location="args",
+)
+
 date_page_parser = page_parser.copy()
 date_page_parser.add_argument(
     "start_date",
