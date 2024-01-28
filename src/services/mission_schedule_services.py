@@ -23,13 +23,6 @@ _logger = logging.getLogger(__name__)
 
 daily_limits = {"comment": 5, "like": 5, "clickAds": 350}
 
-tasks_ids = {
-    "comment": "be5816a1-dd7d-4730-8808-ffedbad9ef7b",
-    "like": "be5816a1-dd7d-4730-8808-ffedbad9ef7b",
-    "clickAds": "be5816a1-dd7d-4730-8808-ffedbad9ef7b",
-}
-
-
 def should_start_job(cron_expression):
     try:
         if not cron_expression:
@@ -120,32 +113,32 @@ def get_user_schedule(username):
         unique_partner_id = find_unique_interaction_partner(
             profile_id_receiver, event_type, days_limit, current_user_id
         )
-
-        tasks = Task.query.filter(Task.tasks_name == event_type).first()
-        if tasks:
-            mission_should_start.append(
-                {
-                    "schedule_id": "",
-                    "profile_id": unique_partner_id,
-                    "profile_id_receiver": profile_id_receiver,
-                    "mission_id": "",
-                    "schedule_json": "",
-                    "start_timestamp": datetime.datetime.now().strftime(
-                        "%d-%m-%Y %H:%M"
-                    ),
-                    "tasks": [
-                        {
-                            "mission_id": "",
-                            "tasks_id": tasks.tasks_id,
-                            "tasks": {
+        if unique_partner_id:
+            tasks = Task.query.filter(Task.tasks_name == event_type).first()
+            if tasks:
+                mission_should_start.append(
+                    {
+                        "schedule_id": "",
+                        "profile_id": unique_partner_id,
+                        "profile_id_receiver": profile_id_receiver,
+                        "mission_id": "",
+                        "schedule_json": "",
+                        "start_timestamp": datetime.datetime.now().strftime(
+                            "%d-%m-%Y %H:%M"
+                        ),
+                        "tasks": [
+                            {
+                                "mission_id": "",
                                 "tasks_id": tasks.tasks_id,
-                                "tasks_name": event_type,
-                                "tasks_json": None,
-                            },
-                        }
-                    ],
-                }
-            )
+                                "tasks": {
+                                    "tasks_id": tasks.tasks_id,
+                                    "tasks_name": event_type,
+                                    "tasks_json": None,
+                                },
+                            }
+                        ],
+                    }
+                )
     return mission_should_start
 
 
