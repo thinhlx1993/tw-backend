@@ -705,7 +705,7 @@ def update_user_role(
             models.RolePermissionMappingLog(
                 role_id=i.role_id,
                 permission_id=i.permission_id,
-                deactivation_date=datetime.datetime.now(),
+                deactivation_date=datetime.datetime.utcnow(),
             )
             for i in role_permission_mappings
         ]
@@ -804,7 +804,7 @@ def delete_user_role(role_id):
                 models.RolePermissionMappingLog(
                     role_id=i.role_id,
                     permission_id=i.permission_id,
-                    deactivation_date=datetime.datetime.now(),
+                    deactivation_date=datetime.datetime.utcnow(),
                 )
                 for i in role_permission_mappings
             ]
@@ -843,7 +843,7 @@ def update_user_notification(user_id, notification_status):
             return False, {"Message": "Invalid user Id"}
         # tokens = user.tokens
         user.notifications_enabled = notification_status
-        user.modified_at = datetime.datetime.now()
+        user.modified_at = datetime.datetime.utcnow()
         # if tokens:
         #     for token in tokens:
         #         if not hasattr(token, "is_deleted"):
@@ -1234,7 +1234,7 @@ def check_password_token_validity(token):
         # Check if it is older than 24 hours
         if token_row:
             token_created_at = token_row.created_at
-            if (datetime.datetime.now() - token_created_at).total_seconds() > 86400:
+            if (datetime.datetime.utcnow() - token_created_at).total_seconds() > 86400:
                 return None
     except Exception as e:
         db.session.rollback()
@@ -1279,7 +1279,7 @@ def invalidate_password_reset_token(token):
             models.UserPasswordResetToken.token == token
         ).first()
         token_row.is_valid = False
-        token_row.used_at = datetime.datetime.now()
+        token_row.used_at = datetime.datetime.utcnow()
         db.session.flush()
         return True
     except Exception as e:
@@ -1994,6 +1994,6 @@ def update_user_last_active_at(user_id):
     Function to update user's last_active_at
     """
     user = models.User.query.filter_by(user_id=user_id).first()
-    user.last_active_at = datetime.datetime.now()
+    user.last_active_at = datetime.datetime.utcnow()
     db.session.flush()
     return True

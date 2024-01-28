@@ -356,7 +356,7 @@ class Teams(Resource):
         )
         owner = request_data.get("owner", None)
         created_at = request_data.get("created_at", None)
-        updated_at = request_data.get("update_at", datetime.now().isoformat())
+        updated_at = request_data.get("update_at", datetime.utcnow().isoformat())
         is_disabled = request_data.get("is_disabled", None)
         is_deleted = request_data.get("is_deleted", None)
         try:

@@ -1,3 +1,4 @@
+import datetime
 import math
 
 from sqlalchemy import text, or_, func
@@ -28,7 +29,7 @@ def get_all_events(
     # Aliases for Profiles table for giver and receiver
     giver_profile = aliased(Profiles)
     receiver_profile = aliased(Profiles)
-
+    today_date = datetime.datetime.utcnow().date()
     # Specify the column from Events for sorting
     if sort_by == "created_at":
         column = Events.created_at
@@ -45,6 +46,9 @@ def get_all_events(
         .join(receiver_profile, Events.profile_id == receiver_profile.profile_id)
     )
 
+    query = query.filter(
+        db.func.date(Events.created_at) == today_date
+    )
     # Apply sorting
     if sorting_order:
         query = query.order_by(text(sorting_order))

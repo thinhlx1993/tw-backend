@@ -14,7 +14,7 @@ def datetime_since(datetime_string):
     """" Calculates datetime since the specified datetime string"""
     try:
         datetime_obj = to_datetime_obj(datetime_string)
-        time_now = datetime.now()
+        time_now = datetime.utcnow()
         difference = time_now - datetime_obj
         return difference
     except Exception as err:
@@ -22,4 +22,4 @@ def datetime_since(datetime_string):
         return None
     
 def datetime_now():
-    return datetime.now()
+    return datetime.utcnow()

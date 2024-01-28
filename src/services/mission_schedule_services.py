@@ -132,7 +132,7 @@ def get_user_schedule(username):
                 "profile_id_receiver": profile_id_receiver,
                 "mission_id": "",
                 "schedule_json": "",
-                "start_timestamp": datetime.datetime.now().strftime(
+                "start_timestamp": datetime.datetime.utcnow().strftime(
                     "%d-%m-%Y %H:%M"
                 ),
                 "tasks": [
@@ -157,11 +157,11 @@ def find_unique_interaction_partner(
 ):
     # Calculate the start date based on days_limit
     if days_limit < 1:
-        start_date = datetime.datetime.now() - datetime.timedelta(
+        start_date = datetime.datetime.utcnow() - datetime.timedelta(
             hours=int(days_limit * 24)
         )
     else:
-        start_date = datetime.datetime.now() - datetime.timedelta(days=int(days_limit))
+        start_date = datetime.datetime.utcnow() - datetime.timedelta(days=int(days_limit))
 
     # Subquery to find profiles that have already interacted with the given profile
     interacted_subquery = db.session.query(Events.profile_id_interact).filter(
@@ -175,7 +175,7 @@ def find_unique_interaction_partner(
         db.session.query(Events.profile_id)
         .filter(
             Events.event_type == event_type,
-            db.func.date(Events.created_at) == datetime.datetime.now().date(),
+            db.func.date(Events.created_at) == datetime.datetime.utcnow().date(),
         )
         .group_by(Events.profile_id)
         .having(db.func.count() >= daily_limits[event_type])
@@ -188,7 +188,7 @@ def find_unique_interaction_partner(
         )
         .filter(
             Events.event_type == "clickAds",
-            db.func.date(Events.created_at) == datetime.datetime.now().date(),
+            db.func.date(Events.created_at) == datetime.datetime.utcnow().date(),
         )
         .group_by(Events.profile_id_interact)
         .subquery()
@@ -243,7 +243,7 @@ def calculate_days_for_unique_interactions(event_type):
 
 def get_profile_with_event_count_below_limit(event_type):
     # Get today's date
-    today = datetime.datetime.now().date()
+    today = datetime.datetime.utcnow().date()
 
     # Subquery to count the event type for each profile for today
     event_count_subquery = (

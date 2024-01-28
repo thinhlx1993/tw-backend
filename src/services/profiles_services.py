@@ -108,7 +108,7 @@ def update_profile(profile_id, data):
                 if isinstance(value, str):
                     value = value.strip()
                 setattr(profile, key, value)
-        profile.modified_at = datetime.datetime.now()
+        profile.modified_at = datetime.datetime.utcnow()
         db.session.flush()
         return profile
     return None

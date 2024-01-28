@@ -392,7 +392,7 @@ def update_robot(data):
         # update metadata
         for i in data:
             setattr(robotDetails, i, data[i])
-        robotDetails.modified_at = datetime.datetime.now()
+        robotDetails.modified_at = datetime.datetime.utcnow()
         db.session.flush()
     except Exception as e:
         db.session.rollback()
