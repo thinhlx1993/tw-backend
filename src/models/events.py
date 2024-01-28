@@ -40,5 +40,5 @@ class Events(db.Model):
             "mission_id": self.mission_id,
             "user_id": self.user_id,
             "issue": self.issue,
-            "created_at": self.created_at.strftime("%d-%m-%Y %H:%M"),
+            "created_at": self.created_at.isoformat(),
         }
