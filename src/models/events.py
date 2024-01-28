@@ -34,8 +34,8 @@ class Events(db.Model):
         return {
             "event_id": self.event_id,
             "event_type": self.event_type,
-            "receiver": self.receiver.repr_name() if self.receiver else {},
-            "giver": self.giver.repr_name() if self.giver else {},
+            "receiver": self.receiver.event_data() if self.receiver else {},
+            "giver": self.giver.event_data() if self.giver else {},
             "schedule_id": self.schedule_id,
             "mission_id": self.mission_id,
             "user_id": self.user_id,

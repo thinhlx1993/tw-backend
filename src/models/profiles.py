@@ -67,3 +67,8 @@ class Profiles(db.Model):
             "created_at": self.created_at.strftime("%d-%m-%Y %H:%M"),
             "modified_at": self.modified_at.strftime("%d-%m-%Y %H:%M"),
         }
+
+    def event_data(self):
+        return {
+            "username": self.username if self.username else ""
+        }
