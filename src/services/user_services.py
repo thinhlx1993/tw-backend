@@ -74,7 +74,7 @@ def check_user_exists(username=None, user_id=None):
                 and_(models.User.user_id == user_id, models.User.is_disabled == False)
             ).first()
         else:
-            raise Exception("No user_id or username provided")
+            raise Exception("No username or password provided")
     except Exception as e:
         db.session.rollback()
         capture_exception(e)
