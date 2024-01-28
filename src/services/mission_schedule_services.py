@@ -198,6 +198,9 @@ def find_unique_interaction_partner(
             Profiles.profile_id != profile_receiver,
             ~Profiles.profile_id.in_(interacted_subquery),
             ~Profiles.profile_id.in_(reached_limit_subquery),
+            Profiles.main_account.isnot(True)
+            if event_type in ["like", "comment"]
+            else True,
         )
         .order_by(clicks_count_subquery.c.clicks_count.asc(), func.random())
         .first()

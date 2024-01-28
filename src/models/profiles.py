@@ -34,7 +34,7 @@ class Profiles(db.Model):
     pass_emails = db.Column(db.String(128), nullable=True, server_default="")
     phone_number = db.Column(db.String(128), nullable=True, server_default="")
     owner = db.Column(db.String(128), nullable=True, unique=False, server_default="")
-
+    main_profile = db.Column(db.Boolean, server_default="false", nullable=True)
     interactions_giver = db.relationship(
         "Events", foreign_keys="Events.profile_id", backref="receiver", lazy=True
     )
@@ -60,6 +60,7 @@ class Profiles(db.Model):
             "hma_profile_id": self.hma_profile_id if self.hma_profile_id else "",
             "emails": self.emails if self.emails else "",
             "status": self.status if self.status else "",
+            "main_profile": self.main_profile,
             "pass_emails": self.pass_emails if self.pass_emails else "",
             "phone_number": self.phone_number if self.phone_number else "",
             "notes": self.notes if self.notes else "",
