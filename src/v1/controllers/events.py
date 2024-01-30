@@ -15,7 +15,7 @@ event_model = events_ns.model(
         "issue": fields.String(required=False, example="issue"),
         "event_type": fields.String(required=True, example="event_type"),
         "profile_id": fields.String(required=True, example="profile_id"),
-        "profile_id_interact": fields.String(required=True, example="profile_id"),
+        "profile_id_interact": fields.String(required=False, example="profile_id"),
         "schedule_id": fields.String(required=False, example="event_id"),
         "mission_id": fields.String(required=False, example="mission_id"),
     },

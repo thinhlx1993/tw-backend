@@ -22,6 +22,7 @@ def create_profile(data, device_id, user_id):
     if existed:
         return False
     new_profile = Profiles()
+    new_profile.created_at = datetime.datetime.utcnow()
     for key, val in data.items():
         if hasattr(new_profile, key):
             if isinstance(val, str):
@@ -61,7 +62,7 @@ def get_all_profiles(
         query = Profiles.query
         # Apply sorting
         if sorting_order:
-            query = query.order_by(text(sorting_order))
+            query = query.order_by(db.text(sorting_order))
         if search:
             query = query.filter(
                 or_(

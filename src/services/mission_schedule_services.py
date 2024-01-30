@@ -21,7 +21,7 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
-daily_limits = {"comment": 5, "like": 5, "clickAds": 350}
+daily_limits = {"fairInteract": 1, "clickAds": 300}
 
 
 def should_start_job(cron_expression):
@@ -101,14 +101,12 @@ def get_user_schedule(username):
     """
     Get tasks for clickAds, comment, like
     """
-    event_type = random.choice(["comment", "like", "clickAds"])
+    event_type = random.choice(list(daily_limits.keys()))
     claims = get_jwt_claims()
     current_user_id = claims["user_id"]
 
     # user should be online within 5 minutes
-    profile_id_receiver = get_profile_with_event_count_below_limit(
-        event_type
-    )
+    profile_id_receiver = get_profile_with_event_count_below_limit(event_type)
 
     # Not found any user receiver
     if not profile_id_receiver:
@@ -142,7 +140,7 @@ def get_user_schedule(username):
                         "tasks": {
                             "tasks_id": tasks.tasks_id,
                             "tasks_name": event_type,
-                            "tasks_json": None,
+                            "tasks_json": tasks.tasks_json,
                         },
                     }
                 ],
@@ -161,7 +159,9 @@ def find_unique_interaction_partner(
             hours=int(days_limit * 24)
         )
     else:
-        start_date = datetime.datetime.utcnow() - datetime.timedelta(days=int(days_limit))
+        start_date = datetime.datetime.utcnow() - datetime.timedelta(
+            days=int(days_limit)
+        )
 
     # Subquery to find profiles that have already interacted with the given profile
     interacted_subquery = db.session.query(Events.profile_id_interact).filter(
@@ -187,7 +187,7 @@ def find_unique_interaction_partner(
             Events.profile_id_interact, db.func.count().label("clicks_count")
         )
         .filter(
-            Events.event_type == "clickAds",
+            Events.event_type == event_type,
             db.func.date(Events.created_at) == datetime.datetime.utcnow().date(),
         )
         .group_by(Events.profile_id_interact)
@@ -207,9 +207,7 @@ def find_unique_interaction_partner(
             Profiles.profile_id != profile_receiver,
             ~Profiles.profile_id.in_(interacted_subquery),
             ~Profiles.profile_id.in_(reached_limit_subquery),
-            Profiles.main_profile.isnot(True)
-            if event_type in ["like", "comment"]
-            else True,
+            Profiles.main_profile.isnot(True) if event_type == "fairInteract" else True,
         )
         .order_by(clicks_count_subquery.c.clicks_count.asc())
         .limit(10)
@@ -234,31 +232,40 @@ def calculate_days_for_unique_interactions(event_type):
     ).count()
     unique_interactions_per_account = total_accounts - 1
 
-    days_for_comments_likes = unique_interactions_per_account / daily_limits["like"]
-    days_for_clicks = unique_interactions_per_account / daily_limits["clickAds"]
-    if event_type in ["like", "comment"]:
+    if event_type == "fairInteract":
+        days_for_comments_likes = (
+            unique_interactions_per_account / daily_limits["fairInteract"]
+        )
         return days_for_comments_likes
-    return days_for_clicks
+    if event_type == "clickAds":
+        days_for_clicks = unique_interactions_per_account / daily_limits["clickAds"]
+        return days_for_clicks
+    return 14
 
 
 def get_profile_with_event_count_below_limit(event_type):
-    # Get today's date
     today = datetime.datetime.utcnow().date()
 
-    # Subquery to count the event type for each profile for today
     event_count_subquery = (
         db.session.query(Events.profile_id, db.func.count().label("event_count"))
         .filter(
             Events.event_type == event_type,
             Events.issue == "OK",
-            db.func.date(Events.created_at) == today,  # Filter for today's events
+            db.func.date(Events.created_at) == today,
         )
         .group_by(Events.profile_id)
         .subquery()
     )
 
-    # Query to find a profile with event count below the specified limit for today
-    # or profiles without event records
+    # Filters for monetizable and verified based on event_type
+    if event_type == "clickAds":
+        monetizable_filter = cast(Profiles.profile_data["monetizable"], Text) == "true"
+        additional_filters = (monetizable_filter,)
+    else:
+        monetizable_filter = cast(Profiles.profile_data["monetizable"], Text) == "false"
+        verified_filter = cast(Profiles.profile_data["verify"], Text) == "true"
+        additional_filters = (monetizable_filter, verified_filter)
+
     profile = (
         db.session.query(Profiles.profile_id, Profiles.owner)
         .outerjoin(
@@ -266,19 +273,17 @@ def get_profile_with_event_count_below_limit(event_type):
             Profiles.profile_id == event_count_subquery.c.profile_id,
         )
         .filter(
-            # Check if event count is below the limit or if there's no event record
             or_(
                 event_count_subquery.c.event_count < daily_limits[event_type],
                 event_count_subquery.c.event_count.is_(None),
             ),
             Profiles.profile_data.isnot(None),
-            cast(Profiles.profile_data["verify"], Text) == "true",
+            *additional_filters
         )
         .order_by(func.random())
         .first()
     )
 
-    # check last activate date
     if not profile:
         return None
 
@@ -288,6 +293,7 @@ def get_profile_with_event_count_below_limit(event_type):
     if not user_data:
         return None
 
+    # find activate node
     last_active_at = user_data.last_active_at
     current_time = datetime.datetime.utcnow()
     time_difference = current_time - last_active_at
