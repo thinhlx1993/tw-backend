@@ -197,6 +197,15 @@ def find_unique_interaction_partner(
     # Query to find a profile that has not interacted, not reached the daily limit,
     # and has the lowest number of clicks
     # Query to find the top 10 profiles with the lowest number of clicks
+    # Filters for monetizable and verified based on event_type
+    # if event_type == "clickAds":
+    #     monetizable_filter = cast(Profiles.profile_data["monetizable"], Text) == "false"
+    #     additional_filters = (monetizable_filter,)
+    # else:
+    monetizable_filter = cast(Profiles.profile_data["monetizable"], Text) == "false"
+    verified_filter = cast(Profiles.profile_data["verify"], Text) == "true"
+    additional_filters = (monetizable_filter, verified_filter)
+
     top_accounts = (
         Profiles.query.outerjoin(
             clicks_count_subquery,
@@ -208,6 +217,7 @@ def find_unique_interaction_partner(
             ~Profiles.profile_id.in_(interacted_subquery),
             ~Profiles.profile_id.in_(reached_limit_subquery),
             Profiles.main_profile.isnot(True) if event_type == "fairInteract" else True,
+            *additional_filters
         )
         .order_by(clicks_count_subquery.c.clicks_count.asc())
         .limit(10)
