@@ -236,17 +236,20 @@ class ProfilesBrowserController(Resource):
     def post(self, profile_id):
         """Used to retrieve profile's data"""
         body_data = profiles_ns2.payload
+
         _logger.info(f"tz info Client request data: {body_data}")
         profile = profiles_services.get_profile_by_id(profile_id)
         if not profile:
             return {"message": "profile not found"}, 400
 
         claims = get_jwt_claims()
+        user_id = claims.get("user_id")
         device_id = claims.get("device_id")
-        if profile.owner:
-            user_id = profile.owner
-        else:
-            user_id = claims.get("user_id")
+        if profile.owner and profile.owner != user_id:
+            return_data = {
+                "username": profile.username
+            }
+            return return_data, 200
 
         settings = setting_services.get_settings_by_user_device(user_id, device_id)
         if not settings:
