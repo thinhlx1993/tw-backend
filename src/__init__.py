@@ -8,11 +8,9 @@ from flask_jwt_extended import JWTManager
 from flask_script import Manager
 from flask_caching import Cache
 from flask_migrate import Migrate, MigrateCommand
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+# from flask_limiter import Limiter
+# from flask_limiter.util import get_remote_address
 import sentry_sdk
-from sentry_sdk.integrations.flask import FlaskIntegration
-from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 
 from .config import DevelopmentConfig, StagingConfig, ProductionConfig, Config
 
@@ -20,11 +18,17 @@ from .config import DevelopmentConfig, StagingConfig, ProductionConfig, Config
 app = Flask(__name__)
 cache = Cache(app, config={"CACHE_TYPE": "simple"})
 
-# sentry_sdk.init(
-#     dsn=Config.SENTRY_CONFIG,
-#     integrations=[FlaskIntegration(), SqlalchemyIntegration()],
-#     traces_sample_rate=1.0
-# )
+sentry_sdk.init(
+    dsn="https://4d71513c1fe88390e864983b9110f431@o1068161.ingest.sentry.io/4506666720952320",
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    traces_sample_rate=0.3,
+    # Set profiles_sample_rate to 1.0 to profile 100%
+    # of sampled transactions.
+    # We recommend adjusting this value in production.
+    profiles_sample_rate=0.3,
+)
+
 
 # Config is PROD by default
 if os.environ["CONFIG"] == "DEV":
