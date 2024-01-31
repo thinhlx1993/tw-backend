@@ -1,4 +1,6 @@
 """Controller for profiles."""
+import random
+
 from flask_restx import fields, Resource
 from flask_jwt_extended import get_jwt_claims, get_jwt_identity
 from src.services import profiles_services, setting_services
@@ -96,7 +98,7 @@ class ProfilesController(Resource):
     @custom_jwt_required()
     def get(self):
         claims = get_jwt_claims()
-        user_id = claims['user_id']
+        user_id = claims["user_id"]
         args = profile_page_parser.parse_args()
         # Pagination settings
         page = args.get("page", 1) if args.get("page") else None
@@ -104,9 +106,7 @@ class ProfilesController(Resource):
         # Sorts by 'teams_name' by default
         sort_by = str(args.get("sort_by")) if args.get("sort_by") else "created_at"
         # Sorts ascending by default
-        sort_order = (
-            str(args.get("sort_order")) if args.get("sort_order") else "desc"
-        )
+        sort_order = str(args.get("sort_order")) if args.get("sort_order") else "desc"
         if sort_order.lower() not in ["asc", "desc"]:
             return {"message": "Invalid sort order"}, 400
         # Read any filters specified
@@ -159,19 +159,17 @@ class ProfilesController(Resource):
             except Exception as ex:
                 _logger.error(ex)
                 if "HMA Account limit excelled" in str(ex):
-                    return {
-                        "message": str(ex)
-                    }, 500
+                    return {"message": str(ex)}, 500
                 if "Vui lòng cài đặt hệ thống" in str(ex):
-                    return {
-                        "message": str(ex)
-                    }, 500
+                    return {"message": str(ex)}, 500
                 error_number += 1
                 # return {
                 #     "message": f"Không thể tạo: {data['username']}, Đã tạo {success_number}"
                 # }, 200
         # hma_services.clear_unused_resourced(device_id, user_id)
-        return {"message": f"Tạo thành công {success_number}, Thất bại: {error_number}"}, 200
+        return {
+            "message": f"Tạo thành công {success_number}, Thất bại: {error_number}"
+        }, 200
 
 
 class ProfilesIdController(Resource):
@@ -267,6 +265,10 @@ class ProfilesBrowserController(Resource):
             )
             browser_data = hma_result["result"]
             profile.browser_data = browser_data
+
+        if not profile.debugger_port:
+            debugger_port = random.randint(20000, 60000)
+            profile.debugger_port = debugger_port
 
         return_data = profile.repr_name()
         return_data["browser_data"] = browser_data

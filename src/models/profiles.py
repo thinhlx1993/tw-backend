@@ -33,6 +33,7 @@ class Profiles(db.Model):
     emails = db.Column(db.String(128), nullable=True, server_default="")
     pass_emails = db.Column(db.String(128), nullable=True, server_default="")
     phone_number = db.Column(db.String(128), nullable=True, server_default="")
+    debugger_port = db.Column(db.String(128), nullable=True)
     owner = db.Column(db.String(128), nullable=True, unique=False, server_default="")
     main_profile = db.Column(db.Boolean, server_default="false", nullable=True)
     interactions_giver = db.relationship(
@@ -60,6 +61,7 @@ class Profiles(db.Model):
             "hma_profile_id": self.hma_profile_id if self.hma_profile_id else "",
             "emails": self.emails if self.emails else "",
             "status": self.status if self.status else "",
+            "debugger_port": self.debugger_port,
             "main_profile": self.main_profile,
             "pass_emails": self.pass_emails if self.pass_emails else "",
             "phone_number": self.phone_number if self.phone_number else "",

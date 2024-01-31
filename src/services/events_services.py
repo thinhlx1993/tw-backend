@@ -46,9 +46,7 @@ def get_all_events(
         .join(receiver_profile, Events.profile_id == receiver_profile.profile_id)
     )
 
-    query = query.filter(
-        db.func.date(Events.created_at) == today_date
-    )
+    query = query.filter(db.func.date(Events.created_at) == today_date)
     # Apply sorting
     if sorting_order:
         query = query.order_by(text(sorting_order))
@@ -107,6 +105,7 @@ def create_or_update_event(event_id, event_data):
     else:
         # Create a new record
         event_record = Events()
+        event_record.created_at = datetime.datetime.utcnow()
         for key, val in event_data.items():
             if hasattr(event_record, key):
                 event_record.__setattr__(key, val)
