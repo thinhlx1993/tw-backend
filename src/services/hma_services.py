@@ -63,6 +63,8 @@ def delete_browser_profile(profile_id, user_id, device_id):
     url = f"{base_url}/browser/{profile_id}"
     headers = {"Authorization": f"Bearer {hma_token}"}
     response = requests.delete(url, headers=headers)
+    if response.status_code == 404:
+        return True
     if response.json()["code"] == 1:
         return True
     raise Exception("Please contact your administrator, delete profile failed")
