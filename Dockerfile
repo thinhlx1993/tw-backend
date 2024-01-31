@@ -30,4 +30,3 @@ EXPOSE 8080
 
 # Start uWSGI with the Flask app
 CMD ["uwsgi", "--ini", "uwsgi.ini"]
-# CMD ["python", "run.py"]
