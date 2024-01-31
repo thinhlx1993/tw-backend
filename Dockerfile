@@ -9,7 +9,7 @@ ENV FLASK_RUN_HOST=0.0.0.0
 WORKDIR /app
 
 # Copy the requirements file into the container
-COPY dev-requirements.txt dev-requirements.txt
+COPY prod-requirements.txt requirements.txt
 
 RUN apt-get update && apt-get -y install \
     libssl-dev \
@@ -20,7 +20,7 @@ RUN apt-get update && apt-get -y install \
 
 # Install any needed packages specified in requirements.txt
 RUN pip install --upgrade pip
-RUN pip install --no-cache-dir -r dev-requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the current directory contents into the container at /app
 COPY . .
@@ -29,5 +29,5 @@ COPY . .
 EXPOSE 8080
 
 # Start uWSGI with the Flask app
-#CMD ["uwsgi", "--ini", "/app/uwsgi.ini"]
-CMD ["python", "run.py"]
+CMD ["uwsgi", "--ini", "uwsgi.ini"]
+# CMD ["python", "run.py"]

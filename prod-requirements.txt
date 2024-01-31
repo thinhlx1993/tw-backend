@@ -42,3 +42,4 @@ Flask-Marshmallow==0.15.0
 Redis==5.0.1
 openai==1.6.0
 Flask-Limiter==2.0.1
+uwsgi
