@@ -53,6 +53,8 @@ def create_marco_browser_profile(token, data):
 
 def delete_browser_profile(profile_id, user_id, device_id):
     settings = setting_services.get_settings_by_user_device(user_id, device_id)
+    if not settings:
+        raise Exception("User settings not found")
     settings = settings["settings"]
     hma_account = settings.get("hideMyAccAccount")
     hma_password = settings.get("hideMyAccPassword")
@@ -61,7 +63,9 @@ def delete_browser_profile(profile_id, user_id, device_id):
     url = f"{base_url}/browser/{profile_id}"
     headers = {"Authorization": f"Bearer {hma_token}"}
     response = requests.delete(url, headers=headers)
-    return response.status_code == 200
+    if response.json()["code"] == 1:
+        return True
+    raise Exception("Please contact your administrator, delete profile failed")
 
 
 def list_browser_profiles(token):
@@ -173,7 +177,7 @@ def clear_unused_resourced(device_id, user_id):
         settings = setting_services.get_settings_by_user_device(user_id, device_id)
         if not settings or "settings" not in settings.keys():
             return False
-        settings = settings.get('settings')
+        settings = settings.get("settings")
         hma_account = settings.get("hideMyAccAccount")
         hma_password = settings.get("hideMyAccPassword")
         hma_token = authenticate(hma_account, hma_password)
