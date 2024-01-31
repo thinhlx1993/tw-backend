@@ -51,12 +51,12 @@ if os.environ["CONFIG"] == "PROD":
 # Set JWT Config
 jwt = JWTManager(app)
 
-limiter = Limiter(
-    app=app,
-    key_func=get_remote_address,
-    default_limits=["200 per minute"],
-    storage_uri="memory://",
-)
+# limiter = Limiter(
+#     app=app,
+#     key_func=get_remote_address,
+#     default_limits=["50/second"],
+#     storage_uri="memory://",
+# )
 
 
 from src import routes
