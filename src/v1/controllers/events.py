@@ -49,9 +49,9 @@ class EventsController(Resource):
         if sort_order.lower() not in ["asc", "desc"]:
             return {"message": "Invalid sort order"}, 400
         # Read any filters specified
-        search = args.get("search", "").strip().lower()
-        receiver = args.get("receiver", "").strip().lower()
-        giver = args.get("giver", "").strip().lower()
+        search = args.get("search", "")
+        receiver = args.get("receiver", "")
+        giver = args.get("giver", "")
         events = events_services.get_all_events(
             page=page,
             per_page=per_page,

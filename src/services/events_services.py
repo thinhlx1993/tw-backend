@@ -55,7 +55,7 @@ def get_all_events(
     if event_type:
         query = query.filter(func.lower(Events.event_type) == func.lower(event_type))
     if search:
-        search = search.lower()
+        search = search.strip().lower()
         query = query.filter(
             or_(
                 func.lower(Events.issue).ilike(f"%{search}%"),
@@ -67,10 +67,12 @@ def get_all_events(
     if user_id:
         query = query.filter(Events.user_id == user_id)
     if receiver_username:
+        receiver_username = receiver_username.strip().lower()
         query = query.filter(
             func.lower(receiver_profile.username) == func.lower(receiver_username)
         )
     if giver_username:
+        giver_username = receiver_username.strip().lower()
         query = query.filter(
             func.lower(giver_profile.username) == func.lower(giver_username)
         )
