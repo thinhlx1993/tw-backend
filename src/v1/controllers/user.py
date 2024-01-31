@@ -3,7 +3,6 @@
 import logging
 import uuid
 
-from src import limiter
 from flask import request, jsonify
 from flask_restx import Resource, reqparse, fields
 from flask_jwt_extended import get_raw_jwt, get_jwt_claims
