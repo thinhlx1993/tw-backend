@@ -21,7 +21,7 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
-daily_limits = {"fairInteract": 5, "clickAds": 350}
+daily_limits = {"clickAds": 350}
 
 
 def should_start_job(cron_expression):
