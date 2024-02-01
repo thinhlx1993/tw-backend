@@ -260,6 +260,7 @@ def get_profile_with_event_count_below_limit(event_type):
         db.session.query(Events.profile_id, db.func.count().label("event_count"))
         .filter(
             Events.event_type == event_type,
+            Events.issue == "OK",
             db.func.date(Events.created_at) == today,
         )
         .group_by(Events.profile_id)
