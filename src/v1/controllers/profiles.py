@@ -264,9 +264,12 @@ class ProfilesBrowserController(Resource):
             hma_account = settings.get("hideMyAccAccount")
             hma_password = settings.get("hideMyAccPassword")
             hma_token = hma_services.get_hma_access_token(hma_account, hma_password)
-            hma_result = hma_services.get_browser_data(
+            status, hma_result = hma_services.get_browser_data(
                 hma_token, profile.hma_profile_id, body_data
             )
+            if not status:
+                return {"message": hma_result}, 400
+
             browser_data = hma_result["result"]
             profile.browser_data = browser_data
 

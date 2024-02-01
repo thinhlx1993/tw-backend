@@ -85,8 +85,8 @@ def get_browser_data(token, profile_id, tz_data):
     timezone_data = {"tz": tz_data}
     response = requests.post(url, headers=headers, json=timezone_data)
     if response.status_code == 200:
-        return response.json()
-    raise Exception("Can not get proxy timezone data")
+        return True, response.json()
+    return False, "HMA error can not get proxy timezone data"
 
 
 def update_browser_profile(token, profile_id, data):
