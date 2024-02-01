@@ -247,7 +247,8 @@ class ProfilesBrowserController(Resource):
         device_id = claims.get("device_id")
         if profile.owner and profile.owner != user_id:
             return_data = {
-                "username": profile.username
+                "username": profile.username,
+                "profile_id": profile.profile_id
             }
             return return_data, 200
 
