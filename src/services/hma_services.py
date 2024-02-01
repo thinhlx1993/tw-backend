@@ -78,14 +78,16 @@ def list_browser_profiles(token):
     return response.json()
 
 
-def get_browser_data(token, profile_id, tz_data):
+def get_browser_data(token, hma_profile_id, tz_data):
     """Get browser data for a specific profile."""
-    url = f"{base_url}/browser/marco/data/{profile_id}"
+    url = f"{base_url}/browser/marco/data/{hma_profile_id}"
     headers = {"Authorization": f"Bearer {token}"}
     timezone_data = {"tz": tz_data}
     response = requests.post(url, headers=headers, json=timezone_data)
     if response.status_code == 200:
         return True, response.json()
+    if response.status_code == 404:
+        return False, f"Account not found error ${hma_profile_id}"
     return False, "HMA error can not get proxy timezone data"
 
 
