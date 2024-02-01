@@ -216,7 +216,7 @@ def find_unique_interaction_partner(
             Profiles.profile_id != profile_receiver,
             ~Profiles.profile_id.in_(interacted_subquery),
             ~Profiles.profile_id.in_(reached_limit_subquery),
-            Profiles.main_profile.isnot(True) if event_type == "fairInteract" else True,
+            Profiles.main_profile == False,
             *additional_filters
         )
         .order_by(clicks_count_subquery.c.clicks_count.asc())
