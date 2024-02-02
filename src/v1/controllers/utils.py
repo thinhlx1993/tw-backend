@@ -26,7 +26,7 @@ def generate_crontab_schedule(time_str=None, days=None):
 
     # Parse time_str to get hour and minute if provided
     if time_str:
-        time_obj = datetime.strptime(time_str, "%Y-%m-%dT%H:%M")
+        time_obj = datetime.strptime(time_str, "%H:%M")
         hour, minute = str(time_obj.hour), str(time_obj.minute)
     else:
         hour, minute = default_hour, default_minute

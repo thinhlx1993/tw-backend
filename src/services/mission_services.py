@@ -1,5 +1,7 @@
 import datetime
 
+from flask_jwt_extended import get_jwt_claims
+
 from src import db
 from src.models import Mission, MissionSchedule, MissionTask
 from src.services import profiles_services, user_services
@@ -74,6 +76,9 @@ def create_mission(data):
     mission_name = data.get("mission_name")
     group_id = data.get("group_id")
     user_id = data.get("user_id")
+    if not user_id:
+        claims = get_jwt_claims()
+        user_id = claims['user_id']
     new_mission = Mission(mission_name, group_id, user_id)
     db.session.add(new_mission)
     db.session.flush()  # save missions
