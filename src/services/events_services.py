@@ -72,7 +72,7 @@ def get_all_events(
             func.lower(receiver_profile.username) == func.lower(receiver_username)
         )
     if giver_username:
-        giver_username = receiver_username.strip().lower()
+        giver_username = giver_username.strip().lower()
         query = query.filter(
             func.lower(giver_profile.username) == func.lower(giver_username)
         )
