@@ -26,6 +26,7 @@ sentry_sdk.init(
     dsn="https://4d71513c1fe88390e864983b9110f431@o1068161.ingest.sentry.io/4506666720952320",
     enable_tracing=True,
     instrumenter="otel",
+    traces_sample_rate=1.0,  # Adjust sample rate as needed
 )
 
 
