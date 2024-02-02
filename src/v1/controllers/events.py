@@ -72,8 +72,8 @@ class EventsController(Resource):
     def post(self):
         """Create a new event"""
         data = events_ns.payload
-        profile_id_interact = data['profile_id_interact']
-        profile_id = data['profile_id']
+        profile_id_interact = data.get('profile_id_interact')
+        profile_id = data.get('profile_id')
         if not profile_id:
             return {'message': 'profile_id is required'}, 442
         if not profile_id_interact:
