@@ -9,13 +9,16 @@ from src.utilities.custom_decorator import custom_jwt_required
 
 events_ns = api_version_1_web.namespace("events", description="Events Functionalities")
 
+
+# profile_id: profile receiver event
+# profile_id_interact: profile create the event
 event_model = events_ns.model(
     "EventModel",
     {
         "issue": fields.String(required=False, example="issue"),
         "event_type": fields.String(required=True, example="event_type"),
         "profile_id": fields.String(required=False, example="profile_id"),
-        "profile_id_interact": fields.String(required=False, example="profile_id"),
+        "profile_id_interact": fields.String(required=True, example="profile_id"),
         "schedule_id": fields.String(required=False, example="event_id"),
         "mission_id": fields.String(required=False, example="mission_id"),
     },
@@ -69,6 +72,12 @@ class EventsController(Resource):
     def post(self):
         """Create a new event"""
         data = events_ns.payload
+        profile_id_interact = data['profile_id_interact']
+        profile_id = data['profile_id']
+        if not profile_id:
+            return {'message': 'profile_id is required'}, 442
+        if not profile_id_interact:
+            return {'message': 'profile_id_interact is required'}, 442
         event = events_services.create_or_update_event(event_id=None, event_data=data)
         return event.repr_name(), 201
 
