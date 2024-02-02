@@ -47,6 +47,7 @@ def get_all_events(
     )
 
     query = query.filter(db.func.date(Events.created_at) == today_date)
+    query = query.filter(Events.issue == 'OK')
     # Apply sorting
     if sorting_order:
         query = query.order_by(text(sorting_order))
