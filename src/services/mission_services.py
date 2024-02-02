@@ -6,12 +6,12 @@ from src.services import profiles_services, user_services
 from src.v1.controllers.utils import generate_crontab_schedule
 
 
-def get_all_missions():
+def get_all_missions(user_id):
     """Retrieve all missions."""
     sorting_order = "mission_name asc"
     missions = [
         item.repr_name()
-        for item in Mission.query.order_by(db.text(sorting_order)).all()
+        for item in Mission.query.filter(Mission.user_id == user_id).order_by(db.text(sorting_order)).all()
     ]
     for mission in missions:
         user_id = mission["user_id"]

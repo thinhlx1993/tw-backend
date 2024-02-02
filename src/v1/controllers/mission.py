@@ -1,3 +1,4 @@
+from flask_jwt_extended import get_jwt_claims
 from flask_restx import Resource, fields
 from src.version_handler import api_version_1_web
 from src.services import mission_services
@@ -45,7 +46,9 @@ class MissionsController(Resource):
     @custom_jwt_required()
     def get(self):
         """Retrieve a list of missions."""
-        missions = mission_services.get_all_missions()
+        claims = get_jwt_claims()
+        user_id = claims['user_id']
+        missions = mission_services.get_all_missions(user_id)
         return {
             "message": "Missions fetched successfully",
             "missions": missions,
