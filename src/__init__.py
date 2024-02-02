@@ -11,6 +11,10 @@ from flask_migrate import Migrate, MigrateCommand
 # from flask_limiter import Limiter
 # from flask_limiter.util import get_remote_address
 import sentry_sdk
+from opentelemetry import trace
+from opentelemetry.propagate import set_global_textmap
+from opentelemetry.sdk.trace import TracerProvider
+from sentry_sdk.integrations.opentelemetry import SentrySpanProcessor, SentryPropagator
 
 from .config import DevelopmentConfig, StagingConfig, ProductionConfig, Config
 
@@ -20,13 +24,8 @@ cache = Cache(app, config={"CACHE_TYPE": "simple"})
 
 sentry_sdk.init(
     dsn="https://4d71513c1fe88390e864983b9110f431@o1068161.ingest.sentry.io/4506666720952320",
-    # Set traces_sample_rate to 1.0 to capture 100%
-    # of transactions for performance monitoring.
-    traces_sample_rate=0.3,
-    # Set profiles_sample_rate to 1.0 to profile 100%
-    # of sampled transactions.
-    # We recommend adjusting this value in production.
-    profiles_sample_rate=0.3,
+    enable_tracing=True,
+    instrumenter="otel",
 )
 
 
@@ -66,3 +65,9 @@ jwt = JWTManager(app)
 from src import routes
 
 app.config["SWAGGER_DEFAULT_MODELS_EXPANSION_DEPTH"] = -1
+
+
+provider = TracerProvider()
+provider.add_span_processor(SentrySpanProcessor())
+trace.set_tracer_provider(provider)
+set_global_textmap(SentryPropagator())
