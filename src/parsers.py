@@ -63,6 +63,9 @@ profile_page_parser = page_parser.copy()
 profile_page_parser.add_argument(
     "group_id", type=str, help="Search by group", location="args"
 )
+profile_page_parser.add_argument(
+    "filter", type=str, help="Search by type", location="args", default="all"
+)
 
 filter_parser = reqparse.RequestParser()
 filter_parser.add_argument(

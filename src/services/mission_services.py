@@ -13,7 +13,9 @@ def get_all_missions(user_id):
     sorting_order = "mission_name asc"
     missions = [
         item.repr_name()
-        for item in Mission.query.filter(Mission.user_id == user_id).order_by(db.text(sorting_order)).all()
+        for item in Mission.query.filter(Mission.user_id == user_id)
+        .order_by(db.text(sorting_order))
+        .all()
     ]
     for mission in missions:
         user_id = mission["user_id"]
@@ -78,7 +80,7 @@ def create_mission(data):
     user_id = data.get("user_id")
     if not user_id:
         claims = get_jwt_claims()
-        user_id = claims['user_id']
+        user_id = claims["user_id"]
     new_mission = Mission(mission_name, group_id, user_id)
     db.session.add(new_mission)
     db.session.flush()  # save missions
@@ -95,7 +97,9 @@ def create_mission(data):
     profile_ids = data.get("profile_ids", [])
     if len(profile_ids) == 0:
         # fetch by from group_id
-        profiles = profiles_services.get_all_profiles(user_id=user_id, per_page=10000)
+        profiles = profiles_services.get_all_profiles(
+            user_id=user_id, per_page=None, page=None
+        )
         profile_ids = [item["profile_id"] for item in profiles["profiles"]]
 
     for profile_id in profile_ids:

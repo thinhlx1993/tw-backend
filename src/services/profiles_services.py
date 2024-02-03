@@ -52,7 +52,13 @@ def get_total_profiles():
 
 
 def get_all_profiles(
-    page=0, per_page=20, sort_by="created_at", sort_order="desc", search="", user_id=""
+    page=0,
+    per_page=20,
+    sort_by="created_at",
+    sort_order="desc",
+    search="",
+    user_id="",
+    filter_by_type="all",
 ):
     column = getattr(Teams, sort_by, None)
     if not column:
@@ -72,6 +78,8 @@ def get_all_profiles(
             )
         if user_id:
             query = query.filter(Profiles.owner == user_id)
+        if filter_by_type == "main_account":
+            query = query.filter(Profiles.main_profile == True)
         # Apply pagination
         count = query.count()
 

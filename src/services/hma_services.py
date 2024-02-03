@@ -186,7 +186,7 @@ def clear_unused_resourced(device_id, user_id):
         hma_password = settings.get("hideMyAccPassword")
         hma_token = authenticate(hma_account, hma_password)
 
-        profiles = profiles_services.get_all_profiles()
+        profiles = profiles_services.get_all_profiles(page=None, per_page=None)
         profiles = profiles.get("profiles", [])
         hma_profile_ids = [profile["hma_profile_id"] for profile in profiles]
         hma_exist = get_hma_profiles(hma_token)

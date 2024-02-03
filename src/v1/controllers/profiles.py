@@ -112,9 +112,10 @@ class ProfilesController(Resource):
         # Read any filters specified
         search = args.get("search", "")
         group_id = args.get("group_id", "")
+        filter_by_type = args.get("filter", "all")
         """Used to retrieve list of profiles"""
         profiles = profiles_services.get_all_profiles(
-            page, per_page, sort_by, sort_order, search, user_id
+            page, per_page, sort_by, sort_order, search, user_id, filter_by_type
         )
 
         return profiles, 200
@@ -248,7 +249,7 @@ class ProfilesBrowserController(Resource):
         if profile.owner and profile.owner != user_id:
             return_data = {
                 "username": profile.username,
-                "profile_id": profile.profile_id
+                "profile_id": profile.profile_id,
             }
             return return_data, 200
 
