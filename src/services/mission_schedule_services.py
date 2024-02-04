@@ -256,7 +256,15 @@ def calculate_days_for_unique_interactions(event_type):
 
 def get_profile_with_event_count_below_limit(event_type):
     today = datetime.datetime.utcnow().date()
+    active_cutoff = datetime.datetime.utcnow() - datetime.timedelta(minutes=5)
 
+    # Step 1: Query active user IDs
+    active_user_ids = db.session.query(User.id).filter(
+        User.last_active_at > active_cutoff
+    ).all()
+    active_user_ids = [user_id[0] for user_id in active_user_ids]
+
+    # Step 2: Setup the event count subquery
     event_count_subquery = (
         db.session.query(Events.profile_id, db.func.count().label("event_count"))
         .filter(
@@ -277,6 +285,7 @@ def get_profile_with_event_count_below_limit(event_type):
         verified_filter = cast(Profiles.profile_data["verify"], Text) == "true"
         additional_filters = (monetizable_filter, verified_filter)
 
+    # Step 3: Filter profiles based on event count and active users
     profiles = (
         db.session.query(Profiles.profile_id, Profiles.owner)
         .outerjoin(
@@ -289,28 +298,17 @@ def get_profile_with_event_count_below_limit(event_type):
                 event_count_subquery.c.event_count.is_(None),
             ),
             Profiles.profile_data.isnot(None),
+            Profiles.owner.in_(active_user_ids),  # Filter by active user IDs
             *additional_filters
         )
-        .limit(500)
+        .limit(50)
         .all()
     )
 
+    # Select a random profile from the filtered list
     profile = random.choice(profiles) if profiles else None
 
-    if not profile:
+    if profile:
+        return profile.profile_id
+    else:
         return None
-
-    profile_id = profile.profile_id
-    owner = profile.owner
-    user_data = user_services.check_user_exists(user_id=owner)
-    if not user_data:
-        return None
-
-    # find activate node
-    last_active_at = user_data.last_active_at
-    current_time = datetime.datetime.utcnow()
-    time_difference = current_time - last_active_at
-    if time_difference > datetime.timedelta(minutes=5):
-        return None
-
-    return profile_id
