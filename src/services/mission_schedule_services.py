@@ -259,7 +259,7 @@ def get_profile_with_event_count_below_limit(event_type):
     active_cutoff = datetime.datetime.utcnow() - datetime.timedelta(minutes=5)
 
     # Step 1: Query active user IDs
-    active_user_ids = db.session.query(User.id).filter(
+    active_user_ids = db.session.query(User.user_id).filter(
         User.last_active_at > active_cutoff
     ).all()
     active_user_ids = [user_id[0] for user_id in active_user_ids]
