@@ -131,7 +131,7 @@ class ProfilesController(Resource):
     @profiles_ns2.response(500, "Internal Server Error", internal_server_error_model)
     @custom_jwt_required()
     def post(self):
-        """Used to create teams"""
+        """Used to create profiles"""
         try:
             request_data = profiles_ns2.payload
             claims = get_jwt_claims()

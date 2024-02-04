@@ -4,7 +4,7 @@ import logging
 import math
 
 from sentry_sdk import capture_exception
-from sqlalchemy import text, or_
+from sqlalchemy import text, or_, func
 
 from src import db
 from src.models.profiles import Profiles
@@ -18,7 +18,9 @@ _logger = logging.getLogger(__name__)
 
 def create_profile(data, device_id, user_id):
     username = data.get("username", "").strip()
-    existed = Profiles.query.filter_by(username=username).first()
+    existed = Profiles.query.filter(
+        func.lower(Profiles.username) == func.lower(username)
+    ).first()
     if existed:
         return False
     new_profile = Profiles()
