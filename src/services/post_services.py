@@ -25,7 +25,7 @@ def get_all_posts(
     if not column:
         return False, {"Message": "Invalid sort_by key provided"}
     sorting_order = sort_by + " " + sort_order
-    query = Posts.query
+    query = Posts.query.filter(Posts.is_deleted == False)
     # Apply sorting
     if sorting_order:
         query = query.order_by(db.text(sorting_order))
@@ -33,6 +33,7 @@ def get_all_posts(
         query = query.filter(
             or_(
                 Posts.title.ilike(f"%{search}%"),
+                Posts.username.ilike(f"%{search}%"),
                 Posts.content.ilike(f"%{search}%"),
                 Posts.tw_post_id.ilike(f"%{search}%"),
             )

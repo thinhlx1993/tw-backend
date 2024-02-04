@@ -2,7 +2,7 @@
 from flask_restx import fields, Resource
 from flask_jwt_extended import get_jwt_claims
 
-from src.parsers import page_parser
+from src.parsers import page_parser, profile_page_parse
 from src.services import post_services
 from src.version_handler import api_version_1_web
 from src.utilities.custom_decorator import custom_jwt_required
@@ -21,6 +21,8 @@ post_model = posts_ns.model(
         "tw_post_id": fields.String(required=False, example="tw_post_id"),
         "profile_id": fields.String(required=True, example="profile_id"),
         "post_date": fields.String(required=True, example="post_date"),
+        "username": fields.String(required=False, example="username"),
+        "is_deleted": fields.Boolean(example=True, required=False),
     },
 )
 
@@ -34,6 +36,7 @@ post_update_model = posts_ns.model(
         "share": fields.String(example="New Post Content"),
         "view": fields.String(example="New Post Content"),
         "post_date": fields.String(example="New Post date content"),
+        "is_deleted": fields.Boolean(example=True, required=False),
     },
 )
 
@@ -41,12 +44,12 @@ post_update_model = posts_ns.model(
 class PostsController(Resource):
     """Class for /posts functionalities."""
 
-    @posts_ns.expect(page_parser)
+    @posts_ns.expect(profile_page_parse)
     @posts_ns.response(200, "Success")
     @custom_jwt_required()
     def get(self):
         """Retrieve list of posts"""
-        args = page_parser.parse_args()
+        args = profile_page_parse.parse_args()
         page = args.get("page", 1)
         per_page = args.get("per_page", 20)
         sort_by = args.get("sort_by", "created_at")

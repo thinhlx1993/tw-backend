@@ -22,10 +22,12 @@ class Posts(db.Model):
     crawl_by = db.Column(db.String(128), ForeignKey("user.user_id"), nullable=True)
     created_at = db.Column(db.DateTime(), server_default=func.now())
     like = db.Column(db.String(128), nullable=True)
+    username = db.Column(db.String(128), nullable=True)
     comment = db.Column(db.String(128), nullable=True)
     share = db.Column(db.String(128), nullable=True)
     view = db.Column(db.String(128), nullable=True)
     post_date = db.Column(db.String(128), nullable=True)
+    is_deleted = db.Column(db.Boolean, server_default="false")
     # Relationships
     profile = relationship("Profiles", foreign_keys=[profile_id])
     user = relationship("User", foreign_keys=[crawl_by])
@@ -35,11 +37,14 @@ class Posts(db.Model):
             "post_id": self.post_id,
             "title": self.title,
             "content": self.content,
-            "like": self.content,
-            "comment": self.content,
-            "share": self.content,
-            "view": self.content,
+            "like": self.like,
+            "comment": self.comment,
+            "share": self.share,
+            "view": self.view,
+            "username": self.username,
             "tw_post_id": self.tw_post_id,
+            "is_deleted": self.is_deleted,
+            "post_date": self.post_date,
             "profile_crawl": self.profile.username if self.profile else None,
             "user_crawl": self.user.username if self.user else None,
             "created_at": self.created_at.strftime("%d-%m-%Y %H:%M"),
