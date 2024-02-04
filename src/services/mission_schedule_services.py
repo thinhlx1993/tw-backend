@@ -22,6 +22,7 @@ import logging
 _logger = logging.getLogger(__name__)
 
 daily_limits = {"clickAds": 350}
+# 30% clicks
 
 
 def should_start_job(cron_expression):
@@ -220,7 +221,7 @@ def find_unique_interaction_partner(
             *additional_filters
         )
         .order_by(clicks_count_subquery.c.clicks_count.asc())
-        .limit(10)
+        .limit(500)
         .all()
     )
 
@@ -276,7 +277,7 @@ def get_profile_with_event_count_below_limit(event_type):
         verified_filter = cast(Profiles.profile_data["verify"], Text) == "true"
         additional_filters = (monetizable_filter, verified_filter)
 
-    profile = (
+    profiles = (
         db.session.query(Profiles.profile_id, Profiles.owner)
         .outerjoin(
             event_count_subquery,
@@ -290,9 +291,11 @@ def get_profile_with_event_count_below_limit(event_type):
             Profiles.profile_data.isnot(None),
             *additional_filters
         )
-        .order_by(func.random())
-        .first()
+        .limit(500)
+        .all()
     )
+
+    profile = random.choice(profiles) if profiles else None
 
     if not profile:
         return None
