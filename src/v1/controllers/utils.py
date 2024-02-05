@@ -6,7 +6,7 @@ def generate_crontab_schedule(time_str=None, days=None):
     """
     Generates a crontab schedule string.
 
-    :param time_str: Time in 'YYYY-MM-DDTHH:MM' format or None.
+    :param time_str: Time in 'HH:MM' format or None.
     :param days: List of days of the week as ['Monday', 'Tuesday', ...] or None for daily.
     :return: Crontab schedule string.
     """
@@ -26,15 +26,15 @@ def generate_crontab_schedule(time_str=None, days=None):
 
     # Parse time_str to get hour and minute if provided
     if time_str:
+        # Corrected to parse 'HH:MM' format
         time_obj = datetime.strptime(time_str, "%H:%M")
         hour, minute = str(time_obj.hour), str(time_obj.minute)
     else:
         hour, minute = default_hour, default_minute
 
     # Determine the day field for crontab
-    if days is None:
-        day_field = '*'
-    else:
+    day_field = '*'
+    if days:
         day_field = ','.join([day_map[day.capitalize()] for day in days if day.capitalize() in day_map])
 
     # Construct the crontab schedule string (minute hour day_of_month month day_of_week)
