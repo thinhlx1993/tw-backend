@@ -10,7 +10,7 @@ from src.v1.controllers.utils import generate_crontab_schedule
 
 def get_all_missions(user_id):
     """Retrieve all missions."""
-    sorting_order = "mission_name asc"
+    sorting_order = "created_at desc"
     missions = [
         item.repr_name()
         for item in Mission.query.filter(Mission.user_id == user_id)
@@ -62,6 +62,7 @@ def create_mission(data):
           "e1ad246e-c562-47ea-a8d2-927eb800300a",
           "7fed041c-4669-421a-a0c4-2af421f5743b"
        ],
+       "config_profiles": "acb\ndef\nghi",
        "user_id":"a3213c22-c8c5-4e86-aa7c-ec4a08f0a7f9",
        "mission_schedule":[
           "Monday",
@@ -77,11 +78,13 @@ def create_mission(data):
     """
     mission_name = data.get("mission_name")
     group_id = data.get("group_id")
+    config = data.get("config", "")
     user_id = data.get("user_id")
     if not user_id:
         claims = get_jwt_claims()
         user_id = claims["user_id"]
     new_mission = Mission(mission_name, group_id, user_id)
+    new_mission.created_at = datetime.datetime.utcnow()
     db.session.add(new_mission)
     db.session.flush()  # save missions
 
@@ -109,6 +112,8 @@ def create_mission(data):
     tasks = data.get("tasks")
     for task in tasks:
         mission_task = MissionTask(new_mission.mission_id, task)
+        if config:
+            mission_task.config = config
         db.session.add(mission_task)
     db.session.flush()  # save tasks
     return new_mission

@@ -36,6 +36,11 @@ class Mission(db.Model):
         nullable=True,
         comment="Timestamp indicating when the record was soft deleted",
     )
+    created_at = db.Column(
+        db.DateTime(),
+        nullable=True,
+        comment="Timestamp indicating when the record was created",
+    )
     mission_tasks = relationship("MissionTask", back_populates="mission")
 
     def __init__(self, mission_name, group_id, user_id):
@@ -52,6 +57,7 @@ class Mission(db.Model):
             "mission_json": self.mission_json,
             "force_start": self.force_start,
             "group_id": self.group_id,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
             "mission_schedule": [item.repr_name() for item in self.mission_schedule],
             "mission_tasks": [item.repr_name() for item in self.mission_tasks],
         }

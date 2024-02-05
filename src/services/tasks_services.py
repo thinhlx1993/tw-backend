@@ -4,7 +4,7 @@ from src.models import Task
 
 def get_all_tasks():
     """Retrieve all tasks."""
-    task_names = ['Check follow', 'newsFeed', 'Login', 'Lấy cookie']
+    task_names = ['Check follow', 'newsFeed', 'Login', 'Lấy cookie', 'reUpPost']
     tasks = Task.query.filter(
         Task.tasks_name.in_(task_names)
     ).all()

@@ -13,6 +13,7 @@ class MissionTask(db.Model):
 
     mission_id = db.Column(db.String(128), db.ForeignKey('mission.mission_id'), primary_key=True)
     tasks_id = db.Column(db.String(128), db.ForeignKey('tasks.tasks_id'), primary_key=True)
+    config = db.Column(db.JSON(), nullable=True)
 
     # Relationships
     mission = relationship("Mission", back_populates="mission_tasks")
@@ -29,5 +30,6 @@ class MissionTask(db.Model):
         return {
             "mission_id": self.mission_id,
             "tasks_id": self.tasks_id,
-            "tasks": self.task.repr_name()
+            "tasks": self.task.repr_name(),
+            "config": self.config
         }
