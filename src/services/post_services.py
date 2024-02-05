@@ -70,6 +70,7 @@ def create_or_update_post(tw_post_id, post_data):
     else:
         # Create a new record
         post_record = Posts()
+        post_record.is_deleted = False
         for key, val in post_data.items():
             if hasattr(post_record, key):
                 post_record.__setattr__(key, val)
