@@ -284,13 +284,13 @@ def get_profile_with_event_count_below_limit(event_type):
     )
 
     # Filters for monetizable and verified based on event_type
-    if event_type == "clickAds":
-        monetizable_filter = cast(Profiles.profile_data["monetizable"], Text) == "true"
-        additional_filters = (monetizable_filter,)
-    else:
-        monetizable_filter = cast(Profiles.profile_data["monetizable"], Text) == "false"
-        verified_filter = cast(Profiles.profile_data["verify"], Text) == "true"
-        additional_filters = (monetizable_filter, verified_filter)
+    # if event_type == "clickAds":
+    #     monetizable_filter = cast(Profiles.profile_data["monetizable"], Text) == "true"
+    #     additional_filters = (monetizable_filter,)
+    # else:
+    #     monetizable_filter = cast(Profiles.profile_data["monetizable"], Text) == "false"
+    #     verified_filter = cast(Profiles.profile_data["verify"], Text) == "true"
+    #     additional_filters = (monetizable_filter, verified_filter)
 
     # Step 3: Filter profiles based on event count and active users
     profiles = (
@@ -306,7 +306,11 @@ def get_profile_with_event_count_below_limit(event_type):
             ),
             Profiles.profile_data.isnot(None),
             Profiles.owner.in_(active_user_ids),  # Filter by active user IDs
-            *additional_filters
+            cast(Profiles.profile_data["verify"], Text) == "true",
+            or_(
+                cast(Profiles.profile_data["monetizable"], Text) == "true",
+                Profiles.main_profile == True
+            )
         )
         .limit(50)
         .all()
