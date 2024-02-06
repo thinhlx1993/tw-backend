@@ -168,6 +168,7 @@ def find_unique_interaction_partner(
     interacted_subquery = db.session.query(Events.profile_id_interact).filter(
         Events.profile_id == profile_receiver,
         Events.event_type == event_type,
+        Events.issue == "OK",
         db.func.date(Events.created_at) >= start_date,
     )
 
@@ -175,6 +176,7 @@ def find_unique_interaction_partner(
     reached_limit_subquery = (
         db.session.query(Events.profile_id)
         .filter(
+            Events.issue == "OK",
             Events.event_type == event_type,
             db.func.date(Events.created_at) == datetime.datetime.utcnow().date(),
         )
