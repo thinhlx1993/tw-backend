@@ -239,9 +239,14 @@ def find_unique_interaction_partner(
 # Function to calculate days for unique interactions
 def calculate_days_for_unique_interactions(event_type):
     # get total verify accounts
+    monetizable_filter = cast(Profiles.profile_data["monetizable"], Text) == "false"
+    verified_filter = cast(Profiles.profile_data["verify"], Text) == "true"
+    additional_filters = (monetizable_filter, verified_filter)
+
     total_accounts = Profiles.query.filter(
         Profiles.profile_data.isnot(None),
-        cast(Profiles.profile_data["verify"], Text) == "true",
+        Profiles.main_profile == False,
+        *additional_filters
     ).count()
     unique_interactions_per_account = total_accounts - 1
 
