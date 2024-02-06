@@ -20,17 +20,6 @@ def authenticate(username, password):
     raise Exception("HMA Account is required")
 
 
-def get_hma_access_token(hma_account, hma_password):
-    """Authenticate and get a token."""
-    url = f"{base_url}/auth"
-    auth = (hma_account, hma_password)
-    data = {"version": appVersion}
-    response = requests.post(url, auth=auth, data=data)
-    if response.status_code == 200 and response.json()["code"] == 1:
-        return response.json()["result"]["token"]
-    raise Exception("HMA Account is required")
-
-
 def get_account_info(token):
     """Get account information."""
     url = f"{base_url}/users/me"

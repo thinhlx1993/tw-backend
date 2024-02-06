@@ -264,7 +264,7 @@ class ProfilesBrowserController(Resource):
             # _logger.info(f"tz info server request data: {tz_data}")
             hma_account = settings.get("hideMyAccAccount")
             hma_password = settings.get("hideMyAccPassword")
-            hma_token = hma_services.get_hma_access_token(hma_account, hma_password)
+            hma_token = hma_services.authenticate(hma_account, hma_password)
             status, hma_result = hma_services.get_browser_data(
                 hma_token, profile.hma_profile_id, body_data
             )
