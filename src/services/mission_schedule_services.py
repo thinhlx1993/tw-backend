@@ -223,7 +223,7 @@ def find_unique_interaction_partner(
             *additional_filters
         )
         .order_by(clicks_count_subquery.c.clicks_count.asc())
-        .limit(10)
+        .limit(15)
         .all()
     )
 
