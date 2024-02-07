@@ -307,8 +307,8 @@ def get_profile_with_event_count_below_limit(event_type):
             ),
             Profiles.profile_data.isnot(None),
             or_(
-                Profiles.profile_data["account_status"] == 'NotStarted',
-                Profiles.profile_data["account_status"] == 'OK',
+                cast(Profiles.profile_data["account_status"], Text) == 'NotStarted',
+                cast(Profiles.profile_data["account_status"], Text) == 'OK',
 
             ),
             Profiles.main_profile == True
