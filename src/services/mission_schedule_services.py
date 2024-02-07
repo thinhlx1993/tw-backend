@@ -294,7 +294,7 @@ def get_profile_with_event_count_below_limit(event_type):
 
     # Step 3: Filter profiles based on event count and active users
     profiles = (
-        db.session.query(Profiles.profile_id, Profiles.owner)
+        db.session.query(Profiles.profile_id)
         .outerjoin(
             event_count_subquery,
             Profiles.profile_id == event_count_subquery.c.profile_id,
@@ -306,14 +306,10 @@ def get_profile_with_event_count_below_limit(event_type):
                 event_count_subquery.c.event_count.is_(None),
             ),
             Profiles.profile_data.isnot(None),
-            or_(
-                cast(Profiles.profile_data["account_status"], Text) == 'NotStarted',
-                cast(Profiles.profile_data["account_status"], Text) == 'OK',
-
-            ),
-            Profiles.main_profile == True
+            func.json_extract_path_text(Profiles.profile_data, 'account_status').in_(['NotStarted', 'OK']),
+            Profiles.main_profile.is_(True)
         )
-        .limit(50)
+        .limit(10)
         .all()
     )
 
