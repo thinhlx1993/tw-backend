@@ -76,6 +76,7 @@ def get_all_profiles(
                 or_(
                     Profiles.username.ilike(f"%{search}%"),
                     Profiles.user_access.ilike(f"%{search}%"),
+                    Profiles.status.ilike(f"%{search}%"),
                 )
             )
         if user_id:
