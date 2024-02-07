@@ -300,17 +300,18 @@ def get_profile_with_event_count_below_limit(event_type):
             Profiles.profile_id == event_count_subquery.c.profile_id,
         )
         .filter(
+            Profiles.owner.in_(active_user_ids),  # Filter by active user IDs
             or_(
                 event_count_subquery.c.event_count < daily_limits[event_type],
                 event_count_subquery.c.event_count.is_(None),
             ),
             Profiles.profile_data.isnot(None),
-            Profiles.owner.in_(active_user_ids),  # Filter by active user IDs
-            cast(Profiles.profile_data["verify"], Text) == "true",
             or_(
-                cast(Profiles.profile_data["monetizable"], Text) == "true",
-                Profiles.main_profile == True
-            )
+                Profiles.profile_data["account_status"] == 'NotStarted',
+                Profiles.profile_data["account_status"] == 'OK',
+
+            ),
+            Profiles.main_profile == True
         )
         .limit(50)
         .all()
