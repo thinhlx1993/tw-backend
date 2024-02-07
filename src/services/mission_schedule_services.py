@@ -309,7 +309,7 @@ def get_profile_with_event_count_below_limit(event_type):
             func.json_extract_path_text(Profiles.profile_data, 'account_status').in_(['NotStarted', 'OK']),
             Profiles.main_profile.is_(True)
         )
-        .limit(10)
+        .limit(500)
         .all()
     )
 
