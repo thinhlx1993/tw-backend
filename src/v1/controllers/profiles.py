@@ -250,6 +250,7 @@ class ProfilesBrowserController(Resource):
             return_data = {
                 "username": profile.username,
                 "profile_id": profile.profile_id,
+                "gpt_key": profile.gpt_key
             }
             return return_data, 200
 
