@@ -211,7 +211,7 @@ def find_unique_interaction_partner(
     verified_filter = cast(Profiles.profile_data["verify"], Text) == "true"
     additional_filters = (monetizable_filter, verified_filter)
 
-    top_accounts = (
+    account = (
         Profiles.query.outerjoin(
             clicks_count_subquery,
             Profiles.profile_id == clicks_count_subquery.c.profile_id_interact,
@@ -224,13 +224,12 @@ def find_unique_interaction_partner(
             Profiles.main_profile == False,
             *additional_filters
         )
-        .order_by(clicks_count_subquery.c.clicks_count.asc())
-        .limit(15)
-        .all()
+        .order_by(func.random())
+        .first()
     )
 
     # Randomly select one account from the top 10
-    account = random.choice(top_accounts) if top_accounts else None
+    # account = random.choice(top_accounts) if top_accounts else None
 
     # Retrieve the profile ID of the selected account
     selected_profile_id = account.profile_id if account else None
@@ -311,14 +310,14 @@ def get_profile_with_event_count_below_limit(event_type):
             func.json_extract_path_text(Profiles.profile_data, 'account_status').in_(['NotStarted', 'OK']),
             Profiles.main_profile.is_(True)
         )
-        .limit(500)
-        .all()
+        .order_by(func.random())
+        .first()
     )
 
     # Select a random profile from the filtered list
-    profile = random.choice(profiles) if profiles else None
+    # profile = random.choice(profiles) if profiles else None
 
-    if profile:
-        return profile.profile_id
+    if profiles:
+        return profiles.profile_id
     else:
         return None
