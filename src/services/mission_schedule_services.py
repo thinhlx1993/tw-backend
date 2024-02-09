@@ -1,6 +1,6 @@
 # mission_schedule_services.py
 import random
-
+import pytz
 from flask_jwt_extended import get_jwt_claims
 from sqlalchemy import func, cast, or_, Numeric, Text
 
@@ -30,7 +30,9 @@ def should_start_job(cron_expression):
         if not cron_expression:
             return False
         # Get the current local time
-        now = datetime.datetime.utcnow()
+        # now = datetime.datetime.now()
+        tz_ho_chi_minh = pytz.timezone('Asia/Ho_Chi_Minh')
+        now = datetime.datetime.now(tz_ho_chi_minh)
 
         # Initialize croniter with the cron expression and current time
         iter = croniter(cron_expression, now)
