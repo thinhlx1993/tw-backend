@@ -109,46 +109,49 @@ def get_user_schedule(username):
     current_user_id = claims["user_id"]
 
     # user should be online within 5 minutes
-    profile_id_receiver = get_profile_with_event_count_below_limit(event_type)
+    profile_ids_receiver = get_profile_with_event_count_below_limit_v2(event_type)
 
     # Not found any user receiver
-    if not profile_id_receiver:
+    if not profile_ids_receiver:
         return mission_should_start
 
     # Find a unique interaction partner from current user profiles
     days_limit = calculate_days_for_unique_interactions(event_type)
-    # user giver
-    unique_partner_id = find_unique_interaction_partner(
-        profile_id_receiver, event_type, days_limit, current_user_id
-    )
-    if not unique_partner_id:
-        return mission_should_start
 
-    tasks = Task.query.filter(Task.tasks_name == event_type).first()
-    if tasks:
-        mission_should_start.append(
-            {
-                "schedule_id": "",
-                "profile_id": unique_partner_id,
-                "profile_id_receiver": profile_id_receiver,
-                "mission_id": "",
-                "schedule_json": "",
-                "start_timestamp": datetime.datetime.utcnow().strftime(
-                    "%d-%m-%Y %H:%M"
-                ),
-                "tasks": [
-                    {
-                        "mission_id": "",
-                        "tasks_id": tasks.tasks_id,
-                        "tasks": {
-                            "tasks_id": tasks.tasks_id,
-                            "tasks_name": event_type,
-                            "tasks_json": tasks.tasks_json,
-                        },
-                    }
-                ],
-            }
+    # create missions
+    for profile_id_receiver in profile_ids_receiver:
+        # user giver
+        unique_partner_id = find_unique_interaction_partner(
+            profile_id_receiver, event_type, days_limit, current_user_id
         )
+        if not unique_partner_id:
+            continue
+
+        tasks = Task.query.filter(Task.tasks_name == event_type).first()
+        if tasks:
+            mission_should_start.append(
+                {
+                    "schedule_id": "",
+                    "profile_id": unique_partner_id,
+                    "profile_id_receiver": profile_id_receiver,
+                    "mission_id": "",
+                    "schedule_json": "",
+                    "start_timestamp": datetime.datetime.utcnow().strftime(
+                        "%d-%m-%Y %H:%M"
+                    ),
+                    "tasks": [
+                        {
+                            "mission_id": "",
+                            "tasks_id": tasks.tasks_id,
+                            "tasks": {
+                                "tasks_id": tasks.tasks_id,
+                                "tasks_name": event_type,
+                                "tasks_json": tasks.tasks_json,
+                            },
+                        }
+                    ],
+                }
+            )
     return mission_should_start
 
 
@@ -222,6 +225,54 @@ def find_unique_interaction_partner(
             ~Profiles.profile_id.in_(interacted_subquery),
             ~Profiles.profile_id.in_(reached_limit_subquery),
             Profiles.main_profile == False,
+            *additional_filters
+        )
+        .order_by(func.random())
+        .first()
+    )
+
+    # Randomly select one account from the top 10
+    # account = random.choice(top_accounts) if top_accounts else None
+
+    # Retrieve the profile ID of the selected account
+    selected_profile_id = account.profile_id if account else None
+
+    return selected_profile_id
+
+
+def find_unique_interaction_partner_v2(
+    profile_receiver, event_type, days_limit, current_user_id
+):
+    # Calculate the start date based on days_limit
+    if days_limit < 1:
+        start_date = datetime.datetime.utcnow() - datetime.timedelta(
+            hours=int(days_limit * 24)
+        )
+    else:
+        start_date = datetime.datetime.utcnow() - datetime.timedelta(
+            days=int(days_limit)
+        )
+
+    # Subquery to find profiles that have already interacted with the given profile
+    interacted_subquery = db.session.query(Events.profile_id_interact).filter(
+        Events.profile_id == profile_receiver,
+        Events.event_type == event_type,
+        Events.issue == "OK",
+        db.func.date(Events.created_at) >= start_date,
+    )
+
+    monetizable_filter = cast(Profiles.profile_data["monetizable"], Text) == "false"
+    verified_filter = cast(Profiles.profile_data["verify"], Text) == "true"
+    additional_filters = (monetizable_filter, verified_filter)
+
+    account = (
+        Profiles.query.filter(
+            Profiles.owner == current_user_id,
+            Profiles.profile_id != profile_receiver,
+            ~Profiles.profile_id.in_(interacted_subquery),
+            Profiles.profile_id.click_count < daily_limits[event_type],
+            Profiles.main_profile == False,
+            Profiles.is_disable == False,
             *additional_filters
         )
         .order_by(func.random())
@@ -321,3 +372,36 @@ def get_profile_with_event_count_below_limit(event_type):
         return profiles.profile_id
     else:
         return None
+
+
+def get_profile_with_event_count_below_limit_v2(event_type):
+    """Count direct by click count in profile data"""
+    today = datetime.datetime.utcnow().date()
+    active_cutoff = datetime.datetime.utcnow() - datetime.timedelta(minutes=5)
+
+    # Step 1: Query active user IDs
+    active_user_ids = db.session.query(User.user_id).filter(
+        User.last_active_at > active_cutoff
+    ).all()
+    active_user_ids = [user_id[0] for user_id in active_user_ids]
+
+    # Step 3: Filter profiles based on event count and active users
+    profiles = (
+        db.session.query(Profiles.profile_id)
+        .filter(
+            Profiles.owner.in_(active_user_ids),  # Filter by active user IDs
+            Profiles.click_count < daily_limits[event_type],
+            Profiles.profile_data.isnot(None),
+            func.json_extract_path_text(Profiles.profile_data, 'account_status').in_(['NotStarted', 'OK']),
+            Profiles.main_profile.is_(True),
+            Profiles.is_disable.is_(False),
+        )
+        .order_by(func.random())
+        .limit(3)
+        .all()
+    )
+
+    # Select a random profile from the filtered list
+    # profile = random.choice(profiles) if profiles else None
+
+    return [profile.profile_id for profile in profiles]

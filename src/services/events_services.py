@@ -7,6 +7,10 @@ from src import db
 from src.models import Profiles, Events
 from sqlalchemy.orm import aliased
 
+from src.services.mission_schedule_services import should_start_job
+from src.v1.dto.event_type import EventType
+from src.log_config import _logger
+
 
 def get_event_by_id(event_id):
     """Retrieve an event by its ID."""
@@ -109,13 +113,60 @@ def create_or_update_event(event_id, event_data):
         # Create a new record
         event_record = Events()
         event_record.created_at = datetime.datetime.utcnow()
+        # "event_type": fields.String(required=True, example="event_type"),
+        # "profile_id": fields.String(required=False, example="profile_id"),
+        # "profile_id_interact": fields.String(required=True, example="profile_id"),
+        event_type = event_data.get('event_type')
+        profile_id_receiver = event_data.get('profile_id')
+        profile_id_giver = event_data.get('profile_id_interact')
+        issue = event_type.get('issue')
+
+        if issue == "OK":
+            update_count(profile_id_receiver, event_type)
+            update_count(profile_id_giver, event_type)
+
         for key, val in event_data.items():
             if hasattr(event_record, key):
                 event_record.__setattr__(key, val)
+
         db.session.add(event_record)
 
     db.session.flush()
     return event_record
+
+
+def update_count(profile_id, event_type):
+    profile_receiver = Profiles.query.filter(Profiles.profile_id == profile_id).first()
+    today = datetime.datetime.utcnow().date()
+    _logger.info(f'Today is {today}  and profile date {profile_receiver.modified_at.date()}')
+    if profile_receiver.modified_at.date() != today:
+        profile_receiver.click_count = 0
+        profile_receiver.comment_count = 0
+        profile_receiver.like_count = 0
+
+    click_count = profile_receiver.click_count
+    comment_count = profile_receiver.comment_count
+    like_count = profile_receiver.like_count
+
+    # update event count for profile
+    if event_type == EventType.CLICK_ADS.value:
+        if not click_count:
+            click_count = 0
+        click_count += 1
+        profile_receiver.click_count = click_count
+    elif event_type == EventType.COMMENT.value:
+        if not comment_count:
+            comment_count = 0
+        comment_count += 1
+        profile_receiver.comment_count = comment_count
+    elif event_type == EventType.LIKE.value:
+        if not like_count:
+            like_count = 0
+        like_count += 1
+        profile_receiver.like_count = like_count
+    profile_receiver.modified_at = datetime.datetime.utcnow()
+    _logger.info('Update event count ok')
+    db.session.flush()
 
 
 def delete_event(event_id):
