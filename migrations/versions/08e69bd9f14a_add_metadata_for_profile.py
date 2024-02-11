@@ -19,15 +19,15 @@ depends_on = None
 def upgrade():
     op.add_column(
         "profiles",
-        sa.Column("click_count", sa.Integer(), nullable=True),
+        sa.Column("click_count", sa.Integer(), server_default="0", nullable=True),
     )
     op.add_column(
         "profiles",
-        sa.Column("comment_count", sa.Integer(), nullable=True),
+        sa.Column("comment_count", sa.Integer(), server_default="0", nullable=True),
     )
     op.add_column(
         "profiles",
-        sa.Column("like_count", sa.Integer(), nullable=True),
+        sa.Column("like_count", sa.Integer(), server_default="0", nullable=True),
     )
     op.add_column(
         "profiles",

@@ -119,7 +119,7 @@ def create_or_update_event(event_id, event_data):
         event_type = event_data.get('event_type')
         profile_id_receiver = event_data.get('profile_id')
         profile_id_giver = event_data.get('profile_id_interact')
-        issue = event_type.get('issue')
+        issue = event_data.get('issue')
 
         if issue == "OK":
             update_count(profile_id_receiver, event_type)
