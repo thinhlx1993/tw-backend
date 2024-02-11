@@ -36,9 +36,9 @@ class Profiles(db.Model):
     debugger_port = db.Column(db.String(128), nullable=True)
     owner = db.Column(db.String(128), nullable=True, unique=False, server_default="")
     main_profile = db.Column(db.Boolean, server_default="false", nullable=True)
-    click_count = db.Column(db.Integer, nullable=True)
-    comment_count = db.Column(db.Integer, nullable=True)
-    like_count = db.Column(db.Integer, nullable=True)
+    click_count = db.Column(db.Integer, nullable=True, server_default="0")
+    comment_count = db.Column(db.Integer, nullable=True, server_default="0")
+    like_count = db.Column(db.Integer, nullable=True, server_default="0")
     is_disable = db.Column(db.Boolean, server_default="false", nullable=True)
     interactions_giver = db.relationship(
         "Events", foreign_keys="Events.profile_id", backref="receiver", lazy=True
