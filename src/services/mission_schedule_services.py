@@ -31,7 +31,7 @@ def should_start_job(cron_expression):
             return False
         # Get the current local time
         # now = datetime.datetime.now()
-        tz_ho_chi_minh = pytz.timezone('Asia/Ho_Chi_Minh')
+        tz_ho_chi_minh = pytz.timezone("Asia/Ho_Chi_Minh")
         now = datetime.datetime.now(tz_ho_chi_minh)
 
         # Initialize croniter with the cron expression and current time
@@ -318,9 +318,9 @@ def get_profile_with_event_count_below_limit(event_type):
     active_cutoff = datetime.datetime.utcnow() - datetime.timedelta(minutes=5)
 
     # Step 1: Query active user IDs
-    active_user_ids = db.session.query(User.user_id).filter(
-        User.last_active_at > active_cutoff
-    ).all()
+    active_user_ids = (
+        db.session.query(User.user_id).filter(User.last_active_at > active_cutoff).all()
+    )
     active_user_ids = [user_id[0] for user_id in active_user_ids]
 
     # Step 2: Setup the event count subquery
@@ -358,8 +358,10 @@ def get_profile_with_event_count_below_limit(event_type):
                 event_count_subquery.c.event_count.is_(None),
             ),
             Profiles.profile_data.isnot(None),
-            func.json_extract_path_text(Profiles.profile_data, 'account_status').in_(['NotStarted', 'OK']),
-            Profiles.main_profile.is_(True)
+            func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
+                ["NotStarted", "OK"]
+            ),
+            Profiles.main_profile.is_(True),
         )
         .order_by(func.random())
         .first()
@@ -376,15 +378,10 @@ def get_profile_with_event_count_below_limit(event_type):
 
 def get_profile_with_event_count_below_limit_v2(event_type):
     """Count direct by click count in profile data"""
-    today = datetime.datetime.utcnow().date()
     active_cutoff = datetime.datetime.utcnow() - datetime.timedelta(minutes=5)
 
-    # Step 1: Query active user IDs
-    active_user_ids = db.session.query(User.user_id).filter(
-        User.last_active_at > active_cutoff
-    ).all()
-    active_user_ids = [user_id[0] for user_id in active_user_ids]
-
+    # query priority user first
+    active_user_ids = ["307aa5f6-b63e-4a6d-a134-f84a96a38256"]
     # Step 3: Filter profiles based on event count and active users
     profiles = (
         db.session.query(Profiles.profile_id)
@@ -392,7 +389,9 @@ def get_profile_with_event_count_below_limit_v2(event_type):
             Profiles.owner.in_(active_user_ids),  # Filter by active user IDs
             Profiles.click_count < daily_limits[event_type],
             Profiles.profile_data.isnot(None),
-            func.json_extract_path_text(Profiles.profile_data, 'account_status').in_(['NotStarted', 'OK']),
+            func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
+                ["NotStarted", "OK"]
+            ),
             Profiles.main_profile.is_(True),
             Profiles.is_disable.is_(False),
         )
@@ -400,6 +399,32 @@ def get_profile_with_event_count_below_limit_v2(event_type):
         .limit(3)
         .all()
     )
+
+    if len(profiles) == 0:
+        # Step 1: Query active user IDs
+        active_user_ids = (
+            db.session.query(User.user_id)
+            .filter(User.last_active_at > active_cutoff)
+            .all()
+        )
+        active_user_ids = [user_id[0] for user_id in active_user_ids]
+
+        profiles = (
+            db.session.query(Profiles.profile_id)
+            .filter(
+                Profiles.owner.in_(active_user_ids),  # Filter by active user IDs
+                Profiles.click_count < daily_limits[event_type],
+                Profiles.profile_data.isnot(None),
+                func.json_extract_path_text(
+                    Profiles.profile_data, "account_status"
+                ).in_(["NotStarted", "OK"]),
+                Profiles.main_profile.is_(True),
+                Profiles.is_disable.is_(False),
+            )
+            .order_by(func.random())
+            .limit(3)
+            .all()
+        )
 
     # Select a random profile from the filtered list
     # profile = random.choice(profiles) if profiles else None
