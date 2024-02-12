@@ -267,9 +267,12 @@ def find_unique_interaction_partner_v2(
         )
     )
 
-    monetizable_filter = cast(Profiles.profile_data["monetizable"], Text) == "false"
-    verified_filter = cast(Profiles.profile_data["verify"], Text) == "true"
-    additional_filters = (monetizable_filter, verified_filter)
+    # monetizable_filter = cast(Profiles.profile_data["monetizable"], Text) == "false"
+    func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
+        ["NotStarted", 'ERROR']
+    ),
+    # verified_filter = cast(Profiles.profile_data["verify"], Text) == "true"
+    # additional_filters = (monetizable_filter, verified_filter)
 
     top_accounts = (
         Profiles.query.filter(
@@ -279,7 +282,10 @@ def find_unique_interaction_partner_v2(
             Profiles.click_count < daily_limits[event_type],
             Profiles.main_profile == False,
             Profiles.is_disable == False,
-            *additional_filters
+            cast(Profiles.profile_data["verify"], Text) == "true",
+            func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
+                ["NotStarted", 'ERROR']
+            ),
         )
         .order_by(func.random())
         .limit(10)
