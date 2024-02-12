@@ -71,9 +71,15 @@ class Profiles(db.Model):
             "phone_number": self.phone_number if self.phone_number else "",
             "notes": self.notes if self.notes else "",
             "profile_data": self.profile_data,
+            "click_count": self.click_count,
+            "comment_count": self.comment_count,
+            "like_count": self.like_count,
             "created_at": self.created_at.strftime("%d-%m-%Y %H:%M"),
             "modified_at": self.modified_at.strftime("%d-%m-%Y %H:%M"),
         }
 
     def event_data(self):
-        return {"username": self.username if self.username else ""}
+        return {
+            "username": self.username if self.username else "",
+            "gpt_key": self.gpt_key if self.gpt_key else ""
+        }
