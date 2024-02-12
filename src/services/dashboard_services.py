@@ -12,6 +12,8 @@ def get_dashboard_data():
         .filter(
             Profiles.profile_data.isnot(None),
             cast(Profiles.profile_data["verify"], Text) == "true",
+            cast(Profiles.profile_data["monetizable"], Text) == "false",
+            Profiles.main_profile == False,
         )
         .scalar()
     )
@@ -19,10 +21,8 @@ def get_dashboard_data():
     unverified_profiles_count = (
         db.session.query(func.count(Profiles.username))
         .filter(
-            or_(
-                Profiles.profile_data.is_(None),
-                cast(Profiles.profile_data["verify"], Text) == "false",
-            )
+            Profiles.profile_data.isnot(None),
+            cast(Profiles.profile_data["verify"], Text) == "false",
         )
         .scalar()
     )
@@ -31,7 +31,10 @@ def get_dashboard_data():
         db.session.query(func.count(Profiles.username))
         .filter(
             Profiles.profile_data.isnot(None),
-            cast(Profiles.profile_data["monetizable"], Text) == "true",
+            func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
+                ["NotStarted", "OK"]
+            ),
+            Profiles.main_profile == True,
         )
         .scalar()
     )
@@ -77,9 +80,11 @@ def get_summary(user_id):
     verified_profiles_count = (
         db.session.query(func.count(Profiles.username))
         .filter(
-            Profiles.profile_data.isnot(None),
             Profiles.owner == user_id,
+            Profiles.profile_data.isnot(None),
             cast(Profiles.profile_data["verify"], Text) == "true",
+            cast(Profiles.profile_data["monetizable"], Text) == "false",
+            Profiles.main_profile == False,
         )
         .scalar()
     )
@@ -88,10 +93,8 @@ def get_summary(user_id):
         db.session.query(func.count(Profiles.username))
         .filter(
             Profiles.owner == user_id,
-            or_(
-                Profiles.profile_data.is_(None),
-                cast(Profiles.profile_data["verify"], Text) == "false",
-            ),
+            Profiles.profile_data.isnot(None),
+            cast(Profiles.profile_data["verify"], Text) == "false",
         )
         .scalar()
     )
@@ -99,9 +102,12 @@ def get_summary(user_id):
     monetizable_profiles_count = (
         db.session.query(func.count(Profiles.username))
         .filter(
-            Profiles.profile_data.isnot(None),
             Profiles.owner == user_id,
-            cast(Profiles.profile_data["monetizable"], Text) == "true",
+            Profiles.profile_data.isnot(None),
+            func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
+                ["NotStarted", "OK"]
+            ),
+            Profiles.main_profile == True,
         )
         .scalar()
     )
