@@ -14,6 +14,7 @@ def get_dashboard_data():
             cast(Profiles.profile_data["verify"], Text) == "true",
             cast(Profiles.profile_data["monetizable"], Text) == "false",
             Profiles.main_profile == False,
+            Profiles.is_disable == False
         )
         .scalar()
     )
@@ -23,6 +24,7 @@ def get_dashboard_data():
         .filter(
             Profiles.profile_data.isnot(None),
             cast(Profiles.profile_data["verify"], Text) == "false",
+            Profiles.is_disable == False
         )
         .scalar()
     )
@@ -35,6 +37,7 @@ def get_dashboard_data():
                 ["NotStarted", "OK"]
             ),
             Profiles.main_profile == True,
+            Profiles.is_disable == False
         )
         .scalar()
     )
@@ -85,6 +88,7 @@ def get_summary(user_id):
             cast(Profiles.profile_data["verify"], Text) == "true",
             cast(Profiles.profile_data["monetizable"], Text) == "false",
             Profiles.main_profile == False,
+            Profiles.is_disable == False
         )
         .scalar()
     )
@@ -95,6 +99,7 @@ def get_summary(user_id):
             Profiles.owner == user_id,
             Profiles.profile_data.isnot(None),
             cast(Profiles.profile_data["verify"], Text) == "false",
+            Profiles.is_disable == False
         )
         .scalar()
     )
@@ -108,6 +113,7 @@ def get_summary(user_id):
                 ["NotStarted", "OK"]
             ),
             Profiles.main_profile == True,
+            Profiles.is_disable == False
         )
         .scalar()
     )
