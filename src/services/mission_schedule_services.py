@@ -22,6 +22,8 @@ import logging
 _logger = logging.getLogger(__name__)
 
 daily_limits = {"clickAds": 400}
+
+
 # 30% clicks
 
 
@@ -157,7 +159,7 @@ def get_user_schedule(username):
 
 # Function to find a unique interaction partner
 def find_unique_interaction_partner(
-    profile_receiver, event_type, days_limit, current_user_id
+        profile_receiver, event_type, days_limit, current_user_id
 ):
     # Calculate the start date based on days_limit
     if days_limit < 1:
@@ -241,17 +243,17 @@ def find_unique_interaction_partner(
 
 
 def find_unique_interaction_partner_v2(
-    profile_receiver, event_type, days_limit, current_user_id
+        profile_receiver, event_type, days_limit, current_user_id
 ):
     # Calculate the start date based on days_limit
-    if days_limit < 1:
-        start_date = datetime.datetime.utcnow() - datetime.timedelta(
-            hours=int(days_limit * 24)
-        )
-    else:
-        start_date = datetime.datetime.utcnow() - datetime.timedelta(
-            days=int(days_limit)
-        )
+    # if days_limit < 1:
+    #     start_date = datetime.datetime.utcnow() - datetime.timedelta(
+    #         hours=int(days_limit * 24)
+    #     )
+    # else:
+    start_date = datetime.datetime.utcnow() - datetime.timedelta(
+        days=int(1)
+    )
 
     # Subquery to find profiles that have already interacted with the given profile
     interacted_subquery = (
@@ -310,7 +312,7 @@ def calculate_days_for_unique_interactions(event_type):
 
     if event_type == "fairInteract":
         days_for_comments_likes = (
-            unique_interactions_per_account / daily_limits["fairInteract"]
+                unique_interactions_per_account / daily_limits["fairInteract"]
         )
         return days_for_comments_likes
     if event_type == "clickAds":
@@ -387,24 +389,27 @@ def get_profile_with_event_count_below_limit_v2(event_type):
     active_cutoff = datetime.datetime.utcnow() - datetime.timedelta(minutes=5)
 
     # query priority user first
-    active_user_ids = ["307aa5f6-b63e-4a6d-a134-f84a96a38256"]
-    # Step 3: Filter profiles based on event count and active users
-    profiles = (
-        db.session.query(Profiles.profile_id)
-        .filter(
-            Profiles.owner.in_(active_user_ids),  # Filter by active user IDs
-            Profiles.click_count < daily_limits[event_type],
-            Profiles.profile_data.isnot(None),
-            func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
-                ["NotStarted", "OK"]
-            ),
-            Profiles.main_profile.is_(True),
-            Profiles.is_disable.is_(False),
+    choose_otp = random.choice([0, 1])
+    profiles = []
+    if choose_otp == 0:
+        active_user_ids = ["307aa5f6-b63e-4a6d-a134-f84a96a38256"]
+        # Step 3: Filter profiles based on event count and active users
+        profiles = (
+            db.session.query(Profiles.profile_id)
+            .filter(
+                Profiles.owner.in_(active_user_ids),  # Filter by active user IDs
+                Profiles.click_count < daily_limits[event_type],
+                Profiles.profile_data.isnot(None),
+                func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
+                    ["NotStarted", "OK"]
+                ),
+                Profiles.main_profile.is_(True),
+                Profiles.is_disable.is_(False),
+            )
+            .order_by(func.random())
+            .limit(10)
+            .all()
         )
-        .order_by(func.random())
-        .limit(10)
-        .all()
-    )
 
     if len(profiles) == 0:
         # Step 1: Query active user IDs
