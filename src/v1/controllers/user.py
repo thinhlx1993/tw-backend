@@ -649,6 +649,8 @@ class UserRefresh(Resource):
                 }, 200
             user_details = user_services.row_to_dict(user_details)
             teams_id = get_jwt_claims()["teams_id"]
+            device_id = get_jwt_claims()["device_id"]
+            # "device_id": payload["device_id"]
             teams_code = get_jwt_claims()["teams_code"]
             db.session.execute("SET search_path TO public, 'cs_" + str(teams_id) + "'")
             permissions = user_services.get_user_permissions(username)
@@ -669,6 +671,7 @@ class UserRefresh(Resource):
                 "user": username,
                 "user_id": user_details.get("user_id"),
                 "role": roles,
+                "device_id": device_id,
                 "permissions": permissions,
                 "default_page": user_details.get("default_page", ""),
                 "profile_name": profile_name,
@@ -1175,9 +1178,7 @@ class UserRegistration(Resource):
                 return {"message": "Tài khoản {} đã tồn tại".format(username)}, 400
 
             # Create user in user table
-            new_user = user_services.create_user(
-                username, password, email
-            )
+            new_user = user_services.create_user(username, password, email)
 
             # Create user's default organization
             # teams_id, err_data, err_code = user_services.create_default_user_teams(
