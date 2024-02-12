@@ -254,18 +254,22 @@ def find_unique_interaction_partner_v2(
         )
 
     # Subquery to find profiles that have already interacted with the given profile
-    interacted_subquery = db.session.query(Events.profile_id_interact).filter(
-        Events.profile_id == profile_receiver,
-        Events.event_type == event_type,
-        Events.issue == "OK",
-        db.func.date(Events.created_at) >= start_date,
+    interacted_subquery = (
+        db.session.query(Events.profile_id_interact)
+        .distinct()
+        .filter(
+            Events.profile_id == profile_receiver,
+            Events.event_type == event_type,
+            Events.issue == "OK",
+            db.func.date(Events.created_at) >= start_date,
+        )
     )
 
     monetizable_filter = cast(Profiles.profile_data["monetizable"], Text) == "false"
     verified_filter = cast(Profiles.profile_data["verify"], Text) == "true"
     additional_filters = (monetizable_filter, verified_filter)
 
-    account = (
+    top_accounts = (
         Profiles.query.filter(
             Profiles.owner == current_user_id,
             Profiles.profile_id != profile_receiver,
@@ -276,11 +280,12 @@ def find_unique_interaction_partner_v2(
             *additional_filters
         )
         .order_by(func.random())
-        .first()
+        .limit(10)
+        .all()
     )
 
     # Randomly select one account from the top 10
-    # account = random.choice(top_accounts) if top_accounts else None
+    account = random.choice(top_accounts) if top_accounts else None
 
     # Retrieve the profile ID of the selected account
     selected_profile_id = account.profile_id if account else None
@@ -298,6 +303,7 @@ def calculate_days_for_unique_interactions(event_type):
     total_accounts = Profiles.query.filter(
         Profiles.profile_data.isnot(None),
         Profiles.main_profile == False,
+        Profiles.is_disable == False,
         *additional_filters
     ).count()
     unique_interactions_per_account = total_accounts - 1
