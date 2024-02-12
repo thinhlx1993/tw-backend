@@ -402,7 +402,7 @@ def get_profile_with_event_count_below_limit_v2(event_type):
             Profiles.is_disable.is_(False),
         )
         .order_by(func.random())
-        .limit(3)
+        .limit(10)
         .all()
     )
 
