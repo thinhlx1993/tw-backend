@@ -159,7 +159,7 @@ def get_user_schedule(username):
 
 # Function to find a unique interaction partner
 def find_unique_interaction_partner(
-        profile_receiver, event_type, days_limit, current_user_id
+    profile_receiver, event_type, days_limit, current_user_id
 ):
     # Calculate the start date based on days_limit
     if days_limit < 1:
@@ -172,11 +172,15 @@ def find_unique_interaction_partner(
         )
 
     # Subquery to find profiles that have already interacted with the given profile
-    interacted_subquery = db.session.query(Events.profile_id_interact).distinct().filter(
-        Events.profile_id == profile_receiver,
-        Events.event_type == event_type,
-        Events.issue == "OK",
-        db.func.date(Events.created_at) >= start_date,
+    interacted_subquery = (
+        db.session.query(Events.profile_id_interact)
+        .distinct()
+        .filter(
+            Events.profile_id == profile_receiver,
+            Events.event_type == event_type,
+            Events.issue == "OK",
+            db.func.date(Events.created_at) >= start_date,
+        )
     )
 
     # Subquery to find profiles that have reached their daily limit for the interaction type
@@ -243,7 +247,7 @@ def find_unique_interaction_partner(
 
 
 def find_unique_interaction_partner_v2(
-        profile_receiver, event_type, days_limit, current_user_id
+    profile_receiver, event_type, days_limit, current_user_id
 ):
     # Calculate the start date based on days_limit
     if days_limit < 1:
@@ -251,9 +255,7 @@ def find_unique_interaction_partner_v2(
             hours=int(days_limit * 24)
         )
     else:
-        start_date = datetime.datetime.utcnow() - datetime.timedelta(
-            days=days_limit
-        )
+        start_date = datetime.datetime.utcnow() - datetime.timedelta(days=days_limit)
 
     # Subquery to find profiles that have already interacted with the given profile
     interacted_subquery = (
@@ -283,7 +285,7 @@ def find_unique_interaction_partner_v2(
             Profiles.main_profile == False,
             Profiles.is_disable == False,
             func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
-                ["NotStarted", 'ERROR']
+                ["NotStarted", "ERROR"]
             ),
         )
         .order_by(func.random())
@@ -303,21 +305,23 @@ def find_unique_interaction_partner_v2(
 # Function to calculate days for unique interactions
 def calculate_days_for_unique_interactions(event_type):
     # get total verify accounts
-    monetizable_filter = cast(Profiles.profile_data["monetizable"], Text) == "false"
-    verified_filter = cast(Profiles.profile_data["verify"], Text) == "true"
-    additional_filters = (monetizable_filter, verified_filter)
+    # monetizable_filter = cast(Profiles.profile_data["monetizable"], Text) == "false"
+    # verified_filter = cast(Profiles.profile_data["verify"], Text) == "true"
+    # additional_filters = (monetizable_filter, verified_filter)
 
     total_accounts = Profiles.query.filter(
         Profiles.profile_data.isnot(None),
         Profiles.main_profile == False,
         Profiles.is_disable == False,
-        *additional_filters
+        func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
+            ["NotStarted", "ERROR"]
+        ),
     ).count()
     unique_interactions_per_account = total_accounts - 1
 
     if event_type == "fairInteract":
         days_for_comments_likes = (
-                unique_interactions_per_account / daily_limits["fairInteract"]
+            unique_interactions_per_account / daily_limits["fairInteract"]
         )
         return days_for_comments_likes
     if event_type == "clickAds":
@@ -405,9 +409,9 @@ def get_profile_with_event_count_below_limit_v2(event_type):
                 Profiles.owner.in_(active_user_ids),  # Filter by active user IDs
                 Profiles.click_count < daily_limits[event_type],
                 Profiles.profile_data.isnot(None),
-                func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
-                    ["NotStarted", "OK"]
-                ),
+                func.json_extract_path_text(
+                    Profiles.profile_data, "account_status"
+                ).in_(["NotStarted", "OK"]),
                 Profiles.main_profile.is_(True),
                 Profiles.is_disable.is_(False),
             )
