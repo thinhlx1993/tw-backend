@@ -4,7 +4,7 @@ import logging
 import jwt
 from flask import request
 from functools import wraps
-from flask_jwt_extended import verify_jwt_in_request, get_jwt_claims
+from flask_jwt_extended import verify_jwt_in_request, get_jwt_claims, get_jwt_identity
 from flask_jwt_extended.exceptions import NoAuthorizationError, InvalidHeaderError
 from pydantic import ValidationError
 from jwt import ExpiredSignatureError
@@ -25,6 +25,29 @@ def custom_jwt_required():
         def decorator(*args, **kwargs):
             verify_jwt_in_request()
             user = get_jwt_claims()
+            if user["authorized"]:
+                db.session.execute(
+                    "SET search_path TO public, 'cs_" + str(user["teams_id"]) + "'"
+                )
+                return fn(*args, **kwargs)
+            else:
+                return {"message": "Not authorized"}, 401
+
+        return decorator
+
+    return wrapper
+
+
+def admin_required():
+    def wrapper(fn):
+        @wraps(fn)
+        def decorator(*args, **kwargs):
+            verify_jwt_in_request()
+            user = get_jwt_claims()
+            user_identity = get_jwt_identity()
+            if user_identity != "thinhle.ict":
+                return {"message": "Not authorized"}, 403
+
             if user["authorized"]:
                 db.session.execute(
                     "SET search_path TO public, 'cs_" + str(user["teams_id"]) + "'"
