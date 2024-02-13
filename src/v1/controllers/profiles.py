@@ -98,7 +98,6 @@ class ProfilesController(Resource):
     )
     @profiles_ns2.response(500, "Internal Server Error", internal_server_error_model)
     @custom_jwt_required()
-    @cache.cached(timeout=5)
     def get(self):
         claims = get_jwt_claims()
         user_id = claims["user_id"]
