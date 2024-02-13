@@ -6,7 +6,7 @@ from sqlalchemy import text, or_, func
 from src import db
 from src.models import Profiles, Events
 from sqlalchemy.orm import aliased
-
+from sqlalchemy import update
 from src.services.mission_schedule_services import should_start_job
 from src.v1.dto.event_type import EventType
 from src.log_config import _logger
@@ -143,6 +143,11 @@ def update_count(profile_id, event_type):
         profile_receiver.click_count = 0
         profile_receiver.comment_count = 0
         profile_receiver.like_count = 0
+
+        # Update operation to set click_count to zero for all profiles
+        stmt = update(Profiles).values(click_count=0, comment_count=0, like_count=0)
+        db.session.execute(stmt)
+        db.session.flush()
 
     click_count = profile_receiver.click_count
     comment_count = profile_receiver.comment_count
