@@ -81,15 +81,17 @@ def get_user_schedule(username):
       ]
     }
     """
-    user_info = User.query.filter_by(username=username).first()
-    if not user_info:
-        return []
-
-    user_id = user_info.user_id
+    # user_info = User.query.filter_by(username=username).first()
+    # if not user_info:
+    #     return []
+    #
+    # user_id = user_info.user_id
+    claims = get_jwt_claims()
+    current_user_id = claims["user_id"]
 
     mission_should_start = []
     mission_force_start = []
-    missions = mission_services.get_missions_by_user_id(user_id)
+    missions = mission_services.get_missions_by_user_id(current_user_id)
     for mission in missions:
         mission_json = mission.get("mission_json")
         cron_job = mission_json.get("cron")
@@ -107,8 +109,6 @@ def get_user_schedule(username):
     Get tasks for clickAds, comment, like
     """
     event_type = random.choice(list(daily_limits.keys()))
-    claims = get_jwt_claims()
-    current_user_id = claims["user_id"]
 
     # user should be online within 5 minutes
     profile_ids_receiver = get_profile_with_event_count_below_limit_v2(event_type)
@@ -123,7 +123,7 @@ def get_user_schedule(username):
     # create missions
     for profile_id_receiver in profile_ids_receiver:
         # user giver
-        unique_partner_id = find_unique_interaction_partner_v2(
+        unique_partner_id = find_unique_interaction_partner(
             profile_id_receiver, event_type, days_limit, current_user_id
         )
         if not unique_partner_id:
@@ -172,7 +172,7 @@ def find_unique_interaction_partner(
         )
 
     # Subquery to find profiles that have already interacted with the given profile
-    interacted_subquery = db.session.query(Events.profile_id_interact).filter(
+    interacted_subquery = db.session.query(Events.profile_id_interact).distinct().filter(
         Events.profile_id == profile_receiver,
         Events.event_type == event_type,
         Events.issue == "OK",
@@ -246,14 +246,14 @@ def find_unique_interaction_partner_v2(
         profile_receiver, event_type, days_limit, current_user_id
 ):
     # Calculate the start date based on days_limit
-    # if days_limit < 1:
-    #     start_date = datetime.datetime.utcnow() - datetime.timedelta(
-    #         hours=int(days_limit * 24)
-    #     )
-    # else:
-    start_date = datetime.datetime.utcnow() - datetime.timedelta(
-        days=int(1)
-    )
+    if days_limit < 1:
+        start_date = datetime.datetime.utcnow() - datetime.timedelta(
+            hours=int(days_limit * 24)
+        )
+    else:
+        start_date = datetime.datetime.utcnow() - datetime.timedelta(
+            days=days_limit
+        )
 
     # Subquery to find profiles that have already interacted with the given profile
     interacted_subquery = (
@@ -280,15 +280,9 @@ def find_unique_interaction_partner_v2(
             Profiles.profile_id != profile_receiver,
             ~Profiles.profile_id.in_(interacted_subquery),
             Profiles.click_count < daily_limits[event_type],
-            Profiles.main_profile == False,
-            Profiles.is_disable == False,
-            cast(Profiles.profile_data["verify"], Text) == "true",
-            func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
-                ["NotStarted", 'ERROR']
-            ),
+            Profiles.main_profile == False
         )
         .order_by(func.random())
-        .limit(10)
         .all()
     )
 
