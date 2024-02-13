@@ -62,15 +62,15 @@ def get_all_profiles(
     user_id="",
     filter_by_type="all",
 ):
-    column = getattr(Teams, sort_by, None)
-    if not column:
-        return False, {"Message": "Invalid sort_by Key provided"}
-    sorting_order = sort_by + " " + sort_order
+    # column = getattr(Teams, sort_by, None)
+    # if not column:
+    #     return False, {"Message": "Invalid sort_by Key provided"}
+    # sorting_order = sort_by + " " + sort_order
     try:
         query = Profiles.query
         # Apply sorting
-        if sorting_order:
-            query = query.order_by(db.text(sorting_order))
+        # if sorting_order:
+        #     query = query.order_by(db.text(sorting_order))
         if search:
             query = query.filter(
                 or_(
