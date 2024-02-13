@@ -38,7 +38,7 @@ def custom_jwt_required():
     return wrapper
 
 
-def admin_required():
+def super_admin_required():
     def wrapper(fn):
         @wraps(fn)
         def decorator(*args, **kwargs):

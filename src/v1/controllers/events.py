@@ -5,7 +5,7 @@ from flask_restx import fields, Resource
 from src.parsers import page_parser, event_page_parser
 from src.services import events_services  # Import your events services
 from src.version_handler import api_version_1_web
-from src.utilities.custom_decorator import custom_jwt_required
+from src.utilities.custom_decorator import custom_jwt_required, super_admin_required
 
 events_ns = api_version_1_web.namespace("events", description="Events Functionalities")
 
@@ -38,7 +38,7 @@ class EventsController(Resource):
 
     @events_ns.expect(event_page_parser)
     @events_ns.response(200, "Success")
-    @custom_jwt_required()
+    @super_admin_required()
     def get(self):
         """Retrieve list of events"""
         args = event_page_parser.parse_args()
