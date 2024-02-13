@@ -1,4 +1,4 @@
-from sqlalchemy import func, cast, or_, Numeric, Text
+from sqlalchemy import func, cast, or_, Numeric, Text, select, text
 from src import db
 from src.models import User, Profiles
 
@@ -11,10 +11,11 @@ def get_dashboard_data():
         db.session.query(func.count(Profiles.username))
         .filter(
             Profiles.profile_data.isnot(None),
-            cast(Profiles.profile_data["verify"], Text) == "true",
-            cast(Profiles.profile_data["monetizable"], Text) == "false",
+            func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
+                ["NotStarted", "ERROR"]
+            ),
             Profiles.main_profile == False,
-            Profiles.is_disable == False
+            Profiles.is_disable == False,
         )
         .scalar()
     )
@@ -24,7 +25,7 @@ def get_dashboard_data():
         .filter(
             Profiles.profile_data.isnot(None),
             cast(Profiles.profile_data["verify"], Text) == "false",
-            Profiles.is_disable == False
+            Profiles.is_disable == False,
         )
         .scalar()
     )
@@ -37,22 +38,27 @@ def get_dashboard_data():
                 ["NotStarted", "OK"]
             ),
             Profiles.main_profile == True,
-            Profiles.is_disable == False
+            Profiles.is_disable == False,
         )
         .scalar()
     )
 
-    total_earnings_result = (
-        db.session.query(
-            func.coalesce(
-                func.sum(cast(cast(Profiles.profile_data["earning"], Text), Numeric)), 0
-            )
-        )
-        .filter(
-            Profiles.profile_data.isnot(None), Profiles.profile_data["earning"] != None
-        )
-        .scalar()
-    )
+    # payout_elements = select(
+    #     [func.jsonb_array_elements(Profiles.profile_data["payouts"]).alias("element")]
+    # ).lateral("payout_elements")
+
+    # Cast each element to float and sum them up
+    sql_query = """
+        SELECT SUM((value::numeric)) AS total_payout
+        FROM profiles p,
+        LATERAL json_array_elements_text(p.profile_data->'payouts') AS value
+        WHERE p.profile_data->'payouts' IS NOT NULL
+        AND json_array_length(p.profile_data->'payouts') > 1
+    """
+
+    # Execute the raw SQL query
+    result = db.session.execute(text(sql_query))
+    total_payouts = result.scalar()
 
     users = User.query.filter_by().all()
     summaries = []
@@ -69,7 +75,7 @@ def get_dashboard_data():
         "verified_profiles_count": verified_profiles_count,
         "unverified_profiles_count": unverified_profiles_count,
         "monetizable_profiles_count": monetizable_profiles_count,
-        "total_earnings": float(total_earnings_result),
+        "total_earnings": float(total_payouts),
         "summaries": sorted_data,
     }
     return response_data
@@ -88,7 +94,7 @@ def get_summary(user_id):
             cast(Profiles.profile_data["verify"], Text) == "true",
             cast(Profiles.profile_data["monetizable"], Text) == "false",
             Profiles.main_profile == False,
-            Profiles.is_disable == False
+            Profiles.is_disable == False,
         )
         .scalar()
     )
@@ -99,7 +105,7 @@ def get_summary(user_id):
             Profiles.owner == user_id,
             Profiles.profile_data.isnot(None),
             cast(Profiles.profile_data["verify"], Text) == "false",
-            Profiles.is_disable == False
+            Profiles.is_disable == False,
         )
         .scalar()
     )
@@ -113,28 +119,28 @@ def get_summary(user_id):
                 ["NotStarted", "OK"]
             ),
             Profiles.main_profile == True,
-            Profiles.is_disable == False
+            Profiles.is_disable == False,
         )
         .scalar()
     )
 
-    total_earnings_result = (
-        db.session.query(
-            func.coalesce(
-                func.sum(cast(cast(Profiles.profile_data["earning"], Text), Numeric)), 0
-            )
-        )
-        .filter(
-            Profiles.owner == user_id,
-            Profiles.profile_data.isnot(None),
-            Profiles.profile_data["earning"] != None,
-        )
-        .scalar()
-    )
+    sql_query = f"""
+        SELECT SUM((value::numeric)) AS total_payout
+        FROM profiles p,
+        LATERAL json_array_elements_text(p.profile_data->'payouts') AS value
+        WHERE p.profile_data->'payouts' IS NOT NULL
+        AND json_array_length(p.profile_data->'payouts') > 1
+        AND p."owner" = '{user_id}'
+    """
+
+    # Execute the raw SQL query
+    result = db.session.execute(text(sql_query))
+    total_payouts = result.scalar()
+
     return {
         "profiles_count": profiles_count,
         "verified_profiles_count": verified_profiles_count,
         "unverified_profiles_count": unverified_profiles_count,
         "monetizable_profiles_count": monetizable_profiles_count,
-        "total_earnings": float(total_earnings_result),
+        "total_earnings": float(total_payouts) if total_payouts else 0,
     }

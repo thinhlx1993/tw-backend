@@ -3,6 +3,8 @@ import random
 
 from flask_restx import fields, Resource
 from flask_jwt_extended import get_jwt_claims, get_jwt_identity
+
+from src import cache
 from src.services import profiles_services, setting_services
 from src.services import hma_services, teams_services
 from src.utilities.custom_decorator import custom_jwt_required
@@ -96,6 +98,7 @@ class ProfilesController(Resource):
     )
     @profiles_ns2.response(500, "Internal Server Error", internal_server_error_model)
     @custom_jwt_required()
+    @cache.cached(timeout=5)
     def get(self):
         claims = get_jwt_claims()
         user_id = claims["user_id"]
@@ -250,7 +253,7 @@ class ProfilesBrowserController(Resource):
             return_data = {
                 "username": profile.username,
                 "profile_id": profile.profile_id,
-                "gpt_key": profile.gpt_key
+                "gpt_key": profile.gpt_key,
             }
             return return_data, 200
 
