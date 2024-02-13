@@ -123,7 +123,7 @@ def get_user_schedule(username):
     # create missions
     for profile_id_receiver in profile_ids_receiver:
         # user giver
-        unique_partner_id = find_unique_interaction_partner(
+        unique_partner_id = find_unique_interaction_partner_v2(
             profile_id_receiver, event_type, days_limit, current_user_id
         )
         if not unique_partner_id:
@@ -280,9 +280,14 @@ def find_unique_interaction_partner_v2(
             Profiles.profile_id != profile_receiver,
             ~Profiles.profile_id.in_(interacted_subquery),
             Profiles.click_count < daily_limits[event_type],
-            Profiles.main_profile == False
+            Profiles.main_profile == False,
+            Profiles.is_disable == False,
+            func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
+                ["NotStarted", 'ERROR']
+            ),
         )
         .order_by(func.random())
+        .limit(10)
         .all()
     )
 
