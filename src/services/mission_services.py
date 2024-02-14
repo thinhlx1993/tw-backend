@@ -11,25 +11,22 @@ from src.v1.controllers.utils import generate_crontab_schedule
 def get_all_missions(user_id):
     """Retrieve all missions."""
     sorting_order = "created_at desc"
-    readonly_session = get_readonly_session()
-    # Now use this session for querying
-    missions = [
-        item.repr_name()
-        for item in readonly_session.query(Mission).filter(Mission.user_id == user_id)
-        .order_by(db.text(sorting_order))
-        .all()
-    ]
+    with get_readonly_session() as readonly_session:
+        # Now use this session for querying
+        missions = [
+            item.repr_name()
+            for item in readonly_session.query(Mission).filter(Mission.user_id == user_id)
+            .order_by(db.text(sorting_order))
+            .all()
+        ]
 
-    # Make sure to remove the session after use to avoid connection leaks
-    readonly_session.close()
+        for mission in missions:
+            user_id = mission["user_id"]
+            if user_id:
+                user_info = user_services.check_user_exists(user_id=user_id)
+                mission["username"] = user_info.username
 
-    for mission in missions:
-        user_id = mission["user_id"]
-        if user_id:
-            user_info = user_services.check_user_exists(user_id=user_id)
-            mission["username"] = user_info.username
-
-    return missions
+        return missions
 
 
 def get_missions_by_user_id(user_id, readonly_session):

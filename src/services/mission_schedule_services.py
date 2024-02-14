@@ -85,74 +85,72 @@ def get_user_schedule(username):
     """
     claims = get_jwt_claims()
     current_user_id = claims["user_id"]
-    readonly_session = get_readonly_session()
+    with get_readonly_session() as readonly_session:
+        mission_should_start = []
+        mission_force_start = []
+        missions = mission_services.get_missions_by_user_id(current_user_id, readonly_session)
+        for mission in missions:
+            mission_json = mission.get("mission_json")
+            cron_job = mission_json.get("cron")
+            if should_start_job(cron_job) or mission["force_start"]:
+                mission_schedule = mission["mission_schedule"]
+                mission_tasks = mission["mission_tasks"]
+                for item in mission_schedule:
+                    item["tasks"] = mission_tasks
+                mission_should_start.extend(mission_schedule)
+                mission_force_start.append(mission["mission_id"])
 
-    mission_should_start = []
-    mission_force_start = []
-    missions = mission_services.get_missions_by_user_id(current_user_id, readonly_session)
-    for mission in missions:
-        mission_json = mission.get("mission_json")
-        cron_job = mission_json.get("cron")
-        if should_start_job(cron_job) or mission["force_start"]:
-            mission_schedule = mission["mission_schedule"]
-            mission_tasks = mission["mission_tasks"]
-            for item in mission_schedule:
-                item["tasks"] = mission_tasks
-            mission_should_start.extend(mission_schedule)
-            mission_force_start.append(mission["mission_id"])
+        for mission_id in mission_force_start:
+            mission_services.set_force_start_false(mission_id)
+        """
+        Get tasks for clickAds, comment, like
+        """
+        event_type = random.choice(list(daily_limits.keys()))
 
-    for mission_id in mission_force_start:
-        mission_services.set_force_start_false(mission_id)
-    """
-    Get tasks for clickAds, comment, like
-    """
-    event_type = random.choice(list(daily_limits.keys()))
+        # user should be online within 5 minutes
+        profile_ids_receiver = get_profile_with_event_count_below_limit_v2(event_type, readonly_session)
 
-    # user should be online within 5 minutes
-    profile_ids_receiver = get_profile_with_event_count_below_limit_v2(event_type, readonly_session)
+        # Not found any user receiver
+        if not profile_ids_receiver:
+            return mission_should_start
 
-    # Not found any user receiver
-    if not profile_ids_receiver:
-        return mission_should_start
+        # Find a unique interaction partner from current user profiles
+        days_limit = calculate_days_for_unique_interactions(event_type, readonly_session)
 
-    # Find a unique interaction partner from current user profiles
-    days_limit = calculate_days_for_unique_interactions(event_type, readonly_session)
-
-    # create missions
-    for profile_id_receiver in profile_ids_receiver:
-        # user giver
-        unique_partner_id = find_unique_interaction_partner_v2(
-            profile_id_receiver, event_type, days_limit, current_user_id, readonly_session
-        )
-        if not unique_partner_id:
-            continue
-
-        tasks = readonly_session.query(Task).filter(Task.tasks_name == event_type).first()
-        if tasks:
-            mission_should_start.append(
-                {
-                    "schedule_id": "",
-                    "profile_id": unique_partner_id,
-                    "profile_id_receiver": profile_id_receiver,
-                    "mission_id": "",
-                    "schedule_json": "",
-                    "start_timestamp": datetime.datetime.utcnow().strftime(
-                        "%d-%m-%Y %H:%M"
-                    ),
-                    "tasks": [
-                        {
-                            "mission_id": "",
-                            "tasks_id": tasks.tasks_id,
-                            "tasks": {
-                                "tasks_id": tasks.tasks_id,
-                                "tasks_name": event_type,
-                                "tasks_json": tasks.tasks_json,
-                            },
-                        }
-                    ],
-                }
+        # create missions
+        for profile_id_receiver in profile_ids_receiver:
+            # user giver
+            unique_partner_id = find_unique_interaction_partner_v2(
+                profile_id_receiver, event_type, days_limit, current_user_id, readonly_session
             )
-    readonly_session.close()
+            if not unique_partner_id:
+                continue
+
+            tasks = readonly_session.query(Task).filter(Task.tasks_name == event_type).first()
+            if tasks:
+                mission_should_start.append(
+                    {
+                        "schedule_id": "",
+                        "profile_id": unique_partner_id,
+                        "profile_id_receiver": profile_id_receiver,
+                        "mission_id": "",
+                        "schedule_json": "",
+                        "start_timestamp": datetime.datetime.utcnow().strftime(
+                            "%d-%m-%Y %H:%M"
+                        ),
+                        "tasks": [
+                            {
+                                "mission_id": "",
+                                "tasks_id": tasks.tasks_id,
+                                "tasks": {
+                                    "tasks_id": tasks.tasks_id,
+                                    "tasks_name": event_type,
+                                    "tasks_json": tasks.tasks_json,
+                                },
+                            }
+                        ],
+                    }
+                )
     return mission_should_start
 
 
