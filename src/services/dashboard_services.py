@@ -72,6 +72,9 @@ def get_dashboard_data():
         user_summary = get_summary(user.user_id, readonly_session)
         user_summary["username"] = user.username
         summaries.append(user_summary)
+
+    readonly_session.close()
+
     sorted_data = sorted(
         summaries, key=lambda x: x["verified_profiles_count"], reverse=True
     )
