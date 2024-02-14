@@ -143,7 +143,7 @@ class ProfilesController(Resource):
         except Exception as e:
             _logger.debug(f"Data not valid: {e}")
             return {"message": "Data not valid"}, 400
-        total_profiles = profiles_services.get_total_profiles()
+        # total_profiles = profiles_services.get_total_profiles()
         # teams = teams_services.get_teams(teams_id)
         # if total_profiles >= teams.teams_plan:
         #     return {

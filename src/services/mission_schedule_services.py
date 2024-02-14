@@ -2,19 +2,17 @@
 import random
 import pytz
 from flask_jwt_extended import get_jwt_claims
-from sqlalchemy import func, cast, or_, Numeric, Text
+from sqlalchemy import func, cast, or_, Text
 
 from src import db, app
 from src.models import (
     MissionSchedule,
     User,
-    MissionTask,
-    Mission,
     Task,
     Events,
     Profiles,
 )
-from src.services import mission_services, user_services
+from src.services import mission_services
 import datetime
 from croniter import croniter
 import logging
@@ -182,7 +180,7 @@ def find_unique_interaction_partner(
             Events.event_type == event_type,
             Events.issue == "OK",
             db.func.date(Events.created_at) >= start_date,
-        )
+        ).execution_options(bind=db.get_engine(app, bind='readonly'))
     )
 
     # Subquery to find profiles that have reached their daily limit for the interaction type
@@ -195,6 +193,7 @@ def find_unique_interaction_partner(
         )
         .group_by(Events.profile_id)
         .having(db.func.count() >= daily_limits[event_type])
+        .execution_options(bind=db.get_engine(app, bind='readonly'))
     )
 
     # Subquery to count clicks for each profile
@@ -207,6 +206,7 @@ def find_unique_interaction_partner(
             db.func.date(Events.created_at) == datetime.datetime.utcnow().date(),
         )
         .group_by(Events.profile_id_interact)
+        .execution_options(bind=db.get_engine(app, bind='readonly'))
         .subquery()
     )
 
@@ -236,6 +236,7 @@ def find_unique_interaction_partner(
             *additional_filters
         )
         .order_by(func.random())
+        .execution_options(bind=db.get_engine(app, bind='readonly'))
         .first()
     )
 
@@ -269,6 +270,7 @@ def find_unique_interaction_partner_v2(
             Events.issue == "OK",
             db.func.date(Events.created_at) >= start_date,
         )
+        .execution_options(bind=db.get_engine(app, bind='readonly'))
     )
 
     # monetizable_filter = cast(Profiles.profile_data["monetizable"], Text) == "false"
@@ -292,6 +294,7 @@ def find_unique_interaction_partner_v2(
         )
         .order_by(func.random())
         .limit(10)
+        .execution_options(bind=db.get_engine(app, bind='readonly'))
         .all()
     )
 
@@ -318,7 +321,7 @@ def calculate_days_for_unique_interactions(event_type):
         func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
             ["NotStarted", "ERROR"]
         ),
-    ).count()
+    ).execution_options(bind=db.get_engine(app, bind='readonly')).count()
     unique_interactions_per_account = total_accounts - 1
 
     if event_type == "fairInteract":
@@ -338,7 +341,7 @@ def get_profile_with_event_count_below_limit(event_type):
 
     # Step 1: Query active user IDs
     active_user_ids = (
-        db.session.query(User.user_id).filter(User.last_active_at > active_cutoff).all()
+        db.session.query(User.user_id).filter(User.last_active_at > active_cutoff).execution_options(bind=db.get_engine(app, bind='readonly')).all()
     )
     active_user_ids = [user_id[0] for user_id in active_user_ids]
 
@@ -351,6 +354,7 @@ def get_profile_with_event_count_below_limit(event_type):
             db.func.date(Events.created_at) == today,
         )
         .group_by(Events.profile_id)
+        .execution_options(bind=db.get_engine(app, bind='readonly'))
         .subquery()
     )
 
@@ -383,6 +387,7 @@ def get_profile_with_event_count_below_limit(event_type):
             Profiles.main_profile.is_(True),
         )
         .order_by(func.random())
+        .execution_options(bind=db.get_engine(app, bind='readonly'))
         .first()
     )
 

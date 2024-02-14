@@ -45,14 +45,6 @@ def get_profile_by_id(profile_id):
     return Profiles.query.get(profile_id)
 
 
-def get_profile_by_username(username):
-    return Profiles.query.filter_by(username=username).first()
-
-
-def get_total_profiles():
-    return Profiles.query.filter_by().count()
-
-
 def get_all_profiles(
     page=0,
     per_page=20,
