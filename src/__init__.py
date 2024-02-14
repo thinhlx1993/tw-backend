@@ -46,7 +46,6 @@ else:
 CORS(app=app, origins=app.config["CORS_ORIGIN"], supports_credentials=True)
 
 # Set configuration for DB
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 
 migrate = Migrate(app, db, compare_type=True)

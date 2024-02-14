@@ -1,20 +1,20 @@
 """Services for teams."""
 
 import logging
-import re 
+import re
 
 from sentry_sdk import capture_exception
 from sqlalchemy import func, text, and_
 from sqlalchemy.exc import MultipleResultsFound
 
-from src import db
+from src import db, app
 from src.models.teams import Teams
 from src.models.user_teams_mapping import UserTeamsMapping
 from src.services import user_services, migration_services
 
-
 # Create module log
 _logger = logging.getLogger(__name__)
+
 
 def create_teams(org_name, owner=None):
     """Create teams.
@@ -23,7 +23,11 @@ def create_teams(org_name, owner=None):
     :return bool, UUID: True, teams_id
     """
     try:
-        new_org = Teams(teams_name=org_name, teams_code=get_teams_code_from_name(org_name), owner=owner)
+        new_org = Teams(
+            teams_name=org_name,
+            teams_code=get_teams_code_from_name(org_name),
+            owner=owner,
+        )
         db.session.add(new_org)
         db.session.flush()
         return True, str(new_org.teams_id), None
@@ -42,8 +46,7 @@ def create_schema(org_id):
     :param str org_id: Teams ID
     :return None:
     """
-    db.session.execute(
-        'CREATE SCHEMA IF NOT EXISTS "cs_' + str(org_id) + '"')
+    db.session.execute('CREATE SCHEMA IF NOT EXISTS "cs_' + str(org_id) + '"')
 
 
 def drop_schema(org_id):
@@ -52,8 +55,7 @@ def drop_schema(org_id):
     :param str org_id: Teams ID
     :return None:
     """
-    db.session.execute(
-        'DROP SCHEMA IF EXISTS "cs_' + str(org_id) + '" CASCADE ')
+    db.session.execute('DROP SCHEMA IF EXISTS "cs_' + str(org_id) + '" CASCADE ')
 
 
 def get_teams(teams_id):
@@ -65,8 +67,11 @@ def get_teams(teams_id):
     :return: Teams row from table
     """
     try:
-        teams = (Teams.query.filter(
-            Teams.teams_id == teams_id).first())
+        teams = (
+            Teams.query.filter(Teams.teams_id == teams_id)
+            .execution_options(bind=db.get_engine(app, bind="readonly"))
+            .first()
+        )
         return teams
     except Exception as err:
         capture_exception(err)
@@ -74,7 +79,9 @@ def get_teams(teams_id):
 
 
 def check_is_default_org(teams_id, user_id):
-    mapping = UserTeamsMapping.query.filter_by(teams_id=teams_id, user_id=user_id, is_default=True).first()
+    mapping = UserTeamsMapping.query.filter_by(
+        teams_id=teams_id, user_id=user_id, is_default=True
+    ).first()
     return mapping
 
 
@@ -101,8 +108,8 @@ def update_query(query, model, filters=None, throw_error=True):
 
 
 def fetch_teams(
-    page=0, per_page=20, sort_by="teams_name",
-    sort_order="asc", filters=None):
+    page=0, per_page=20, sort_by="teams_name", sort_order="asc", filters=None
+):
     """Fetch teams data based on sort and filters.
 
     :param int page: Page number to fetch
@@ -119,8 +126,7 @@ def fetch_teams(
     try:
         query = Teams.query
         # Apply filters
-        status, query = update_query(
-            query, Teams, filters=filters)
+        status, query = update_query(query, Teams, filters=filters)
         if not status:
             return False, query
         # Apply sorting
@@ -130,7 +136,8 @@ def fetch_teams(
         if per_page:
             query = query.limit(per_page)
         if page:
-            query = query.offset(per_page*(page-1))
+            query = query.offset(per_page * (page - 1))
+        query = query.execution_options(bind=db.get_engine(app, bind="readonly"))
         result = query.all()
         # Formatting the result
         formatted_result = format_result(result)
@@ -158,10 +165,9 @@ def update_teams(data):
     """
     try:
         # Fetch row with teams_id
-        teams = Teams.query.filter(
-            Teams.teams_id == data["teams_id"]).first()
+        teams = Teams.query.filter(Teams.teams_id == data["teams_id"]).first()
         if not teams:
-            raise Exception('Teams not found')
+            raise Exception("Teams not found")
         # Each value in 'data' is updated in the row, unless they're None
         for attribute in data:
             if data[attribute] is not None:
@@ -188,13 +194,13 @@ def update_teams_owner(org_id, cur_user_id, new_user_id):
         if teams:
             if str(teams.owner) == cur_user_id:
                 # Change owner column in teams row
-                teams = Teams.query.filter(
-                    Teams.teams_id == org_id).first()
-                setattr(teams, 'owner', new_user_id)
+                teams = Teams.query.filter(Teams.teams_id == org_id).first()
+                setattr(teams, "owner", new_user_id)
                 db.session.flush()
                 # Update mapping to reflect the owner change
                 user_services.create_user_teams_mapping(
-                    new_user_id, str(teams.teams_id), False)
+                    new_user_id, str(teams.teams_id), False
+                )
             else:
                 raise Exception("User is not owner of teams")
         else:
@@ -216,17 +222,17 @@ def get_user_org_list(user_id):
     try:
         out_data = {}
         # This only contains teams_ids
-        org_list = UserTeamsMapping.query.filter_by(
-            user_id=user_id).all()
+        org_list = (
+            UserTeamsMapping.query.filter_by(user_id=user_id)
+            .execution_options(bind=db.get_engine(app, bind="readonly"))
+            .all()
+        )
         org_details = []
         # Getting complete details for each org
         for row in org_list:
-            status, details = fetch_teams(
-                filters={
-                    "teams_id": str(row.teams_id)
-                })
+            status, details = fetch_teams(filters={"teams_id": str(row.teams_id)})
             org_details.extend(details)
-        out_data['org_list'] = org_details
+        out_data["org_list"] = org_details
         return out_data
     except Exception as err:
         _logger.exception(err)
@@ -243,7 +249,9 @@ def set_user_default_teams(user_id, teams_id):
     """
     try:
         # Query exist mapping teams and user
-        exist_mapping = UserTeamsMapping.query.filter_by(user_id=user_id, teams_id=teams_id).first()
+        exist_mapping = UserTeamsMapping.query.filter_by(
+            user_id=user_id, teams_id=teams_id
+        ).first()
         if exist_mapping:
             # exist mapping, set default teams
             exist_mapping.is_default = True
@@ -251,7 +259,9 @@ def set_user_default_teams(user_id, teams_id):
             db.session.flush()
             return True
         # add mapping for default
-        new_mapping = UserTeamsMapping(user_id=user_id, teams_id=teams_id, is_default=True)
+        new_mapping = UserTeamsMapping(
+            user_id=user_id, teams_id=teams_id, is_default=True
+        )
         db.session.add(new_mapping)
         db.session.flush()
         return True
@@ -271,68 +281,86 @@ def format_result(result):
     formatted_result = []
     for row in result:
         formatted_row = {}
-        formatted_row['teams_id'] = str(row.teams_id)
-        formatted_row['teams_name'] = str(row.teams_name)
-        formatted_row['teams_code'] = str(row.teams_code).lower()
-        formatted_row['owner'] = str(row.owner)
-        formatted_row['created_at'] = str(row.created_at)
-        formatted_row['updated_at'] = str(row.updated_at)
-        formatted_row['is_disabled'] = row.is_disabled
-        formatted_row['is_deleted'] = row.is_deleted
+        formatted_row["teams_id"] = str(row.teams_id)
+        formatted_row["teams_name"] = str(row.teams_name)
+        formatted_row["teams_code"] = str(row.teams_code).lower()
+        formatted_row["owner"] = str(row.owner)
+        formatted_row["created_at"] = str(row.created_at)
+        formatted_row["updated_at"] = str(row.updated_at)
+        formatted_row["is_disabled"] = row.is_disabled
+        formatted_row["is_deleted"] = row.is_deleted
         formatted_result.append(formatted_row)
 
     return formatted_result
 
 
 def get_teams_code_from_name(org_name):
+    org_code = re.sub(r"[^\w\s]", "_", org_name)
+    # Remove whitespaces with underscore
+    org_code = re.sub(r"\s+", "_", org_code)
 
-    org_code = re.sub(r"[^\w\s]", '_', org_name)
-    #Remove whitespaces with underscore
-    org_code = re.sub(r"\s+", '_', org_code)
-
-    query = Teams.query.filter(func.lower(Teams.teams_code) == str(org_code).lower()).scalar()
+    query = Teams.query.filter(
+        func.lower(Teams.teams_code) == str(org_code).lower()
+    ).scalar()
     if query is None or query == 0:
         return org_code
-    
+
     seq = 0
     is_valid_code = False
     while is_valid_code == False:
         seq += 1
         temp_code = org_code + "_" + str(seq)
-        query = Teams.query.filter(func.lower(Teams.teams_code) == str(temp_code).lower()).scalar()
+        query = Teams.query.filter(
+            func.lower(Teams.teams_code) == str(temp_code).lower()
+        ).scalar()
         if query is None or query == 0:
             is_valid_code = True
             org_code = temp_code
     org_code = temp_code
     return org_code
 
-def get_teams_id_from_code(org_code):   
+
+def get_teams_id_from_code(org_code):
     try:
-        teams = db.session.query(Teams).filter(func.lower(Teams.teams_code) == str(org_code).lower()).first()
+        teams = (
+            db.session.query(Teams)
+            .filter(func.lower(Teams.teams_code) == str(org_code).lower())
+            .first()
+        )
         return teams.teams_id
     except Exception as err:
         _logger.exception(err)
         capture_exception(err)
         return None
 
+
 def search_user_org_list(
-        user_id, page=0, per_page=20, sort_by="teams_id",
-        sort_order="asc", filters=None):
+    user_id, page=0, per_page=20, sort_by="teams_id", sort_order="asc", filters=None
+):
     """Used to filter on list of teamss user belongs to"""
     column = getattr(Teams, sort_by, None)
     if not column:
         return False, {"Message": "Invalid sort_by Key provided"}
     sorting_order = sort_by + " " + sort_order
     try:
-        query = UserTeamsMapping.query.join(Teams,
-                Teams.teams_id == UserTeamsMapping.teams_id).filter(
-                UserTeamsMapping.user_id == user_id).with_entities(
-                Teams.teams_id, Teams.teams_name, Teams.created_at,
-                Teams.updated_at, Teams.teams_code, Teams.is_deleted,
-                Teams.is_disabled, Teams.owner)
+        query = (
+            UserTeamsMapping.query.join(
+                Teams, Teams.teams_id == UserTeamsMapping.teams_id
+            )
+            .filter(UserTeamsMapping.user_id == user_id)
+            .with_entities(
+                Teams.teams_id,
+                Teams.teams_name,
+                Teams.created_at,
+                Teams.updated_at,
+                Teams.teams_code,
+                Teams.is_deleted,
+                Teams.is_disabled,
+                Teams.owner,
+            )
+        )
         # Apply filters
-        status, query = update_query(
-            query, Teams, filters=filters)
+        status, query = update_query(query, Teams, filters=filters)
         if not status:
             return False, query
         # Apply sorting
@@ -342,7 +370,7 @@ def search_user_org_list(
         if per_page:
             query = query.limit(per_page)
         if page:
-            query = query.offset(per_page*(page-1))
+            query = query.offset(per_page * (page - 1))
         result = query.all()
         # Formatting the result
         formatted_result = format_user_org_list_result(result)
@@ -360,14 +388,18 @@ def format_user_org_list_result(result):
     formatted_result = []
     for row in result:
         formatted_row = {}
-        formatted_row['teams_id'] = str(row.teams_id)
-        formatted_row['teams_name'] = str(row.teams_name)
-        formatted_row['teams_code'] = str(row.teams_code).lower()
-        formatted_row['owner'] = str(row.owner)
-        formatted_row['created_at'] = row.created_at.strftime("%d-%m-%Y %H:%M") if row.created_at else None
-        formatted_row['updated_at'] = row.updated_at.strftime("%d-%m-%Y %H:%M") if row.updated_at else None
-        formatted_row['is_disabled'] = row.is_disabled
-        formatted_row['is_deleted'] = row.is_deleted
+        formatted_row["teams_id"] = str(row.teams_id)
+        formatted_row["teams_name"] = str(row.teams_name)
+        formatted_row["teams_code"] = str(row.teams_code).lower()
+        formatted_row["owner"] = str(row.owner)
+        formatted_row["created_at"] = (
+            row.created_at.strftime("%d-%m-%Y %H:%M") if row.created_at else None
+        )
+        formatted_row["updated_at"] = (
+            row.updated_at.strftime("%d-%m-%Y %H:%M") if row.updated_at else None
+        )
+        formatted_row["is_disabled"] = row.is_disabled
+        formatted_row["is_deleted"] = row.is_deleted
         formatted_result.append(formatted_row)
 
     return formatted_result
@@ -395,9 +427,7 @@ def delete_teams(teams_id):
     :return bool: True if successful
     """
     try:
-        (Teams.query.filter(
-            Teams.teams_id == teams_id)
-         .delete())
+        (Teams.query.filter(Teams.teams_id == teams_id).delete())
         db.session.flush()
         return True
     except:

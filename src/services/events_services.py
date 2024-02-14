@@ -3,7 +3,7 @@ import math
 
 from sqlalchemy import text, or_, func
 
-from src import db
+from src import db, app
 from src.models import Profiles, Events
 from sqlalchemy.orm import aliased
 from sqlalchemy import update
@@ -83,6 +83,7 @@ def get_all_events(
         )
 
     # Apply pagination
+    query = query.execution_options(bind=db.get_engine(app, bind="readonly"))
     count = query.count()
     if per_page:
         query = query.limit(per_page)

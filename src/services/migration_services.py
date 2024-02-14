@@ -11,6 +11,7 @@ def upgrade_database():
     db.session.commit()
     upgrade()
 
+
 def set_search_path(teams_id):
     """
     Set search path for session

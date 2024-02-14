@@ -2,7 +2,7 @@ import datetime
 
 from flask_jwt_extended import get_jwt_claims
 
-from src import db
+from src import db, app
 from src.models import Mission, MissionSchedule, MissionTask
 from src.services import profiles_services, user_services
 from src.v1.controllers.utils import generate_crontab_schedule
@@ -28,7 +28,8 @@ def get_all_missions(user_id):
 def get_missions_by_user_id(user_id):
     """Retrieve all missions. by given user id"""
     missions = [
-        item.repr_name() for item in Mission.query.filter_by(user_id=user_id).all()
+        item.repr_name() for item in Mission.query.filter_by(user_id=user_id)
+        .execution_options(bind=db.get_engine(app, bind='readonly')).all()
     ]
     return missions
 

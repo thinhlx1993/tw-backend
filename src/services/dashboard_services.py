@@ -1,5 +1,5 @@
 from sqlalchemy import func, cast, or_, Numeric, Text, select, text
-from src import db
+from src import db, app
 from src.models import User, Profiles
 
 
@@ -17,6 +17,7 @@ def get_dashboard_data():
             Profiles.main_profile == False,
             Profiles.is_disable == False,
         )
+        .execution_options(bind=db.get_engine(app, bind="readonly"))
         .scalar()
     )
 
@@ -27,6 +28,7 @@ def get_dashboard_data():
             cast(Profiles.profile_data["verify"], Text) == "false",
             Profiles.is_disable == False,
         )
+        .execution_options(bind=db.get_engine(app, bind="readonly"))
         .scalar()
     )
 
@@ -40,6 +42,7 @@ def get_dashboard_data():
             Profiles.main_profile == True,
             Profiles.is_disable == False,
         )
+        .execution_options(bind=db.get_engine(app, bind="readonly"))
         .scalar()
     )
 
@@ -57,10 +60,14 @@ def get_dashboard_data():
     """
 
     # Execute the raw SQL query
-    result = db.session.execute(text(sql_query))
+    result = db.session.execute(text(sql_query), execution_options={"bind_key": "readonly"})
     total_payouts = result.scalar()
 
-    users = User.query.filter_by().all()
+    users = (
+        User.query.filter_by()
+        .execution_options(bind=db.get_engine(app, bind="readonly"))
+        .all()
+    )
     summaries = []
     for user in users:
         user_summary = get_summary(user.user_id)
@@ -85,6 +92,14 @@ def get_summary(user_id):
     profiles_count = Profiles.query.filter(
         Profiles.owner == user_id,
     ).count()
+    if profiles_count == 0:
+        return {
+            "profiles_count": profiles_count,
+            "verified_profiles_count": 0,
+            "unverified_profiles_count": 0,
+            "monetizable_profiles_count": 0,
+            "total_earnings": 0,
+        }
 
     verified_profiles_count = (
         db.session.query(func.count(Profiles.username))
@@ -96,6 +111,7 @@ def get_summary(user_id):
             Profiles.main_profile == False,
             Profiles.is_disable == False,
         )
+        .execution_options(bind=db.get_engine(app, bind="readonly"))
         .scalar()
     )
 
@@ -107,6 +123,7 @@ def get_summary(user_id):
             cast(Profiles.profile_data["verify"], Text) == "false",
             Profiles.is_disable == False,
         )
+        .execution_options(bind=db.get_engine(app, bind="readonly"))
         .scalar()
     )
 
@@ -121,6 +138,7 @@ def get_summary(user_id):
             Profiles.main_profile == True,
             Profiles.is_disable == False,
         )
+        .execution_options(bind=db.get_engine(app, bind="readonly"))
         .scalar()
     )
 
@@ -134,7 +152,7 @@ def get_summary(user_id):
     """
 
     # Execute the raw SQL query
-    result = db.session.execute(text(sql_query))
+    result = db.session.execute(text(sql_query), execution_options={"bind_key": "readonly"})
     total_payouts = result.scalar()
 
     return {

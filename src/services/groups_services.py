@@ -1,9 +1,8 @@
 """Services for groups."""
 
 import logging
-from src import db
+from src import db, app
 from src.models.groups import Groups
-
 
 # Create module log
 _logger = logging.getLogger(__name__)
@@ -20,11 +19,17 @@ def create_group(data):
 
 
 def get_group_by_id(group_id):
-    return Groups.query.filter_by(group_id=group_id).first()
+    return (
+        Groups.query.filter_by(group_id=group_id)
+        .execution_options(bind=db.get_engine(app, bind="readonly"))
+        .first()
+    )
 
 
 def get_all_groups():
-    groups = Groups.query.all()
+    groups = Groups.query.execution_options(
+        bind=db.get_engine(app, bind="readonly")
+    ).all()
     groups = [group.repr_name() for group in groups]
     return groups
 

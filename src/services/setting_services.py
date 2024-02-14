@@ -1,4 +1,4 @@
-from src import db
+from src import db, app
 from src.models import Settings
 
 
@@ -6,7 +6,7 @@ def get_settings_by_user_device(user_id, device_id):
     """Retrieve settings for a specific user and device."""
     settings_record = Settings.query.filter_by(
         user_id=user_id, device_id=device_id
-    ).first()
+    ).execution_options(bind=db.get_engine(app, bind='readonly')).first()
     return settings_record.repr_name() if settings_record else None
 
 

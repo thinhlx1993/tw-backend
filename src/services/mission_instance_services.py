@@ -11,10 +11,9 @@ from sqlalchemy import and_, text
 from sqlalchemy.exc import TimeoutError
 from sqlalchemy.orm.attributes import flag_modified
 
-from src import db
+from src import db, app
 from src.models import MissionInstance, Mission, Robot, MissionSchedule
 from src.utilities.date_util import convert_iso_str_to_date_time
-
 
 # Create module log
 _logger = logging.getLogger(__name__)
@@ -43,6 +42,7 @@ def get_mission_instance_from_timestamp_and_schedule_id(
                 .join(Mission, MissionInstance.mission_id == Mission.mission_id)
                 .join(Robot, Robot.robot_id == Mission.robot_id)
                 .filter(Mission.mission_id == mission_id)
+                .execution_options(bind=db.get_engine(app, bind="readonly"))
                 .first()
             )
         else:
@@ -58,6 +58,7 @@ def get_mission_instance_from_timestamp_and_schedule_id(
                 )
                 .join(Robot, Mission.robot_id == Robot.robot_id)
                 .filter(Mission.mission_id == mission_id)
+                .execution_options(bind=db.get_engine(app, bind="readonly"))
                 .first()
             )
         return mission_instance
@@ -184,10 +185,14 @@ def get_mission_instance(mission_instance_id):
     :return mission_instance_details: Details of mission_instance
     """
     try:
-        mission_instance_row = MissionInstance.query.filter(
-            MissionInstance.mission_instance_id == mission_instance_id,
-            MissionInstance.is_deleted == False,
-        ).first()
+        mission_instance_row = (
+            MissionInstance.query.filter(
+                MissionInstance.mission_instance_id == mission_instance_id,
+                MissionInstance.is_deleted == False,
+            )
+            .execution_options(bind=db.get_engine(app, bind="readonly"))
+            .first()
+        )
         if mission_instance_row:
             return mission_instance_row.repr_name()
         else:

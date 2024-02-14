@@ -2,7 +2,7 @@ import math
 
 from sqlalchemy import or_
 
-from src import db
+from src import db, app
 from src.models.posts import Posts  # Importing the Posts model
 
 
@@ -42,6 +42,8 @@ def get_all_posts(
         query = query.filter(Posts.profile_id == profile_id)
     if user_id:
         query = query.filter(Posts.crawl_by == user_id)
+
+    query = query.execution_options(bind=db.get_engine(app, bind='readonly'))
     # Apply pagination
     count = query.count()
 

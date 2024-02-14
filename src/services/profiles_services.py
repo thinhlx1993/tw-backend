@@ -6,7 +6,7 @@ import math
 from sentry_sdk import capture_exception
 from sqlalchemy import text, or_, func
 
-from src import db
+from src import db, app
 from src.models.profiles import Profiles
 from src.models.teams import Teams
 from src.services import hma_services
@@ -83,6 +83,8 @@ def get_all_profiles(
             query = query.filter(Profiles.owner == user_id)
         if filter_by_type == "main_account":
             query = query.filter(Profiles.main_profile == True)
+
+        query = query.execution_options(bind=db.get_engine(app, bind="readonly"))
         # Apply pagination
         count = query.count()
 
@@ -107,7 +109,11 @@ def get_all_profiles(
 
 def get_user_profiles(user_id):
     # username = user_detail.user_id
-    profiles = Profiles.query.filter_by(owner=user_id).all()
+    profiles = (
+        Profiles.query.filter_by(owner=user_id)
+        .execution_options(bind=db.get_engine(app, bind="readonly"))
+        .all()
+    )
     formatted_result = [profile.repr_name() for profile in profiles]
     return {"profiles": formatted_result}
 

@@ -4,7 +4,7 @@ import pytz
 from flask_jwt_extended import get_jwt_claims
 from sqlalchemy import func, cast, or_, Numeric, Text
 
-from src import db
+from src import db, app
 from src.models import (
     MissionSchedule,
     User,
@@ -52,7 +52,9 @@ def should_start_job(cron_expression):
 
 
 def get_mission_schedule(schedule_id):
-    return MissionSchedule.query.get(schedule_id)
+    return MissionSchedule.query.execution_options(
+        bind=db.get_engine(app, bind="readonly")
+    ).get(schedule_id)
 
 
 def get_user_schedule(username):
@@ -417,6 +419,7 @@ def get_profile_with_event_count_below_limit_v2(event_type):
             )
             .order_by(func.random())
             .limit(10)
+            .execution_options(bind=db.get_engine(app, bind="readonly"))
             .all()
         )
 
@@ -443,6 +446,7 @@ def get_profile_with_event_count_below_limit_v2(event_type):
             )
             .order_by(func.random())
             .limit(3)
+            .execution_options(bind=db.get_engine(app, bind="readonly"))
             .all()
         )
 

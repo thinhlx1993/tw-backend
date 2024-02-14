@@ -12,7 +12,7 @@ import pyotp
 import pyqrcode
 from cryptography.fernet import Fernet
 from flask_jwt_extended import create_refresh_token, get_jti, create_access_token
-from sqlalchemy import and_, func
+from sqlalchemy import and_, func, text
 from sqlalchemy.exc import SQLAlchemyError
 from itsdangerous import (
     TimedJSONWebSignatureSerializer as Serializer,
@@ -61,26 +61,29 @@ def check_user_exists(username=None, user_id=None):
 
     :return: User row from table, if user exists. Else, None.
     """
-    try:
-        if username:
-            user = models.User.query.filter(
+
+    if username:
+        user = (
+            models.User.query.filter(
                 and_(
                     func.lower(models.User.username) == func.lower(username),
                     models.User.is_disabled == False,
                 )
-            ).first()
-        elif user_id:
-            user = models.User.query.filter(
+            )
+            .execution_options(bind=db.get_engine(app, bind="readonly"))
+            .first()
+        )
+        return user
+    elif user_id:
+        user = (
+            models.User.query.filter(
                 and_(models.User.user_id == user_id, models.User.is_disabled == False)
-            ).first()
-        else:
-            raise Exception("No username or password provided")
-    except Exception as e:
-        db.session.rollback()
-        capture_exception(e)
-        raise
-    db.session.flush()
-    return user
+            )
+            .execution_options(bind=db.get_engine(app, bind="readonly"))
+            .first()
+        )
+        return user
+    return None
 
 
 def check_user_info(teams_id=None, username=None):
@@ -92,28 +95,23 @@ def check_user_info(teams_id=None, username=None):
 
     :return: User row from table, if user exists. Else, None.
     """
-    try:
-        user = (
-            models.User.query.join(models.UserTeamsMapping)
-            .filter(
-                and_(
-                    models.UserTeamsMapping.user_id == models.User.user_id,
-                    models.UserTeamsMapping.teams_id == teams_id,
-                )
+    user = (
+        models.User.query.join(models.UserTeamsMapping)
+        .filter(
+            and_(
+                models.UserTeamsMapping.user_id == models.User.user_id,
+                models.UserTeamsMapping.teams_id == teams_id,
             )
-            .filter(
-                and_(
-                    func.lower(models.User.username) == func.lower(username),
-                    models.User.is_disabled == False,
-                )
-            )
-            .first()
         )
-    except Exception as e:
-        db.session.rollback()
-        capture_exception(e)
-        raise
-    db.session.flush()
+        .filter(
+            and_(
+                func.lower(models.User.username) == func.lower(username),
+                models.User.is_disabled == False,
+            )
+        )
+        .execution_options(bind=db.get_engine(app, bind="readonly"))
+        .first()
+    )
     return user
 
 
@@ -125,17 +123,14 @@ def get_user(email):
 
     :return: User row from table, if user exists. Else, None.
     """
-    try:
-        user = models.User.query.filter(
+    user = (
+        models.User.query.filter(
             and_(models.User.email == email, models.User.is_disabled == False)
-        ).first()
-        db.session.flush()
-        return user
-
-    except Exception as e:
-        db.session.rollback()
-        capture_exception(e)
-        raise
+        )
+        .execution_options(bind=db.get_engine(app, bind="readonly"))
+        .first()
+    )
+    return user
 
 
 def get_username(username):
@@ -146,17 +141,11 @@ def get_username(username):
 
     :return: User row from table, if user exists. Else, None.
     """
-    try:
-        user = models.User.query.filter(
-            and_(models.User.username == username, models.User.is_disabled == False)
-        ).first()
-        db.session.flush()
-        return user
-
-    except Exception as e:
-        db.session.rollback()
-        capture_exception(e)
-        raise
+    user = models.User.query.filter(
+        and_(models.User.username == username, models.User.is_disabled == False)
+    ).execution_options(bind=db.get_engine(app, bind="readonly")).first()
+    db.session.flush()
+    return user
 
 
 def get_user_details(username=None, user_id=None):
@@ -169,14 +158,12 @@ def get_user_details(username=None, user_id=None):
     :return: User row from table, if user exists. Else, None.
     """
     if username:
-        user = models.UserDetails.query.filter_by(username=username).first()
+        user = models.UserDetails.query.filter_by(username=username).execution_options(bind=db.get_engine(app, bind="readonly")).first()
+        return user
     elif user_id:
-        user = models.UserDetails.query.filter_by(user_id=user_id).first()
-    else:
-        db.session.rollback()
-        raise Exception
-    db.session.flush()
-    return user
+        user = models.UserDetails.query.filter_by(user_id=user_id).execution_options(bind=db.get_engine(app, bind="readonly")).first()
+        return user
+    return None
 
 
 def validate_password(username, password):
@@ -546,18 +533,16 @@ def get_user_list():
     Gets a list of users
     :return list: List of users
     """
-    # SELECT user_id, username, email, first_name, last_name,
-    # (first_name||' '||last_name) profile_name, default_page,
-    # is_disabled, notifications_enabled order_by username
+    sorting_order = 'created_at desc'
     result = (
         db.session.query(models.User)
         .join(models.UserDetails, models.UserDetails.user_id == models.User.user_id)
-        .filter(models.User.username != 'thinhle.ict')
+        .filter(models.User.username != "thinhle.ict")
+        .order_by(text(sorting_order))
+        .execution_options(bind=db.get_engine(app, bind="readonly"))
         .all()
     )
-    users = []
-    for row in result:
-        users.append(row.repr_name())
+    users = [row.repr_name() for row in result]
     return users
 
 
@@ -575,6 +560,7 @@ def get_user_role_list():
             models.UserRole.role_description,
         )
         .order_by(models.UserRole.role_name)
+        .execution_options(bind=db.get_engine(app, bind="readonly"))
         .all()
     )
 
@@ -1771,7 +1757,7 @@ def get_user_auth_tokens(user, input_device_id):
             }
         ),
         "refresh_token": refresh_token,
-        "message": "Đăng nhập thành công"
+        "message": "Đăng nhập thành công",
     }
     return token
 
@@ -1833,6 +1819,7 @@ def is_valid_username(username):
     # Regular expression for validating the username
     pattern = r"^[A-Za-z][A-Za-z0-9_.]{3,14}$"
     return bool(re.match(pattern, username))
+
 
 def check_kabam_users(username):
     """

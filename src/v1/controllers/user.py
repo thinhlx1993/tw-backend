@@ -581,9 +581,9 @@ class UserLogin(Resource):
                 "message": "Username and password combination not valid".format(
                     input_username
                 )
-            }, 200
+            }, 500
         if not user_services.validate_password(input_username, input_password):
-            return {"message": "Username and password combination not valid"}, 200
+            return {"message": "Username and password combination not valid"}, 500
         user_services.update_user_last_active_at(user_details.user_id)
         """
         Handle orphan user
