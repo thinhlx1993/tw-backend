@@ -59,42 +59,41 @@ def get_all_profiles(
     # if not column:
     #     return False, {"Message": "Invalid sort_by Key provided"}
     # sorting_order = sort_by + " " + sort_order
-    readonly_session = get_readonly_session()
+    with get_readonly_session() as readonly_session:
 
-    query = readonly_session.query(Profiles)
-    # Apply sorting
-    # if sorting_order:
-    #     query = query.order_by(db.text(sorting_order))
-    if search:
-        query = query.filter(
-            or_(
-                Profiles.username.ilike(f"%{search}%"),
-                Profiles.user_access.ilike(f"%{search}%"),
-                Profiles.status.ilike(f"%{search}%"),
+        query = readonly_session.query(Profiles)
+        # Apply sorting
+        # if sorting_order:
+        #     query = query.order_by(db.text(sorting_order))
+        if search:
+            query = query.filter(
+                or_(
+                    Profiles.username.ilike(f"%{search}%"),
+                    Profiles.user_access.ilike(f"%{search}%"),
+                    Profiles.status.ilike(f"%{search}%"),
+                )
             )
-        )
-    if user_id:
-        query = query.filter(Profiles.owner == user_id)
-    if filter_by_type == "main_account":
-        query = query.filter(Profiles.main_profile == True)
+        if user_id:
+            query = query.filter(Profiles.owner == user_id)
+        if filter_by_type == "main_account":
+            query = query.filter(Profiles.main_profile == True)
 
-    query = query.execution_options(bind=db.get_engine(app, bind="readonly"))
-    # Apply pagination
-    count = query.count()
+        query = query.execution_options(bind=db.get_engine(app, bind="readonly"))
+        # Apply pagination
+        count = query.count()
 
-    if per_page:
-        query = query.limit(per_page)
-    if page:
-        query = query.offset(per_page * (page - 1))
-    profiles = query.all()
-    readonly_session.close()
-    # Formatting the result
-    formatted_result = [profile.repr_name() for profile in profiles]
-    return {
-        "profiles": formatted_result,
-        "result_count": count,
-        "max_pages": math.ceil(count / per_page),
-    }
+        if per_page:
+            query = query.limit(per_page)
+        if page:
+            query = query.offset(per_page * (page - 1))
+        profiles = query.all()
+        # Formatting the result
+        formatted_result = [profile.repr_name() for profile in profiles]
+        return {
+            "profiles": formatted_result,
+            "result_count": count,
+            "max_pages": math.ceil(count / per_page),
+        }
 
 
 def get_user_profiles(user_id):
