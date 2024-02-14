@@ -8,13 +8,16 @@ from flask_jwt_extended import JWTManager
 from flask_script import Manager
 from flask_caching import Cache
 from flask_migrate import Migrate, MigrateCommand
+
 # from flask_limiter import Limiter
 # from flask_limiter.util import get_remote_address
 import sentry_sdk
-from opentelemetry import trace
-from opentelemetry.propagate import set_global_textmap
-from opentelemetry.sdk.trace import TracerProvider
-from sentry_sdk.integrations.opentelemetry import SentrySpanProcessor, SentryPropagator
+
+# from opentelemetry import trace
+# from opentelemetry.propagate import set_global_textmap
+# from opentelemetry.sdk.trace import TracerProvider
+# from sentry_sdk.integrations.opentelemetry import SentrySpanProcessor, SentryPropagator
+from sentry_sdk.integrations.flask import FlaskIntegration
 
 from .config import DevelopmentConfig, StagingConfig, ProductionConfig, Config
 
@@ -25,17 +28,19 @@ cache = Cache(app, config={"CACHE_TYPE": "simple"})
 sentry_sdk.init(
     dsn="https://4d71513c1fe88390e864983b9110f431@o1068161.ingest.sentry.io/4506666720952320",
     enable_tracing=True,
-    instrumenter="otel",
-    traces_sample_rate=1.0,  # Adjust sample rate as needed
+    traces_sample_rate=0.3,  # Adjust sample rate as needed,
+    integrations=[
+        FlaskIntegration(
+            transaction_style="url",
+        ),
+    ],
 )
-
 
 # Config is PROD by default
 if os.environ["CONFIG"] == "DEV":
     app.config.from_object(DevelopmentConfig)
 else:
     app.config.from_object(ProductionConfig)
-
 
 # Set CORS config
 CORS(app=app, origins=app.config["CORS_ORIGIN"], supports_credentials=True)
@@ -67,8 +72,7 @@ from src import routes
 
 app.config["SWAGGER_DEFAULT_MODELS_EXPANSION_DEPTH"] = -1
 
-
-provider = TracerProvider()
-provider.add_span_processor(SentrySpanProcessor())
-trace.set_tracer_provider(provider)
-set_global_textmap(SentryPropagator())
+# provider = TracerProvider()
+# provider.add_span_processor(SentrySpanProcessor())
+# trace.set_tracer_provider(provider)
+# set_global_textmap(SentryPropagator())
