@@ -1,14 +1,17 @@
 from sqlalchemy import func, cast, or_, Numeric, Text, select, text
 from src import db, app
 from src.models import User, Profiles
+from src.services.migration_services import get_readonly_session
 
 
 def get_dashboard_data():
-    user_count = User.query.count()
-    profiles_count = Profiles.query.count()
+    readonly_session = get_readonly_session()
+
+    user_count = readonly_session.query(User).count()
+    profiles_count = readonly_session.query(Profiles).count()
 
     verified_profiles_count = (
-        db.session.query(func.count(Profiles.username))
+        readonly_session.query(func.count(Profiles.username))
         .filter(
             Profiles.profile_data.isnot(None),
             func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
@@ -17,23 +20,21 @@ def get_dashboard_data():
             Profiles.main_profile == False,
             Profiles.is_disable == False,
         )
-        .execution_options(bind=db.get_engine(app, bind="readonly"))
         .scalar()
     )
 
     unverified_profiles_count = (
-        db.session.query(func.count(Profiles.username))
+        readonly_session.query(func.count(Profiles.username))
         .filter(
             Profiles.profile_data.isnot(None),
             cast(Profiles.profile_data["verify"], Text) == "false",
             Profiles.is_disable == False,
         )
-        .execution_options(bind=db.get_engine(app, bind="readonly"))
         .scalar()
     )
 
     monetizable_profiles_count = (
-        db.session.query(func.count(Profiles.username))
+        readonly_session.query(func.count(Profiles.username))
         .filter(
             Profiles.profile_data.isnot(None),
             func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
@@ -42,7 +43,6 @@ def get_dashboard_data():
             Profiles.main_profile == True,
             Profiles.is_disable == False,
         )
-        .execution_options(bind=db.get_engine(app, bind="readonly"))
         .scalar()
     )
 
@@ -60,17 +60,16 @@ def get_dashboard_data():
     """
 
     # Execute the raw SQL query
-    result = db.session.execute(text(sql_query), execution_options={"bind_key": "readonly"})
+    result = readonly_session.execute(text(sql_query))
     total_payouts = result.scalar()
 
     users = (
         User.query.filter_by()
-        .execution_options(bind=db.get_engine(app, bind="readonly"))
         .all()
     )
     summaries = []
     for user in users:
-        user_summary = get_summary(user.user_id)
+        user_summary = get_summary(user.user_id, readonly_session)
         user_summary["username"] = user.username
         summaries.append(user_summary)
     sorted_data = sorted(
@@ -88,8 +87,8 @@ def get_dashboard_data():
     return response_data
 
 
-def get_summary(user_id):
-    profiles_count = Profiles.query.filter(
+def get_summary(user_id, readonly_session):
+    profiles_count = readonly_session.query(Profiles).filter(
         Profiles.owner == user_id,
     ).count()
     if profiles_count == 0:
@@ -102,7 +101,7 @@ def get_summary(user_id):
         }
 
     verified_profiles_count = (
-        db.session.query(func.count(Profiles.username))
+        readonly_session.query(func.count(Profiles.username))
         .filter(
             Profiles.owner == user_id,
             Profiles.profile_data.isnot(None),
@@ -111,24 +110,22 @@ def get_summary(user_id):
             Profiles.main_profile == False,
             Profiles.is_disable == False,
         )
-        .execution_options(bind=db.get_engine(app, bind="readonly"))
         .scalar()
     )
 
     unverified_profiles_count = (
-        db.session.query(func.count(Profiles.username))
+        readonly_session.query(func.count(Profiles.username))
         .filter(
             Profiles.owner == user_id,
             Profiles.profile_data.isnot(None),
             cast(Profiles.profile_data["verify"], Text) == "false",
             Profiles.is_disable == False,
         )
-        .execution_options(bind=db.get_engine(app, bind="readonly"))
         .scalar()
     )
 
     monetizable_profiles_count = (
-        db.session.query(func.count(Profiles.username))
+        readonly_session.query(func.count(Profiles.username))
         .filter(
             Profiles.owner == user_id,
             Profiles.profile_data.isnot(None),
@@ -138,7 +135,6 @@ def get_summary(user_id):
             Profiles.main_profile == True,
             Profiles.is_disable == False,
         )
-        .execution_options(bind=db.get_engine(app, bind="readonly"))
         .scalar()
     )
 
@@ -152,7 +148,7 @@ def get_summary(user_id):
     """
 
     # Execute the raw SQL query
-    result = db.session.execute(text(sql_query), execution_options={"bind_key": "readonly"})
+    result = readonly_session.execute(text(sql_query))
     total_payouts = result.scalar()
 
     return {

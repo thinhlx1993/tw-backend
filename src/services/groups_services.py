@@ -21,15 +21,12 @@ def create_group(data):
 def get_group_by_id(group_id):
     return (
         Groups.query.filter_by(group_id=group_id)
-        .execution_options(bind=db.get_engine(app, bind="readonly"))
         .first()
     )
 
 
 def get_all_groups():
-    groups = Groups.query.execution_options(
-        bind=db.get_engine(app, bind="readonly")
-    ).all()
+    groups = Groups.query.all()
     groups = [group.repr_name() for group in groups]
     return groups
 

@@ -83,7 +83,6 @@ def get_all_events(
         )
 
     # Apply pagination
-    query = query.execution_options(bind=db.get_engine(app, bind="readonly"))
     count = query.count()
     if per_page:
         query = query.limit(per_page)

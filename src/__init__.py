@@ -25,22 +25,22 @@ from .config import DevelopmentConfig, StagingConfig, ProductionConfig, Config
 app = Flask(__name__)
 cache = Cache(app, config={"CACHE_TYPE": "simple"})
 
-sentry_sdk.init(
-    dsn="https://4d71513c1fe88390e864983b9110f431@o1068161.ingest.sentry.io/4506666720952320",
-    enable_tracing=True,
-    traces_sample_rate=0.3,  # Adjust sample rate as needed,
-    integrations=[
-        FlaskIntegration(
-            transaction_style="url",
-        ),
-    ],
-)
-
 # Config is PROD by default
 if os.environ["CONFIG"] == "DEV":
     app.config.from_object(DevelopmentConfig)
 else:
     app.config.from_object(ProductionConfig)
+    sentry_sdk.init(
+        dsn="https://4d71513c1fe88390e864983b9110f431@o1068161.ingest.sentry.io/4506666720952320",
+        enable_tracing=True,
+        traces_sample_rate=0.3,  # Adjust sample rate as needed,
+        integrations=[
+            FlaskIntegration(
+                transaction_style="url",
+            ),
+        ],
+    )
+
 
 # Set CORS config
 CORS(app=app, origins=app.config["CORS_ORIGIN"], supports_credentials=True)

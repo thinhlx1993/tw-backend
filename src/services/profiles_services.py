@@ -11,6 +11,7 @@ from src.models.profiles import Profiles
 from src.models.teams import Teams
 from src.services import hma_services
 from src.models import Events, Posts
+from src.services.migration_services import get_readonly_session
 
 # Create module log
 _logger = logging.getLogger(__name__)
@@ -58,52 +59,48 @@ def get_all_profiles(
     # if not column:
     #     return False, {"Message": "Invalid sort_by Key provided"}
     # sorting_order = sort_by + " " + sort_order
-    try:
-        query = Profiles.query
-        # Apply sorting
-        # if sorting_order:
-        #     query = query.order_by(db.text(sorting_order))
-        if search:
-            query = query.filter(
-                or_(
-                    Profiles.username.ilike(f"%{search}%"),
-                    Profiles.user_access.ilike(f"%{search}%"),
-                    Profiles.status.ilike(f"%{search}%"),
-                )
+    readonly_session = get_readonly_session()
+
+    query = readonly_session.query(Profiles)
+    # Apply sorting
+    # if sorting_order:
+    #     query = query.order_by(db.text(sorting_order))
+    if search:
+        query = query.filter(
+            or_(
+                Profiles.username.ilike(f"%{search}%"),
+                Profiles.user_access.ilike(f"%{search}%"),
+                Profiles.status.ilike(f"%{search}%"),
             )
-        if user_id:
-            query = query.filter(Profiles.owner == user_id)
-        if filter_by_type == "main_account":
-            query = query.filter(Profiles.main_profile == True)
+        )
+    if user_id:
+        query = query.filter(Profiles.owner == user_id)
+    if filter_by_type == "main_account":
+        query = query.filter(Profiles.main_profile == True)
 
-        query = query.execution_options(bind=db.get_engine(app, bind="readonly"))
-        # Apply pagination
-        count = query.count()
+    query = query.execution_options(bind=db.get_engine(app, bind="readonly"))
+    # Apply pagination
+    count = query.count()
 
-        if per_page:
-            query = query.limit(per_page)
-        if page:
-            query = query.offset(per_page * (page - 1))
-        profiles = query.all()
-        # Formatting the result
-        formatted_result = [profile.repr_name() for profile in profiles]
-        return {
-            "profiles": formatted_result,
-            "result_count": count,
-            "max_pages": math.ceil(count / per_page),
-        }
-    except Exception as err:
-        _logger.exception(err)
-        db.session.rollback()
-        capture_exception(err)
-        raise err
+    if per_page:
+        query = query.limit(per_page)
+    if page:
+        query = query.offset(per_page * (page - 1))
+    profiles = query.all()
+    readonly_session.close()
+    # Formatting the result
+    formatted_result = [profile.repr_name() for profile in profiles]
+    return {
+        "profiles": formatted_result,
+        "result_count": count,
+        "max_pages": math.ceil(count / per_page),
+    }
 
 
 def get_user_profiles(user_id):
     # username = user_detail.user_id
     profiles = (
         Profiles.query.filter_by(owner=user_id)
-        .execution_options(bind=db.get_engine(app, bind="readonly"))
         .all()
     )
     formatted_result = [profile.repr_name() for profile in profiles]

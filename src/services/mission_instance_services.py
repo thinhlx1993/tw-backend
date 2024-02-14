@@ -190,7 +190,6 @@ def get_mission_instance(mission_instance_id):
                 MissionInstance.mission_instance_id == mission_instance_id,
                 MissionInstance.is_deleted == False,
             )
-            .execution_options(bind=db.get_engine(app, bind="readonly"))
             .first()
         )
         if mission_instance_row:
