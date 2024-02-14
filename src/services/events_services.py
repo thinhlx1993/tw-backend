@@ -51,7 +51,7 @@ def get_all_events(
     )
 
     query = query.filter(db.func.date(Events.created_at) == today_date)
-    query = query.filter(Events.issue == 'OK')
+    query = query.filter(Events.issue == "OK")
     # Apply sorting
     if sorting_order:
         query = query.order_by(text(sorting_order))
@@ -116,10 +116,10 @@ def create_or_update_event(event_id, event_data):
         # "event_type": fields.String(required=True, example="event_type"),
         # "profile_id": fields.String(required=False, example="profile_id"),
         # "profile_id_interact": fields.String(required=True, example="profile_id"),
-        event_type = event_data.get('event_type')
-        profile_id_receiver = event_data.get('profile_id')
-        profile_id_giver = event_data.get('profile_id_interact')
-        issue = event_data.get('issue')
+        event_type = event_data.get("event_type")
+        profile_id_receiver = event_data.get("profile_id")
+        profile_id_giver = event_data.get("profile_id_interact")
+        issue = event_data.get("issue")
 
         if issue == "OK":
             update_count(profile_id_receiver, event_type)
@@ -138,8 +138,10 @@ def create_or_update_event(event_id, event_data):
 def update_count(profile_id, event_type):
     profile_receiver = Profiles.query.filter(Profiles.profile_id == profile_id).first()
     today = datetime.datetime.utcnow().date()
-    _logger.info(f'Today is {today}  and profile date {profile_receiver.modified_at.date()}')
-    if profile_receiver.modified_at.date() != today:
+    _logger.info(
+        f"Today is {today}  and profile date {profile_receiver.modified_at.date()}"
+    )
+    if should_start_job("0 0 * * *"):
         profile_receiver.click_count = 0
         profile_receiver.comment_count = 0
         profile_receiver.like_count = 0
@@ -170,7 +172,7 @@ def update_count(profile_id, event_type):
         like_count += 1
         profile_receiver.like_count = like_count
     profile_receiver.modified_at = datetime.datetime.utcnow()
-    _logger.info('Update event count ok')
+    _logger.info("Update event count ok")
     db.session.flush()
 
 
