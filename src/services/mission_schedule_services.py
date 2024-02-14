@@ -289,7 +289,7 @@ def find_unique_interaction_partner_v2(
             ),
         )
         .order_by(func.random())
-        .limit(10)
+        .limit(5)
         .all()
     )
 
@@ -418,7 +418,7 @@ def get_profile_with_event_count_below_limit_v2(event_type, readonly_session):
                 Profiles.is_disable.is_(False),
             )
             .order_by(func.random())
-            .limit(10)
+            .limit(20)
             .all()
         )
 
@@ -444,7 +444,7 @@ def get_profile_with_event_count_below_limit_v2(event_type, readonly_session):
                 Profiles.is_disable.is_(False),
             )
             .order_by(func.random())
-            .limit(10)
+            .limit(20)
             .all()
         )
 
