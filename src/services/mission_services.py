@@ -4,29 +4,27 @@ from flask_jwt_extended import get_jwt_claims
 from src import db, app
 from src.models import Mission, MissionSchedule, MissionTask
 from src.services import profiles_services, user_services
-from src.services.migration_services import get_readonly_session
 from src.v1.controllers.utils import generate_crontab_schedule
 
 
 def get_all_missions(user_id):
     """Retrieve all missions."""
     sorting_order = "created_at desc"
-    with get_readonly_session() as readonly_session:
-        # Now use this session for querying
-        missions = [
-            item.repr_name()
-            for item in readonly_session.query(Mission).filter(Mission.user_id == user_id)
-            .order_by(db.text(sorting_order))
-            .all()
-        ]
+    # Now use this session for querying
+    missions = [
+        item.repr_name()
+        for item in db.session.query(Mission).filter(Mission.user_id == user_id)
+        .order_by(db.text(sorting_order))
+        .all()
+    ]
 
-        for mission in missions:
-            user_id = mission["user_id"]
-            if user_id:
-                user_info = user_services.check_user_exists(user_id=user_id)
-                mission["username"] = user_info.username
+    for mission in missions:
+        user_id = mission["user_id"]
+        if user_id:
+            user_info = user_services.check_user_exists(user_id=user_id)
+            mission["username"] = user_info.username
 
-        return missions
+    return missions
 
 
 def get_missions_by_user_id(user_id, readonly_session):
