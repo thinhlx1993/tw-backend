@@ -83,6 +83,30 @@ def get_user_schedule(username):
       ]
     }
     """
+
+    default_mission = {
+        "schedule_id": "8f74ef78-52ec-46ff-b88a-d93bd1ae9ea5",
+        "group_id": None,
+        "profile_id": "c8a1754f-3769-4816-9c61-f791d7bbddab",
+        "mission_id": "29868e59-538a-48f9-8673-03ffaf8622df",
+        "schedule_json": {"cron": "", "loop_count": 1},
+        "start_timestamp": "26-01-2024 08:22",
+        "tasks": [
+            {
+                "mission_id": "29868e59-538a-48f9-8673-03ffaf8622df",
+                "tasks_id": "7cc3d468-76fa-4167-aab2-2e37702f3846",
+                "tasks": {
+                    "mission_id": "db437f17-f911-40bf-b4e1-db920a5ac787",
+                    "tasks_id": "7cc3d468-76fa-4167-aab2-2e37702f3846",
+                    "tasks": {
+                        "tasks_id": "7cc3d468-76fa-4167-aab2-2e37702f3846",
+                        "tasks_name": "Check follow",
+                        "tasks_json": None,
+                    },
+                },
+            }
+        ],
+    }
     claims = get_jwt_claims()
     current_user_id = claims["user_id"]
     with get_readonly_session() as readonly_session:
@@ -292,8 +316,8 @@ def find_unique_interaction_partner_v2(
     # func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
     #     ["NotStarted", 'ERROR']
     # ),
-    # verified_filter = cast(Profiles.profile_data["verify"], Text) == "true"
-    # additional_filters = (monetizable_filter, verified_filter)
+    verified_filter = cast(Profiles.profile_data["verify"], Text) == "true"
+    # additional_filters = (verified_filter)
 
     top_accounts = (
         readonly_session.query(Profiles.profile_id)
@@ -307,6 +331,7 @@ def find_unique_interaction_partner_v2(
             func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
                 ["NotStarted", "ERROR"]
             ),
+            cast(Profiles.profile_data["verify"], Text) == "true",
         )
         .order_by(func.random())
         .limit(5)
