@@ -29,8 +29,8 @@ class MissionScheduleUserController(Resource):
     def get(self):
         username = get_jwt_identity()
         claims = get_jwt_claims()
-        user_id = claims['user_id']
-        # user_services.update_user_last_active_at(user_id)
+        user_id = claims["user_id"]
+        user_services.update_user_last_active_at(user_id)
         schedule = mission_schedule_services.get_user_schedule(username)
         return {"schedule": schedule}, 200
 

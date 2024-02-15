@@ -34,7 +34,13 @@ class Profiles(db.Model):
     pass_emails = db.Column(db.String(128), nullable=True, server_default="")
     phone_number = db.Column(db.String(128), nullable=True, server_default="")
     debugger_port = db.Column(db.String(128), nullable=True)
-    owner = db.Column(db.String(128), nullable=True, unique=False, server_default="")
+    owner = db.Column(
+        db.String(128),
+        db.ForeignKey("user.user_id"),
+        nullable=True,
+        unique=False,
+        server_default="",
+    )
     main_profile = db.Column(db.Boolean, server_default="false", nullable=True)
     click_count = db.Column(db.Integer, nullable=True, server_default="0")
     comment_count = db.Column(db.Integer, nullable=True, server_default="0")
@@ -49,6 +55,7 @@ class Profiles(db.Model):
         backref="giver",
         lazy=True,
     )
+    owner_user = db.relationship("User", backref="owned_profiles", foreign_keys=[owner])
 
     def repr_name(self):
         return {
@@ -81,5 +88,5 @@ class Profiles(db.Model):
     def event_data(self):
         return {
             "username": self.username if self.username else "",
-            "gpt_key": self.gpt_key if self.gpt_key else ""
+            "gpt_key": self.gpt_key if self.gpt_key else "",
         }
