@@ -471,7 +471,7 @@ def get_profile_with_event_count_below_limit_v2(event_type, readonly_session):
             Profiles.is_disable.is_(False),
         )
         .order_by(func.random())
-        .limit(20)
+        .limit(10)
         .all()
     )
 
