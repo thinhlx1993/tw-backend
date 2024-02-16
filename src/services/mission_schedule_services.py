@@ -329,7 +329,7 @@ def find_unique_interaction_partner_v2(
             Profiles.main_profile == False,
             Profiles.is_disable == False,
             func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
-                ["NotStarted", "ERROR"]
+                ["NotStarted", "ERROR", "OK"]
             ),
             cast(Profiles.profile_data["verify"], Text) == "true",
         )
