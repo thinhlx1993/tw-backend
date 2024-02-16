@@ -103,13 +103,12 @@ def get_user_profiles(user_id):
 
 
 def update_profile(profile_id, data):
-    username = data.get("username", "").strip()
-    if not username:
-        return None
-
     profile = Profiles.query.get(profile_id)
     if profile:
         for key, value in data.items():
+            if key == "username":
+                continue
+
             if hasattr(profile, key):
                 if isinstance(value, str):
                     value = value.strip()
