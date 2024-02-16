@@ -8,6 +8,7 @@ from flask_jwt_extended import JWTManager
 from flask_script import Manager
 from flask_caching import Cache
 from flask_migrate import Migrate, MigrateCommand
+from flask_executor import Executor
 
 # from flask_limiter import Limiter
 # from flask_limiter.util import get_remote_address
@@ -47,7 +48,7 @@ CORS(app=app, origins=app.config["CORS_ORIGIN"], supports_credentials=True)
 
 # Set configuration for DB
 db = SQLAlchemy(app)
-
+executor = Executor(app)
 migrate = Migrate(app, db, compare_type=True)
 
 if os.environ["CONFIG"] == "PROD":

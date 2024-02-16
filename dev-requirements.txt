@@ -44,3 +44,4 @@ openai==1.6.0
 Flask-Limiter==2.0.1
 sentry-sdk[opentelemetry]==1.40.0
 sentry-sdk[flask]==1.40.0
+flask-executor==1.0.0

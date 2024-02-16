@@ -4,9 +4,10 @@ import random
 from flask_restx import fields, Resource
 from flask_jwt_extended import get_jwt_claims, get_jwt_identity
 
-from src import cache
+from src import cache, executor
 from src.services import profiles_services, setting_services
 from src.services import hma_services, teams_services
+from src.tasks.worker import create_profiles, delete_profile, update_profile
 from src.utilities.custom_decorator import custom_jwt_required
 from src.version_handler import api_version_1_web
 from src.parsers import profile_page_parser
@@ -140,6 +141,7 @@ class ProfilesController(Resource):
             device_id = claims.get("device_id")
             user_id = claims.get("user_id")
             teams_id = claims.get("teams_id")
+            profiles = request_data.get("profiles")
         except Exception as e:
             _logger.debug(f"Data not valid: {e}")
             return {"message": "Data not valid"}, 400
@@ -149,30 +151,34 @@ class ProfilesController(Resource):
         #     return {
         #         "message": "Không thể tạo thêm profile do vượt quá số lượng cho phép, vui lòng liên hệ admin"
         #     }, 500
+        settings = setting_services.get_settings_by_user_device(user_id, device_id)
+        if not settings or "settings" not in settings.keys():
+            return {"message": "Vui lòng cài đặt hệ thống"}, 400
 
-        success_number = 0
-        error_number = 0
-        for data in request_data.get("profiles"):
-            try:
-                data["owner"] = user_id  # set owner
-                data["user_access"] = user_id
-                profile = profiles_services.create_profile(data, device_id, user_id)
-                if profile:
-                    success_number += 1
-            except Exception as ex:
-                _logger.error(ex)
-                if "HMA Account limit excelled" in str(ex):
-                    return {"message": str(ex)}, 500
-                if "Vui lòng cài đặt hệ thống" in str(ex):
-                    return {"message": str(ex)}, 500
-                error_number += 1
-                # return {
-                #     "message": f"Không thể tạo: {data['username']}, Đã tạo {success_number}"
-                # }, 200
-        # hma_services.clear_unused_resourced(device_id, user_id)
-        return {
-            "message": f"Tạo thành công {success_number}, Thất bại: {error_number}"
-        }, 200
+        settings = settings["settings"]
+        browser_type = settings.get("browserType")
+        if browser_type != "hideMyAcc":
+            return {"message": "Vui lòng cài đặt hệ thống"}, 400
+
+        browser_version = settings.get("browserVersion")
+        if not browser_version:
+            return {"message": "Vui lòng cài đặt hệ thống"}, 400
+
+        hma_account = settings.get("hideMyAccAccount")
+        hma_password = settings.get("hideMyAccPassword")
+
+        hma_token = hma_services.authenticate(hma_account, hma_password)
+        account_info = hma_services.get_account_info(hma_token)
+        if account_info["code"] != 1:
+            return {"message": f"Vui lòng kiểm tra HMA account"}, 400
+        profile_count = account_info["result"]["profiles"]
+        max_profile = account_info["result"]["plan"]["maxProfiles"]
+        if max_profile - profile_count < len(profiles):
+            return {
+                "message": f"Vui lòng nâng cấp tài khoản HMA {profile_count}/{max_profile}"
+            }, 400
+        executor.submit(create_profiles, profiles, user_id, device_id, teams_id)
+        return {"message": f"Đang tạo tài khoản, vui lòng chờ trong giây lát"}, 200
 
 
 class ProfilesIdController(Resource):
@@ -194,9 +200,12 @@ class ProfilesIdController(Resource):
     def put(self, profile_id):
         """Update a profile by ID"""
         data = profiles_ns2.payload
-        profile = profiles_services.update_profile(profile_id, data)
+        claims = get_jwt_claims()
+        teams_id = claims.get("teams_id")
+        profile = profiles_services.get_profile_by_id(profile_id)
         if not profile:
             return {"message": "Profile not found"}, 404
+        executor.submit(update_profile, profile_id, teams_id, data)
         return {
             "message": "Profile updated successfully",
             "profile": profile.repr_name(),
@@ -214,17 +223,15 @@ class ProfilesIdController(Resource):
     @custom_jwt_required()
     def delete(self, profile_id):
         """Delete a profile by ID"""
-        try:
-            claims = get_jwt_claims()
-            device_id = claims.get("device_id")
-            user_id = claims.get("user_id")
-            result = profiles_services.delete_profile(profile_id, user_id, device_id)
-            if result:
-                return {"message": "Profile deleted successfully"}, 200
+        claims = get_jwt_claims()
+        device_id = claims.get("device_id")
+        user_id = claims.get("user_id")
+        teams_id = claims.get("teams_id")
+        profile = profiles_services.get_profile_by_id(profile_id)
+        if not profile:
             return {"message": "Profile not found"}, 404
-        except Exception as e:
-            _logger.debug(f"Error deleting profile: {e}")
-            return {"message": "Internal error"}, 500
+        executor.submit(delete_profile, profile_id, user_id, device_id, teams_id)
+        return {"message": "Profile deleted successfully"}, 200
 
 
 class ProfilesBrowserController(Resource):
