@@ -465,7 +465,7 @@ def get_profile_with_event_count_below_limit_v2(event_type, readonly_session):
                 Profiles.profile_data.isnot(None),
                 func.json_extract_path_text(
                     Profiles.profile_data, "account_status"
-                ).in_(["NotStarted", "OK"]),
+                ).in_(["AdsEligible", "OK"]),
                 Profiles.main_profile.is_(True),
                 Profiles.is_disable.is_(False),
             )
@@ -492,7 +492,7 @@ def get_profile_with_event_count_below_limit_v2(event_type, readonly_session):
                 Profiles.profile_data.isnot(None),
                 func.json_extract_path_text(
                     Profiles.profile_data, "account_status"
-                ).in_(["NotStarted", "OK"]),
+                ).in_(["AdsEligible", "OK"]),
                 Profiles.main_profile.is_(True),
                 Profiles.is_disable.is_(False),
             )
