@@ -18,6 +18,8 @@ _logger = logging.getLogger(__name__)
 
 def create_profile(data, device_id, user_id):
     username = data.get("username", "").strip()
+    if not username:
+        return None
     existed = Profiles.query.filter(
         func.lower(Profiles.username) == func.lower(username)
     ).first()
@@ -101,6 +103,10 @@ def get_user_profiles(user_id):
 
 
 def update_profile(profile_id, data):
+    username = data.get("username", "").strip()
+    if not username:
+        return None
+
     profile = Profiles.query.get(profile_id)
     if profile:
         for key, value in data.items():
