@@ -13,16 +13,17 @@ def get_all_missions(user_id):
     # Now use this session for querying
     missions = [
         item.repr_name()
-        for item in db.session.query(Mission).filter(Mission.user_id == user_id)
+        for item in db.session.query(Mission)
+        .filter(Mission.user_id == user_id)
         .order_by(db.text(sorting_order))
         .all()
     ]
 
-    for mission in missions:
-        user_id = mission["user_id"]
-        if user_id:
-            user_info = user_services.check_user_exists(user_id=user_id)
-            mission["username"] = user_info.username
+    # for mission in missions:
+    #     user_id = mission["user_id"]
+    #     if user_id:
+    #         user_info = user_services.check_user_exists(user_id=user_id)
+    #         mission["username"] = user_info.username
 
     return missions
 
@@ -30,9 +31,16 @@ def get_all_missions(user_id):
 def get_missions_by_user_id(user_id, readonly_session):
     """Retrieve all missions. by given user id"""
     missions = [
-        item.repr_name() for item in readonly_session.query(Mission).filter_by(user_id=user_id).all()
+        item.repr_name()
+        for item in readonly_session.query(Mission).filter_by(user_id=user_id).all()
     ]
     return missions
+
+
+def get_missions_by_id(mission_id):
+    """Retrieve all missions. by given user id"""
+    mission = db.session.query(Mission).filter_by(mission_id=mission_id).first()
+    return mission
 
 
 def set_force_start_false(mission_id):

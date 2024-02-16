@@ -1,4 +1,4 @@
-from src.services import profiles_services, migration_services
+from src.services import profiles_services, migration_services, mission_services
 from src.log_config import _logger
 from src import db
 
@@ -35,4 +35,10 @@ def delete_profile(profile_id, user_id, device_id, teams_id):
 def update_profile(profile_id, teams_id, data):
     migration_services.set_search_path(teams_id)
     profiles_services.update_profile(profile_id, data)
+    db.session.commit()
+
+
+def delete_missions(mission_id, teams_id):
+    migration_services.set_search_path(teams_id)
+    mission_services.delete_mission(mission_id)
     db.session.commit()
