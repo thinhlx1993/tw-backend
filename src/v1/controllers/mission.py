@@ -1,8 +1,8 @@
 from flask_jwt_extended import get_jwt_claims
 from flask_restx import Resource, fields
 
-from src import executor
-from src.tasks.worker import delete_missions
+from src import cache, executor
+from src.tasks.worker import delete_missions_schedule
 from src.version_handler import api_version_1_web
 from src.services import mission_services
 from src.utilities.custom_decorator import custom_jwt_required
@@ -119,7 +119,7 @@ class MissionIdController(Resource):
             return {"message": "Mission not found"}, 404
         user_claims = get_jwt_claims()
         teams_id = user_claims["teams_id"]
-        executor.submit(delete_missions, teams_id)
+        executor.submit(delete_missions_schedule, mission_id, teams_id)
         return {"message": "Delete the mission can take up to a minute"}, 200
 
 
