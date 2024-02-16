@@ -120,7 +120,7 @@ class MissionIdController(Resource):
         user_claims = get_jwt_claims()
         teams_id = user_claims["teams_id"]
         executor.submit(delete_missions, teams_id)
-        return {"message": "Mission deleted successfully"}, 200
+        return {"message": "Delete the mission can take up to a minute"}, 200
 
 
 # Add resources to namespace
