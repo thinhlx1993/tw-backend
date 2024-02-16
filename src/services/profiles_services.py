@@ -61,7 +61,7 @@ def get_all_profiles(
     query = db.session.query(Profiles)
     # Apply sorting
     # if sorting_order:
-    #     query = query.order_by(db.text(sorting_order))
+    query = query.order_by(db.text('username asc'))
     if search:
         query = query.filter(
             or_(
