@@ -104,11 +104,12 @@ def create_mission(data):
     schedule_json = {"cron": cron, "loop_count": 1}
     new_mission.mission_json = schedule_json
     new_mission.status = "unknown"
-    profile_ids = data.get("profile_ids", "").split("\n")
-    if len(profile_ids) == 0:
+
+    if not data.get("profile_ids", ""):
         # fetch by from group_id
         profiles_selected = profiles_services.get_profile_by_user(user_id=user_id)
     else:
+        profile_ids = data.get("profile_ids", "").split("\n")
         """Check if profile_ids is username, because new version FE will sent username"""
         profiles_selected = profiles_services.get_profile_by_usernames(
             selected_username=profile_ids
