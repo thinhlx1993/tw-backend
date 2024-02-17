@@ -56,10 +56,7 @@ def create_mission(data):
        "mission_name":"2312312",
        "group_id":"80051754-c58a-4ab1-b29d-45c0e4c66dae",
        "profile_ids":[
-          "ea742827-6a6f-4634-ad73-4d02df68923b",
-          "c1047807-0c15-4a65-8777-8421738228ea",
-          "f3d2ed32-d35b-4a88-b7e1-1595744b8521",
-          "dba18113-efaf-4114-ba61-6b28f368acf5"
+          "username"
        ],
        "tasks":[
           "260a439d-0121-48c1-88e0-b09f4bfd780b",
@@ -107,12 +104,22 @@ def create_mission(data):
     schedule_json = {"cron": cron, "loop_count": 1}
     new_mission.mission_json = schedule_json
     new_mission.status = "unknown"
-    profile_ids = data.get("profile_ids", [])
+    profile_ids = data.get("profile_ids", "").split("\n")
     if len(profile_ids) == 0:
         # fetch by from group_id
-        profiles = profiles_services.get_all_profiles(user_id=user_id, per_page=100000)
-        profile_ids = [item["profile_id"] for item in profiles["profiles"]]
+        profiles_selected = profiles_services.get_profile_by_user(user_id=user_id)
+    else:
+        """Check if profile_ids is username, because new version FE will sent username"""
+        profiles_selected = profiles_services.get_profile_by_usernames(
+            selected_username=profile_ids
+        )
 
+        if len(profiles_selected) == 0:
+            profiles_selected = profiles_services.get_profile_by_ids(
+                selected_ids=profile_ids
+            )
+
+    profile_ids = [item.profile_id for item in profiles_selected]
     for profile_id in profile_ids:
         mission_schedule_instance = MissionSchedule(
             group_id, profile_id, new_mission.mission_id, schedule_json

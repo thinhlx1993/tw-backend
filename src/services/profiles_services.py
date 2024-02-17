@@ -1,14 +1,13 @@
 """Services for teams."""
+
 import datetime
 import logging
 import math
 
-from sentry_sdk import capture_exception
-from sqlalchemy import text, or_, func
+from sqlalchemy import text, or_, func, cast, Text
 
 from src import db, app
 from src.models.profiles import Profiles
-from src.models.teams import Teams
 from src.services import hma_services
 from src.models import Events, Posts
 
@@ -74,10 +73,36 @@ def get_all_profiles(
         )
     if user_id:
         query = query.filter(Profiles.owner == user_id)
+
     if filter_by_type == "main_account":
         query = query.filter(Profiles.main_profile == True)
+    elif filter_by_type == "monetizable":
+        query = query.filter(
+            func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
+                ["OK"]
+            )
+        )
+    elif filter_by_type == "error":
+        query = query.filter(
+            func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
+                ["ERROR"]
+            )
+        )
+    elif filter_by_type == "AdsEligible":
+        query = query.filter(
+            func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
+                ["AdsEligible"]
+            )
+        )
+    elif filter_by_type == "suspended":
+        query = query.filter(cast(Profiles.profile_data["suspended"], Text) == "true")
+    elif filter_by_type == "verified":
+        query = query.filter(cast(Profiles.profile_data["verify"], Text) == "true")
+    elif filter_by_type == "not_verified":
+        query = query.filter(cast(Profiles.profile_data["verify"], Text) == "false")
+    elif filter_by_type == "unknown":
+        query = query.filter(Profiles.profile_data.is_(None))
 
-    query = query.execution_options(bind=db.get_engine(app, bind="readonly"))
     # Apply pagination
     count = query.count()
 
@@ -130,3 +155,28 @@ def delete_profile(profile_id, user_id, device_id):
         db.session.flush()
         return True
     return False
+
+
+def get_profile_by_usernames(selected_username: list):
+    profiles = (
+        db.session.query(Profiles.profile_id)
+        .filter(Profiles.username.in_(selected_username))
+        .all()
+    )
+    return profiles
+
+
+def get_profile_by_ids(selected_ids: list):
+    profiles = (
+        db.session.query(Profiles.profile_id)
+        .filter(Profiles.profile_id.in_(selected_ids))
+        .all()
+    )
+    return profiles
+
+
+def get_profile_by_user(user_id: str):
+    profiles = (
+        db.session.query(Profiles.profile_id).filter(Profiles.owner == user_id).all()
+    )
+    return profiles

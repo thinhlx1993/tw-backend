@@ -1,4 +1,5 @@
 """Controller for events."""
+
 from flask_jwt_extended import get_jwt_claims
 from flask_restx import fields, Resource
 
@@ -38,7 +39,7 @@ class EventsController(Resource):
 
     @events_ns.expect(event_page_parser)
     @events_ns.response(200, "Success")
-    @super_admin_required()
+    @custom_jwt_required()
     def get(self):
         """Retrieve list of events"""
         args = event_page_parser.parse_args()
@@ -72,12 +73,12 @@ class EventsController(Resource):
     def post(self):
         """Create a new event"""
         data = events_ns.payload
-        profile_id_interact = data.get('profile_id_interact')
-        profile_id = data.get('profile_id')
+        profile_id_interact = data.get("profile_id_interact")
+        profile_id = data.get("profile_id")
         if not profile_id:
-            return {'message': 'profile_id is required'}, 442
+            return {"message": "profile_id is required"}, 442
         if not profile_id_interact:
-            return {'message': 'profile_id_interact is required'}, 442
+            return {"message": "profile_id_interact is required"}, 442
         event = events_services.create_or_update_event(event_id=None, event_data=data)
         return event.repr_name(), 201
 

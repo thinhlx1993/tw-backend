@@ -22,16 +22,15 @@ mission_create_model = missions_ns.model(
         "tasks": fields.List(
             fields.String(example="260a439d-0121-48c1-88e0-b09f4bfd780b"), required=True
         ),
-        "profile_ids": fields.List(
-            fields.String(example="ea742827-6a6f-4634-ad73-4d02df68923b"), required=True
-        ),
+        "profile_ids": fields.String(example="username1", required=True),
         "user_id": fields.String(
             example="a3213c22-c8c5-4e86-aa7c-ec4a08f0a7f9", required=True
         ),
         "mission_schedule": fields.List(
             fields.String(example="Monday", required=False, default=None)
         ),
-        "start_date": fields.String(example="2024-01-17T21:56", required=False),
+        "start_date": fields.String(example="21:56", required=False),
+        "config": fields.Raw(),
     },
 )
 
