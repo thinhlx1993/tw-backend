@@ -358,6 +358,7 @@ def find_unique_interaction_partner_v2(
             #     ["NotStarted", "ERROR", "OK"]
             # ),
             cast(Profiles.profile_data["verify"], Text) == "true",
+            cast(Profiles.profile_data["suspended"], Text) == "false",
         )
         .order_by(func.random())
         .limit(5)
