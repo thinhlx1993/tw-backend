@@ -455,7 +455,10 @@ def get_profile_with_event_count_below_limit_v2(event_type, readonly_session):
     choose_otp = random.choice([0, 1])
     profiles = []
     if choose_otp == 0:
-        active_user_ids = ["307aa5f6-b63e-4a6d-a134-f84a96a38256"]
+        active_user_ids = [
+            "307aa5f6-b63e-4a6d-a134-f84a96a38256",
+            "0c3c328c-752f-4b2d-9884-9e8832915056",
+        ]
         # # Step 3: Filter profiles based on event count and active users
         profiles = (
             readonly_session.query(Profiles.profile_id)
