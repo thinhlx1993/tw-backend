@@ -19,7 +19,9 @@ class Groups(db.Model):
     group_id = db.Column(
         db.String(128), server_default=text("uuid_generate_v4()"), primary_key=True
     )
-    user_id = db.Column(db.String(128), nullable=True)
+    user_id = db.Column(
+        db.String(128), db.ForeignKey("user.user_id"), nullable=True, server_default=""
+    )
     username = db.Column(db.String(128), nullable=True)
     group_name = db.Column(db.String(128))
     notes = db.Column(db.Text())
