@@ -168,6 +168,7 @@ def get_user_schedule(username):
             event_type, readonly_session
         )
 
+        partner_ids = []
         # create missions
         for profile_id_receiver in profile_ids_receiver:
             # user giver
@@ -177,9 +178,11 @@ def get_user_schedule(username):
                 days_limit,
                 current_user_id,
                 readonly_session,
+                partner_ids,
             )
             if not unique_partner_id:
                 continue
+            partner_ids.append(unique_partner_id)
 
             tasks = (
                 readonly_session.query(Task)
@@ -307,7 +310,12 @@ def find_unique_interaction_partner(
 
 
 def find_unique_interaction_partner_v2(
-    profile_receiver, event_type, days_limit, current_user_id, readonly_session
+    profile_receiver,
+    event_type,
+    days_limit,
+    current_user_id,
+    readonly_session,
+    partner_ids,
 ):
     # Calculate the start date based on days_limit
     if days_limit < 1:
@@ -342,6 +350,7 @@ def find_unique_interaction_partner_v2(
             Profiles.owner == current_user_id,
             Profiles.profile_id != profile_receiver,
             ~Profiles.profile_id.in_(interacted_subquery),
+            ~Profiles.profile_id.in_(partner_ids),
             Profiles.click_count < daily_limits[event_type],
             Profiles.main_profile == False,
             Profiles.is_disable == False,
