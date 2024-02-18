@@ -87,6 +87,10 @@ class Profiles(db.Model):
 
     def event_data(self):
         return {
+            "profile_id": self.profile_id,
             "username": self.username if self.username else "",
             "gpt_key": self.gpt_key if self.gpt_key else "",
+            "click_count": self.click_count,
+            "comment_count": self.comment_count,
+            "like_count": self.like_count,
         }

@@ -256,11 +256,7 @@ class ProfilesBrowserController(Resource):
         user_id = claims.get("user_id")
         device_id = claims.get("device_id")
         if profile.owner and profile.owner != user_id:
-            return_data = {
-                "username": profile.username,
-                "profile_id": profile.profile_id,
-                "gpt_key": profile.gpt_key,
-            }
+            return_data = profile.event_data()
             return return_data, 200
 
         settings = setting_services.get_settings_by_user_device(user_id, device_id)
