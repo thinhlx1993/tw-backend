@@ -389,6 +389,7 @@ def calculate_days_for_unique_interactions(event_type, readonly_session):
             func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
                 ["NotStarted", "ERROR"]
             ),
+            cast(Profiles.profile_data["verify"], Text) == "true",
         )
         .count()
     )
