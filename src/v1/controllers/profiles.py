@@ -202,14 +202,11 @@ class ProfilesIdController(Resource):
         data = profiles_ns2.payload
         claims = get_jwt_claims()
         teams_id = claims.get("teams_id")
-        profile = profiles_services.get_profile_by_id(profile_id)
-        if not profile:
-            return {"message": "Profile not found"}, 404
+        # profile = profiles_services.get_profile_by_id(profile_id)
+        # if not profile:
+        #     return {"message": "Profile not found"}, 404
         executor.submit(update_profile, profile_id, teams_id, data)
-        return {
-            "message": "Profile updated successfully",
-            "profile": profile.repr_name(),
-        }, 200
+        return {"message": "Profile updated successfully"}, 200
 
     @profiles_ns2.response(
         200, "Profile deleted successfully", profile_operation_response_model
@@ -227,9 +224,9 @@ class ProfilesIdController(Resource):
         device_id = claims.get("device_id")
         user_id = claims.get("user_id")
         teams_id = claims.get("teams_id")
-        profile = profiles_services.get_profile_by_id(profile_id)
-        if not profile:
-            return {"message": "Profile not found"}, 404
+        # profile = profiles_services.get_profile_by_id(profile_id)
+        # if not profile:
+        #     return {"message": "Profile not found"}, 404
         executor.submit(delete_profile, profile_id, user_id, device_id, teams_id)
         return {"message": "Profile deleted successfully"}, 200
 
