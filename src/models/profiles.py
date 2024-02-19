@@ -19,7 +19,7 @@ class Profiles(db.Model):
     )
     name = db.Column(db.String(128), nullable=True, server_default="")
     password = db.Column(db.String(128), nullable=True, server_default="")
-    fa = db.Column(db.String(128), nullable=True, server_default="")
+    fa = db.Column(db.Text(), nullable=True, server_default="")
     proxy = db.Column(db.String(128), nullable=True, server_default="")
     gpt_key = db.Column(db.String(128), nullable=True, server_default="")
     cookies = db.Column(db.String(128), nullable=True, server_default="")
