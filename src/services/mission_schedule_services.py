@@ -326,16 +326,16 @@ def find_unique_interaction_partner_v2(
         start_date = datetime.datetime.utcnow() - datetime.timedelta(days=days_limit)
 
     # Subquery to find profiles that have already interacted with the given profile
-    interacted_subquery = (
-        readonly_session.query(Events.profile_id_interact)
-        .distinct()
-        .filter(
-            Events.profile_id == profile_receiver,
-            Events.event_type == event_type,
-            Events.issue == "OK",
-            db.func.date(Events.created_at) >= start_date,
-        )
-    )
+    # interacted_subquery = (
+    #     readonly_session.query(Events.profile_id_interact)
+    #     .distinct()
+    #     .filter(
+    #         Events.profile_id == profile_receiver,
+    #         Events.event_type == event_type,
+    #         Events.issue == "OK",
+    #         db.func.date(Events.created_at) >= start_date,
+    #     )
+    # )
 
     # monetizable_filter = cast(Profiles.profile_data["monetizable"], Text) == "false"
     # func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
@@ -349,14 +349,11 @@ def find_unique_interaction_partner_v2(
         .filter(
             Profiles.owner == current_user_id,
             Profiles.profile_id != profile_receiver,
-            ~Profiles.profile_id.in_(interacted_subquery),
+            # ~Profiles.profile_id.in_(interacted_subquery),
             ~Profiles.profile_id.in_(partner_ids),
             Profiles.click_count < daily_limits[event_type],
             Profiles.main_profile == False,
             Profiles.is_disable == False,
-            # func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
-            #     ["NotStarted", "ERROR", "OK"]
-            # ),
             cast(Profiles.profile_data["verify"], Text) == "true",
             cast(Profiles.profile_data["suspended"], Text) == "false",
         )
