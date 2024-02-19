@@ -19,7 +19,7 @@ class Profiles(db.Model):
     )
     name = db.Column(db.String(128), nullable=True, server_default="")
     password = db.Column(db.String(128), nullable=True, server_default="")
-    fa = db.Column(db.String(128), nullable=True, server_default="")
+    fa = db.Column(db.Text(), nullable=True, server_default="")
     proxy = db.Column(db.String(128), nullable=True, server_default="")
     gpt_key = db.Column(db.String(128), nullable=True, server_default="")
     cookies = db.Column(db.String(128), nullable=True, server_default="")
@@ -87,6 +87,10 @@ class Profiles(db.Model):
 
     def event_data(self):
         return {
+            "profile_id": self.profile_id,
             "username": self.username if self.username else "",
             "gpt_key": self.gpt_key if self.gpt_key else "",
+            "click_count": self.click_count,
+            "comment_count": self.comment_count,
+            "like_count": self.like_count,
         }

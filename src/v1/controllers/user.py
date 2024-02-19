@@ -1,6 +1,7 @@
 """Controller for /user."""
 
 import logging
+import math
 import uuid
 
 from flask import request, jsonify
@@ -9,10 +10,10 @@ from flask_jwt_extended import get_raw_jwt, get_jwt_claims
 from flask_jwt_extended import create_access_token, get_jwt_identity, get_jti
 from flask_jwt_extended import create_refresh_token, jwt_refresh_token_required
 
-from src.config import Config
 from src import db
 from src.enums.role_permissions import RoleName
 from src.enums.user_type import UserTypeEnums, UserRoleEnums
+from src.parsers import page_parser
 from src.services import user_services, teams_services, migration_services
 from src.version_handler import api_version_1_web
 from src.services.teams_services import set_user_default_teams
@@ -897,6 +898,7 @@ class UserOperations(Resource):
             return {"message": str(err)}, 400
 
     @custom_jwt_required()
+    @user_ns2.expect(page_parser)
     @user_ns2.response(200, "OK", user_search_response_ok_model)
     @user_ns2.response(400, "Bad Request", user_search_bad_response_model)
     @user_ns2.response(
@@ -907,12 +909,18 @@ class UserOperations(Resource):
     @user_ns2.response(500, "Internal Server Error", internal_server_error_model)
     def get(self):
         """Used to retrieve list of users"""
+        args = page_parser.parse_args()
+        # Pagination settings
+        page = args.get("page", 1)
+        per_page = args.get("per_page", 25)
+        filter_text = args.get("filter", "")
+
         claims = get_jwt_claims()
         teams_id = claims["teams_id"]
         is_administrator = user_services.check_is_administrator_user(claims.get("role"))
         result = []
         if is_administrator:
-            users = user_services.get_user_list()
+            users, count = user_services.get_user_list(page, per_page, filter_text)
             for each_user in users:
                 roles = user_services.get_user_roles(each_user["username"], teams_id)
                 is_administrator = user_services.check_is_administrator_user(roles)
@@ -922,9 +930,19 @@ class UserOperations(Resource):
                     else UserRoleEnums.User.value
                 )
                 result.append(each_user)
-            return {"user_list": result}, 200
+
+            # return {"user_list": result}, 200
+            return {
+                "data": result,
+                "result_count": count,
+                "max_pages": math.ceil(count / per_page),
+            }
         # client does not have permissions to get user list
-        return {"user_list": []}, 200
+        return {
+            "data": [],
+            "result_count": 0,
+            "max_pages": 0,
+        }, 200
 
 
 class UserSwitchTeams(Resource):

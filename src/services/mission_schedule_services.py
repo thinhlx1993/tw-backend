@@ -83,32 +83,49 @@ def get_user_schedule(username):
       ]
     }
     """
-
-    default_mission = {
-        "schedule_id": "8f74ef78-52ec-46ff-b88a-d93bd1ae9ea5",
-        "group_id": None,
-        "profile_id": "c8a1754f-3769-4816-9c61-f791d7bbddab",
-        "mission_id": "29868e59-538a-48f9-8673-03ffaf8622df",
-        "schedule_json": {"cron": "", "loop_count": 1},
-        "start_timestamp": "26-01-2024 08:22",
-        "tasks": [
-            {
-                "mission_id": "29868e59-538a-48f9-8673-03ffaf8622df",
-                "tasks_id": "7cc3d468-76fa-4167-aab2-2e37702f3846",
-                "tasks": {
-                    "mission_id": "db437f17-f911-40bf-b4e1-db920a5ac787",
-                    "tasks_id": "7cc3d468-76fa-4167-aab2-2e37702f3846",
-                    "tasks": {
-                        "tasks_id": "7cc3d468-76fa-4167-aab2-2e37702f3846",
-                        "tasks_name": "Check follow",
-                        "tasks_json": None,
-                    },
-                },
-            }
-        ],
+    """
+    {
+        "mission_id": self.mission_id,
+        "mission_name": self.mission_name,
+        "status": self.status,
+        "user_id": self.user_id,
+        "mission_json": self.mission_json,
+        "force_start": self.force_start,
+        "group_id": self.group_id,
+        "created_at": self.created_at.isoformat() if self.created_at else None,
+        "mission_schedule": [item.repr_name() for item in self.mission_schedule],
+        "mission_tasks": [item.repr_name() for item in self.mission_tasks],
     }
+    """
     claims = get_jwt_claims()
     current_user_id = claims["user_id"]
+
+    # check follow every morning 4:30 AM
+    if should_start_job("30 4 * * *") or should_start_job("30 16 * * *"):
+        profiles = Profiles.query.filter(Profiles.owner == current_user_id).all()
+        default_missions = []
+        for profile in profiles:
+            default_missions.append(
+                {
+                    "profile_id": profile.profile_id,
+                    "profile_id_receiver": profile.profile_id,
+                    "start_timestamp": datetime.datetime.utcnow().strftime(
+                        "%d-%m-%Y %H:%M"
+                    ),
+                    "tasks": [
+                        {
+                            "tasks_id": "7cc3d468-76fa-4167-aab2-2e37702f3846",
+                            "tasks": {
+                                "tasks_id": "7cc3d468-76fa-4167-aab2-2e37702f3846",
+                                "tasks_name": "Check follow",
+                                "tasks_json": None,
+                            },
+                        }
+                    ],
+                }
+            )
+        return default_missions
+
     with get_readonly_session() as readonly_session:
         mission_should_start = []
         mission_force_start = []
@@ -151,6 +168,7 @@ def get_user_schedule(username):
             event_type, readonly_session
         )
 
+        partner_ids = []
         # create missions
         for profile_id_receiver in profile_ids_receiver:
             # user giver
@@ -160,9 +178,11 @@ def get_user_schedule(username):
                 days_limit,
                 current_user_id,
                 readonly_session,
+                partner_ids,
             )
             if not unique_partner_id:
                 continue
+            partner_ids.append(unique_partner_id)
 
             tasks = (
                 readonly_session.query(Task)
@@ -290,7 +310,12 @@ def find_unique_interaction_partner(
 
 
 def find_unique_interaction_partner_v2(
-    profile_receiver, event_type, days_limit, current_user_id, readonly_session
+    profile_receiver,
+    event_type,
+    days_limit,
+    current_user_id,
+    readonly_session,
+    partner_ids,
 ):
     # Calculate the start date based on days_limit
     if days_limit < 1:
@@ -325,6 +350,7 @@ def find_unique_interaction_partner_v2(
             Profiles.owner == current_user_id,
             Profiles.profile_id != profile_receiver,
             ~Profiles.profile_id.in_(interacted_subquery),
+            ~Profiles.profile_id.in_(partner_ids),
             Profiles.click_count < daily_limits[event_type],
             Profiles.main_profile == False,
             Profiles.is_disable == False,
@@ -332,6 +358,7 @@ def find_unique_interaction_partner_v2(
             #     ["NotStarted", "ERROR", "OK"]
             # ),
             cast(Profiles.profile_data["verify"], Text) == "true",
+            cast(Profiles.profile_data["suspended"], Text) == "false",
         )
         .order_by(func.random())
         .limit(5)
@@ -363,6 +390,7 @@ def calculate_days_for_unique_interactions(event_type, readonly_session):
             func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
                 ["NotStarted", "ERROR"]
             ),
+            cast(Profiles.profile_data["verify"], Text) == "true",
         )
         .count()
     )
@@ -455,7 +483,10 @@ def get_profile_with_event_count_below_limit_v2(event_type, readonly_session):
     choose_otp = random.choice([0, 1])
     profiles = []
     if choose_otp == 0:
-        active_user_ids = ["307aa5f6-b63e-4a6d-a134-f84a96a38256"]
+        active_user_ids = [
+            "307aa5f6-b63e-4a6d-a134-f84a96a38256",
+            "0c3c328c-752f-4b2d-9884-9e8832915056",
+        ]
         # # Step 3: Filter profiles based on event count and active users
         profiles = (
             readonly_session.query(Profiles.profile_id)
@@ -497,7 +528,7 @@ def get_profile_with_event_count_below_limit_v2(event_type, readonly_session):
                 Profiles.is_disable.is_(False),
             )
             .order_by(func.random())
-            .limit(10)
+            .limit(5)
             .all()
         )
 

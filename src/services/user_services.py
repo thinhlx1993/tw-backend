@@ -141,9 +141,13 @@ def get_username(username):
 
     :return: User row from table, if user exists. Else, None.
     """
-    user = models.User.query.filter(
-        and_(models.User.username == username, models.User.is_disabled == False)
-    ).execution_options(bind=db.get_engine(app, bind="readonly")).first()
+    user = (
+        models.User.query.filter(
+            and_(models.User.username == username, models.User.is_disabled == False)
+        )
+        .execution_options(bind=db.get_engine(app, bind="readonly"))
+        .first()
+    )
     db.session.flush()
     return user
 
@@ -158,10 +162,18 @@ def get_user_details(username=None, user_id=None):
     :return: User row from table, if user exists. Else, None.
     """
     if username:
-        user = models.UserDetails.query.filter_by(username=username).execution_options(bind=db.get_engine(app, bind="readonly")).first()
+        user = (
+            models.UserDetails.query.filter_by(username=username)
+            .execution_options(bind=db.get_engine(app, bind="readonly"))
+            .first()
+        )
         return user
     elif user_id:
-        user = models.UserDetails.query.filter_by(user_id=user_id).execution_options(bind=db.get_engine(app, bind="readonly")).first()
+        user = (
+            models.UserDetails.query.filter_by(user_id=user_id)
+            .execution_options(bind=db.get_engine(app, bind="readonly"))
+            .first()
+        )
         return user
     return None
 
@@ -528,22 +540,28 @@ def delete_user_public_constraints(user_id):
         raise Exception("Message" + str(err))
 
 
-def get_user_list():
+def get_user_list(page, per_page, search):
     """
     Gets a list of users
     :return list: List of users
     """
-    sorting_order = 'created_at desc'
-    result = (
+    sorting_order = "created_at desc"
+    query = (
         db.session.query(models.User)
         .join(models.UserDetails, models.UserDetails.user_id == models.User.user_id)
         .filter(models.User.username != "thinhle.ict")
         .order_by(text(sorting_order))
-        .execution_options(bind=db.get_engine(app, bind="readonly"))
-        .all()
     )
+    if search:
+        query = query.filter(func.lower(models.User.username).ilike(f"%{search}%"))
+    user_count = query.count()
+    if per_page:
+        query = query.limit(per_page)
+    if page:
+        query = query.offset(per_page * (page - 1))
+    result = query.all()
     users = [row.repr_name() for row in result]
-    return users
+    return users, user_count
 
 
 def get_user_role_list():
