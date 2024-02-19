@@ -526,8 +526,7 @@ class TeamsUserOperations(Resource):
             if user_org_mapping and str(user_org_mapping.teams_id) == current_org:
                 return (
                     {
-                        "message": "This user is owner of the teams and \
-                    cannot be removed from this teams"
+                        "message": "This user is owner of the teams and cannot be removed from this teams"
                     },
                     400,
                 )
@@ -541,6 +540,56 @@ class TeamsUserOperations(Resource):
             user_services.delete_user_preference(user_id)
             user_services.delete_user_role_mapping(user_id, current_org)
             return {"message": "User has been removed from org"}, 200
+        except Exception as err:
+            _logger.exception(err)
+            return {"message": "Failed to remove user from org " + str(err)}, 400
+
+    @custom_jwt_required()
+    @org_ns2.expect(user_id_parser)
+    @org_ns2.response(200, "OK", delete_user_org_response_ok_model)
+    @org_ns2.response(400, "Bad Request", delete_user_org_bad_response_model)
+    @org_ns2.response(
+        401,
+        "Authorization information is missing or invalid.",
+        unauthorized_response_model,
+    )
+    @org_ns2.response(500, "Internal Server Error", internal_server_error_model)
+    def put(self):
+        """Used to update user group"""
+        # Check mandatory field
+        try:
+            request_data = org_ns2.payload
+            username = user_id_parser.parse_args()["username"]
+        except Exception as e:
+            _logger.debug(f"Request validation failed: {e}")
+            return {"message": "Bad request. Invalid input"}, 400
+        try:
+            exist_user = user_services.get_username(username=username)
+            if not exist_user:
+                return {"message": "The user does not exist!"}, 400
+            user_id = exist_user.user_id
+            # Check if user exists in teams
+            user_claims = get_jwt_claims()
+            current_org = user_claims["teams_id"]
+            if not user_services.check_user_teams_mapping(user_id, current_org):
+                return {"message": "The user does not exist in your teams!"}, 400
+            # Check if this is user's default org
+            user_org_mapping = user_services.check_user_ownership(user_id, current_org)
+            if user_org_mapping and str(user_org_mapping.teams_id) == current_org:
+                return (
+                    {
+                        "message": "This user is owner of the teams and cannot be removed from this teams"
+                    },
+                    400,
+                )
+        except Exception as err:
+            _logger.exception(err)
+            return {"message": "Could not fetch user teams details" + str(err)}, 400
+        # Remove user from teams
+        try:
+            user_services.delete_user_group_mapping(user_id)
+            user_services.create_user_group_mapping(user_id, request_data["group_id"])
+            return {"message": "User updated successfully"}, 200
         except Exception as err:
             _logger.exception(err)
             return {"message": "Failed to remove user from org " + str(err)}, 400
