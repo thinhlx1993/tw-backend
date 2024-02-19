@@ -123,4 +123,5 @@ class User(db.Model):
             "is_admin": True
             if [role for role in self.user_roles if role.role_name == "admin"]
             else False,
+            "groups": [group.repr_name() for group in self.groups],
         }

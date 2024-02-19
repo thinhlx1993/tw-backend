@@ -28,6 +28,7 @@ from src import app, db
 
 from src.enums.user_type import UserRoleEnums
 from src.services import teams_services, migration_services
+from src.models import UserGroup, Groups
 from src.config import Config
 
 # Create module log
@@ -410,6 +411,17 @@ def create_user_role_mapping(user_id, role_id, teams_id):
         raise e
 
     return mapping
+
+
+def create_user_group_mapping(user_id, group_id):
+    group = Groups.query.get(group_id)
+    if not group:
+        return False
+    user_group_mapping = UserGroup()
+    user_group_mapping.user_id = user_id
+    user_group_mapping.group_id = group_id
+    db.session.add(user_group_mapping)
+    db.session.flush()
 
 
 def update_user(
@@ -1025,6 +1037,10 @@ def delete_user_teams_mapping(user_id, teams_id):
     except:
         db.session.rollback()
         raise
+
+
+def delete_user_group_mapping(user_id):
+    models.UserGroup.query.filter(models.UserGroup.user_id == user_id).delete()
 
 
 def delete_user_all_teams_mapping(user_id):

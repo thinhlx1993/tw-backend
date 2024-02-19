@@ -151,6 +151,7 @@ teams_post_bad_response_model = org_ns2.model(
 add_user_model = {
     "username": fields.String(example="", required=True),
     "role_id": fields.String(example=str(uuid.uuid4()), required=True),
+    "group_id": fields.String(example=str(uuid.uuid4()), required=True),
 }
 
 add_user_model = org_ns2.model("add_user_model", add_user_model)
@@ -452,6 +453,7 @@ class TeamsUserOperations(Resource):
             request_data = org_ns2.payload
             username = request_data["username"]
             role_id = request_data["role_id"]
+            group_id = request_data["group_id"]
         except Exception as e:
             _logger.debug(f"Request validation failed: {e}")
             return {"message": "Bad request. Invalid input"}, 400
@@ -480,6 +482,7 @@ class TeamsUserOperations(Resource):
             user_services.create_user_role_mapping(
                 user_details["user_id"], role_id, teams_id
             )
+            user_services.create_user_group_mapping(user_details["user_id"], group_id)
             user_services.create_user_preference(user_details["user_id"])
             org_name = teams_services.get_teams(teams_id).teams_name
             return {
@@ -534,6 +537,7 @@ class TeamsUserOperations(Resource):
         # Remove user from teams
         try:
             user_services.delete_user_teams_mapping(user_id, current_org)
+            user_services.delete_user_group_mapping(user_id)
             user_services.delete_user_preference(user_id)
             user_services.delete_user_role_mapping(user_id, current_org)
             return {"message": "User has been removed from org"}, 200

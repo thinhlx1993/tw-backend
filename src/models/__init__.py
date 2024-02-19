@@ -19,3 +19,5 @@ from src.models.settings import Settings
 from src.models.events import Events
 from src.models.posts import Posts
 from src.models.profiles import Profiles
+from src.models.user_group import UserGroup
+from src.models.groups import Groups
