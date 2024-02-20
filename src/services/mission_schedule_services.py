@@ -133,8 +133,8 @@ def get_user_schedule(schedule_type):
                 }
             )
 
-    if default_missions or schedule_type == "mission_should_start":
-        return default_missions, "mission_should_start"
+    # if default_missions or schedule_type == "mission_should_start":
+    #     return default_missions, "mission_should_start"
 
     mission_should_start = []
     with get_readonly_session() as readonly_session:
