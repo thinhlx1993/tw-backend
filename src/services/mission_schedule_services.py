@@ -477,7 +477,7 @@ def get_profile_with_event_count_below_limit_v2(event_type, readonly_session):
     # active_cutoff = datetime.datetime.utcnow() - datetime.timedelta(minutes=5)
 
     # query priority user first
-    choose_otp = random.choice([0, 1])
+    choose_otp = random.choice([0, 1, 2])
     profiles = []
     if choose_otp == 0:
         active_user_ids = [
