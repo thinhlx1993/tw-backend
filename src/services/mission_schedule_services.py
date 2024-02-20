@@ -487,16 +487,16 @@ def get_profile_with_event_count_below_limit_v2(event_type, readonly_session):
     # active_cutoff = datetime.datetime.utcnow() - datetime.timedelta(minutes=5)
 
     # query priority user first
-    choose_otp = random.choice(["random", "normal"])
+    # choose_otp = random.choice(["random", "normal"])
     additional_filters = []
-    if choose_otp == "normal":
-        group_founded = groups_services.get_group_below_threshold()
-        if group_founded:
-            user_receiver = user_services.get_user_receiver_by_group_id(
-                group_founded.group_id
-            )
-            user_receiver = [user.user_id for user in user_receiver]
-            additional_filters.append(Profiles.owner.in_(user_receiver))
+    # if choose_otp == "normal":
+    group_founded = groups_services.get_group_below_threshold()
+    if group_founded:
+        user_receiver = user_services.get_user_receiver_by_group_id(
+            group_founded.group_id
+        )
+        user_receiver = [user.user_id for user in user_receiver]
+        additional_filters.append(Profiles.owner.in_(user_receiver))
 
     profiles = (
         readonly_session.query(Profiles.profile_id)
