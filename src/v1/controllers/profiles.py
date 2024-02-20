@@ -1,4 +1,5 @@
 """Controller for profiles."""
+
 import random
 
 from flask_restx import fields, Resource
@@ -272,7 +273,9 @@ class ProfilesBrowserController(Resource):
                 hma_token, profile.hma_profile_id, body_data
             )
             if not status:
-                return {"message": hma_result}, 400
+                return {
+                    "message": "HMA account not found, please check your settings"
+                }, 400
 
             browser_data = hma_result["result"]
             profile.browser_data = browser_data

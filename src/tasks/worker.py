@@ -99,7 +99,6 @@ def update_click_count(teams_id):
         # Execute the raw SQL query
         db.session.execute(sql_query)
         db.session.commit()
-        print("Groups updated successfully")
     except Exception as e:
         # Rollback transaction if an error occurs
         db.session.rollback()
