@@ -504,18 +504,18 @@ def get_profile_with_event_count_below_limit_v2(event_type, readonly_session):
 
     if len(profiles) == 0:
         # Step 1: Query active user IDs
-        active_cutoff = datetime.datetime.utcnow() - datetime.timedelta(minutes=5)
-        active_user_ids = (
-            db.session.query(User.user_id)
-            .filter(User.last_active_at > active_cutoff)
-            .all()
-        )
-        active_user_ids = [user_id[0] for user_id in active_user_ids]
+        # active_cutoff = datetime.datetime.utcnow() - datetime.timedelta(minutes=5)
+        # active_user_ids = (
+        #     db.session.query(User.user_id)
+        #     .filter(User.last_active_at > active_cutoff)
+        #     .all()
+        # )
+        # active_user_ids = [user_id[0] for user_id in active_user_ids]
 
         profiles = (
             readonly_session.query(Profiles.profile_id)
             .filter(
-                Profiles.owner.in_(active_user_ids),  # Filter by active user IDs
+                # Profiles.owner.in_(active_user_ids),  # Filter by active user IDs
                 Profiles.click_count < daily_limits[event_type],
                 Profiles.profile_data.isnot(None),
                 func.json_extract_path_text(
