@@ -4,7 +4,7 @@ import pytz
 from flask_jwt_extended import get_jwt_claims
 from sqlalchemy import func, cast, or_, Text
 
-from src import db, app
+from src import db, app, executor
 from src.models import (
     MissionSchedule,
     User,
@@ -12,12 +12,13 @@ from src.models import (
     Events,
     Profiles,
 )
-from src.services import mission_services
+from src.services import mission_services, groups_services, user_services
 import datetime
 from croniter import croniter
 import logging
 
 from src.services.migration_services import get_readonly_session
+from src.tasks.worker import update_click_count, reset_click_count
 
 _logger = logging.getLogger(__name__)
 
@@ -57,7 +58,7 @@ def get_mission_schedule(schedule_id):
     ).get(schedule_id)
 
 
-def get_user_schedule(username):
+def get_user_schedule(schedule_type):
     """
     {
       schedule_id: '8f74ef78-52ec-46ff-b88a-d93bd1ae9ea5',
@@ -99,11 +100,18 @@ def get_user_schedule(username):
     """
     claims = get_jwt_claims()
     current_user_id = claims["user_id"]
+    teams_id = claims["teams_id"]
+
+    default_missions = []
+    if should_start_job("*/10 * * * *"):
+        executor.submit(update_click_count, teams_id)
+
+    if should_start_job("0 0 * * *"):
+        executor.submit(reset_click_count, teams_id)
 
     # check follow every morning 4:30 AM
     if should_start_job("30 4 * * *") or should_start_job("30 16 * * *"):
         profiles = Profiles.query.filter(Profiles.owner == current_user_id).all()
-        default_missions = []
         for profile in profiles:
             default_missions.append(
                 {
@@ -124,10 +132,12 @@ def get_user_schedule(username):
                     ],
                 }
             )
-        return default_missions
 
+    if default_missions or schedule_type == "mission_should_start":
+        return default_missions, "mission_should_start"
+
+    mission_should_start = []
     with get_readonly_session() as readonly_session:
-        mission_should_start = []
         mission_force_start = []
         missions = mission_services.get_missions_by_user_id(
             current_user_id, readonly_session
@@ -146,8 +156,8 @@ def get_user_schedule(username):
         for mission_id in mission_force_start:
             mission_services.set_force_start_false(mission_id)
 
-        if mission_should_start:
-            return mission_should_start
+        if mission_should_start or schedule_type == "mission_should_start":
+            return mission_should_start, "mission_should_start"
 
         """
         Get tasks for clickAds, comment, like
@@ -161,7 +171,7 @@ def get_user_schedule(username):
 
         # Not found any user receiver
         if not profile_ids_receiver:
-            return mission_should_start
+            return mission_should_start, "mission_should_start"
 
         # Find a unique interaction partner from current user profiles
         days_limit = calculate_days_for_unique_interactions(
@@ -213,7 +223,7 @@ def get_user_schedule(username):
                         ],
                     }
                 )
-    return mission_should_start
+    return mission_should_start, "clickAds"
 
 
 # Function to find a unique interaction partner
@@ -477,57 +487,33 @@ def get_profile_with_event_count_below_limit_v2(event_type, readonly_session):
     # active_cutoff = datetime.datetime.utcnow() - datetime.timedelta(minutes=5)
 
     # query priority user first
-    choose_otp = random.choice([0, 1, 2])
-    profiles = []
-    if choose_otp == 0:
-        active_user_ids = [
-            "307aa5f6-b63e-4a6d-a134-f84a96a38256",
-            "0c3c328c-752f-4b2d-9884-9e8832915056",
-        ]
-        # # Step 3: Filter profiles based on event count and active users
-        profiles = (
-            readonly_session.query(Profiles.profile_id)
-            .filter(
-                Profiles.owner.in_(active_user_ids),  # Filter by active user IDs
-                Profiles.click_count < daily_limits[event_type],
-                Profiles.profile_data.isnot(None),
-                func.json_extract_path_text(
-                    Profiles.profile_data, "account_status"
-                ).in_(["AdsEligible", "OK"]),
-                Profiles.main_profile.is_(True),
-                Profiles.is_disable.is_(False),
+    choose_otp = random.choice(["random", "normal"])
+    additional_filters = []
+    if choose_otp == "normal":
+        group_founded = groups_services.get_group_below_threshold()
+        if group_founded:
+            user_receiver = user_services.get_user_receiver_by_group_id(
+                group_founded.group_id
             )
-            .order_by(func.random())
-            .limit(10)
-            .all()
-        )
+            user_receiver = [user.user_id for user in user_receiver]
+            additional_filters.append(Profiles.owner.in_(user_receiver))
 
-    if len(profiles) == 0:
-        # Step 1: Query active user IDs
-        # active_cutoff = datetime.datetime.utcnow() - datetime.timedelta(minutes=5)
-        # active_user_ids = (
-        #     db.session.query(User.user_id)
-        #     .filter(User.last_active_at > active_cutoff)
-        #     .all()
-        # )
-        # active_user_ids = [user_id[0] for user_id in active_user_ids]
-
-        profiles = (
-            readonly_session.query(Profiles.profile_id)
-            .filter(
-                # Profiles.owner.in_(active_user_ids),  # Filter by active user IDs
-                Profiles.click_count < daily_limits[event_type],
-                Profiles.profile_data.isnot(None),
-                func.json_extract_path_text(
-                    Profiles.profile_data, "account_status"
-                ).in_(["AdsEligible", "OK"]),
-                Profiles.main_profile.is_(True),
-                Profiles.is_disable.is_(False),
-            )
-            .order_by(func.random())
-            .limit(5)
-            .all()
+    profiles = (
+        readonly_session.query(Profiles.profile_id)
+        .filter(
+            Profiles.click_count < daily_limits[event_type],
+            Profiles.profile_data.isnot(None),
+            # func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
+            #     ["AdsEligible", "OK"]
+            # ),
+            Profiles.main_profile.is_(True),
+            Profiles.is_disable.is_(False),
+            *additional_filters
         )
+        .order_by(func.random())
+        .limit(5)
+        .all()
+    )
 
     # Select a random profile from the filtered list
     # profile = random.choice(profiles) if profiles else None

@@ -1,6 +1,9 @@
 """Services for groups."""
 
 import logging
+
+from sqlalchemy import func
+
 from src import db, app
 from src.models.groups import Groups
 
@@ -19,10 +22,7 @@ def create_group(data):
 
 
 def get_group_by_id(group_id):
-    return (
-        Groups.query.filter_by(group_id=group_id)
-        .first()
-    )
+    return Groups.query.filter_by(group_id=group_id).first()
 
 
 def get_all_groups():
@@ -49,3 +49,12 @@ def delete_group(group_id):
         db.session.flush()
         return True
     return False  # Or handle the case where the group is not found
+
+
+def get_group_below_threshold():
+    group = (
+        Groups.query.filter(Groups.click_count > Groups.receiver_count)
+        .order_by(func.random())
+        .first()
+    )
+    return group

@@ -141,15 +141,6 @@ def update_count(profile_id, event_type):
     # _logger.info(
     #     f"Today is {today}  and profile date {profile_receiver.modified_at.date()}"
     # )
-    if should_start_job("0 0 * * *"):
-        profile_receiver.click_count = 0
-        profile_receiver.comment_count = 0
-        profile_receiver.like_count = 0
-
-        # Update operation to set click_count to zero for all profiles
-        stmt = update(Profiles).values(click_count=0, comment_count=0, like_count=0)
-        db.session.execute(stmt)
-        db.session.flush()
 
     click_count = profile_receiver.click_count
     comment_count = profile_receiver.comment_count

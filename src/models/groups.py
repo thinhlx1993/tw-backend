@@ -29,6 +29,8 @@ class Groups(db.Model):
     modified_at = db.Column(db.DateTime(), nullable=False, server_default=func.now())
     # Constructor initializing values
     users = db.relationship("User", secondary="user_group", backref="groups")
+    click_count = db.Column(db.Integer, default=0)  # New column for click count
+    receiver_count = db.Column(db.Integer, default=0)  # New column for receiver count
 
     def repr_name(self):
         return {
@@ -36,6 +38,8 @@ class Groups(db.Model):
             "group_name": self.group_name,
             "username": self.username,
             "notes": self.notes,
+            "click_count": self.click_count,
+            "receiver_count": self.receiver_count,
             "created_at": self.created_at.strftime("%d-%m-%Y %H:%M"),
             "modified_at": self.modified_at.strftime("%d-%m-%Y %H:%M"),
         }

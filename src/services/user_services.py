@@ -28,7 +28,7 @@ from src import app, db
 
 from src.enums.user_type import UserRoleEnums
 from src.services import teams_services, migration_services
-from src.models import UserGroup, Groups
+from src.models import UserGroup, Groups, User
 from src.config import Config
 
 # Create module log
@@ -2018,3 +2018,13 @@ def update_user_last_active_at(user_id):
     user.last_active_at = datetime.datetime.utcnow()
     db.session.flush()
     return True
+
+
+def get_user_receiver_by_group_id(group_id):
+    users = (
+        db.session.query(User.user_id)
+        .join(UserGroup)
+        .filter(UserGroup.group_id == group_id)
+        .all()
+    )
+    return users
