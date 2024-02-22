@@ -87,8 +87,8 @@ def update_click_count(teams_id):
         f"    )\n"
         f"    -- Step 2: Update groups table with the click_count and receiver_count\n"
         f'    UPDATE "groups" AS g\n'
-        f"    SET click_count = c.total_clicks_giver,\n"
-        f"        receiver_count = r.total_clicks_receiver\n"
+        f"    SET click_count = COALESCE(c.total_clicks_giver, 0),\n"
+        f"        receiver_count = COALESCE(r.total_clicks_receiver, 0)\n"
         f"    FROM Clicks c\n"
         f"    JOIN Receivers r ON c.group_id = r.group_id\n"
         f"    WHERE g.group_id = c.group_id;\n"
