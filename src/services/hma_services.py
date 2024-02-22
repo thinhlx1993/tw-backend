@@ -1,6 +1,9 @@
 import os
 import requests
 import logging
+
+from flask_jwt_extended import get_jwt_claims
+
 from src.services import setting_services, profiles_services
 
 base_url = os.environ.get("HMA_ENDPOINTS")
@@ -14,10 +17,29 @@ def authenticate(username, password):
     url = f"{base_url}/auth"
     auth = (username, password)
     data = {"version": appVersion}
+    claims = get_jwt_claims()
+    user_id = claims.get("user_id")
+    device_id = claims.get("device_id")
+    user_settings = setting_services.get_settings_by_user_device(user_id, device_id)
+    if user_settings:
+        settings = user_settings["settings"]
+        hma_access_token = settings.get("hma_access_token", "")
+        if hma_access_token:
+            url = f"{base_url}/users/me"
+            headers = {"Authorization": f"Bearer {hma_access_token}"}
+            response = requests.get(url, headers=headers)
+            if response.status_code == 200:
+                return hma_access_token
     response = requests.post(url, auth=auth, data=data)
     if response.status_code == 200 and response.json()["code"] == 1:
-        return response.json()["result"]["token"]
-    raise Exception("HMA Account is required")
+        hma_access_token = response.json()["result"]["token"]
+        if user_settings:
+            settings = user_settings["settings"]
+            settings["hma_access_token"] = hma_access_token
+            setting_services.create_or_update_settings(user_id, device_id, settings)
+        return hma_access_token
+
+    return ""
 
 
 def get_account_info(token):
@@ -48,12 +70,12 @@ def delete_browser_profile(profile_id, user_id, device_id):
     hma_account = settings.get("hideMyAccAccount")
     hma_password = settings.get("hideMyAccPassword")
     hma_token = authenticate(hma_account, hma_password)
+    if not hma_token:
+        return False
     """Delete a browser profile."""
     url = f"{base_url}/browser/{profile_id}"
     headers = {"Authorization": f"Bearer {hma_token}"}
     response = requests.delete(url, headers=headers)
-    # if response.status_code == 404:
-    #     return True
     return response.json()["code"] == 1
 
 
@@ -121,7 +143,7 @@ def delete_team_member(token, team_name, member_email):
 def create_hma_profile(username, device_id, user_id):
     settings = setting_services.get_settings_by_user_device(user_id, device_id)
     if not settings or "settings" not in settings.keys():
-        raise Exception("Vui lòng cài đặt hệ thống")
+        return "Vui lòng cài đặt hệ thống"
     settings = settings["settings"]
     browser_type = settings.get("browserType")
     if browser_type != "hideMyAcc" or username == "":
@@ -133,6 +155,8 @@ def create_hma_profile(username, device_id, user_id):
     hma_account = settings.get("hideMyAccAccount")
     hma_password = settings.get("hideMyAccPassword")
     hma_token = authenticate(hma_account, hma_password)
+    if not hma_token:
+        return False
     data = {
         "name": username,
         "os": "win",

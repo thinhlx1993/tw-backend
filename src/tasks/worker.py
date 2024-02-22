@@ -22,15 +22,10 @@ def create_profiles(profiles, user_id, device_id, teams_id):
             profile = profiles_services.create_profile(data, device_id, user_id)
             if profile:
                 success_number += 1
-                db.session.flush()
+                db.session.commit()
         except Exception as ex:
             _logger.exception(ex)
             error_number += 1
-            # return {
-            #     "message": f"Không thể tạo: {data['username']}, Đã tạo {success_number}"
-            # }, 200
-    # hma_services.clear_unused_resourced(device_id, user_id)
-    db.session.commit()
     return True
 
 

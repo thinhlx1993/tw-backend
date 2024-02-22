@@ -34,8 +34,8 @@ def create_profile(data, device_id, user_id):
                 new_profile.__setattr__(key, val)
 
     hma_profile_id = hma_services.create_hma_profile(username, device_id, user_id)
-    # if not hma_profile_id:
-    #     raise Exception("Can not create HMA profiles, check your settings or HMA account")
+    if not hma_profile_id:
+        return False
     new_profile.hma_profile_id = hma_profile_id
     db.session.add(new_profile)
     db.session.flush()
@@ -146,18 +146,12 @@ def update_profile(profile_id, data):
 
 def delete_profile(profile_id, user_id, device_id):
     profile = Profiles.query.get(profile_id)
-    if profile:
-        delete_status = hma_services.delete_browser_profile(
-            profile.hma_profile_id, user_id, device_id
-        )
-        if delete_status:
-            Events.query.filter_by(profile_id=profile_id).delete()
-            Events.query.filter_by(profile_id_interact=profile_id).delete()
-            Posts.query.filter_by(profile_id=profile_id).delete()
-            db.session.delete(profile)
-            db.session.flush()
-            return True
-    return False
+    Events.query.filter_by(profile_id=profile_id).delete()
+    Events.query.filter_by(profile_id_interact=profile_id).delete()
+    Posts.query.filter_by(profile_id=profile_id).delete()
+    db.session.delete(profile)
+    db.session.commit()
+    return True
 
 
 def get_profile_by_usernames(selected_username: list):

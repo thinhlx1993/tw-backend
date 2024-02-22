@@ -169,6 +169,8 @@ class ProfilesController(Resource):
         hma_password = settings.get("hideMyAccPassword")
 
         hma_token = hma_services.authenticate(hma_account, hma_password)
+        if not hma_token:
+            return {"message": f"Vui lòng kiểm tra HMA account"}, 400
         account_info = hma_services.get_account_info(hma_token)
         if account_info["code"] != 1:
             return {"message": f"Vui lòng kiểm tra HMA account"}, 400
@@ -203,9 +205,9 @@ class ProfilesIdController(Resource):
         data = profiles_ns2.payload
         claims = get_jwt_claims()
         teams_id = claims.get("teams_id")
-        # profile = profiles_services.get_profile_by_id(profile_id)
-        # if not profile:
-        #     return {"message": "Profile not found"}, 404
+        profile = profiles_services.get_profile_by_id(profile_id)
+        if not profile:
+            return {"message": "Profile not found"}, 404
         executor.submit(update_profile, profile_id, teams_id, data)
         return {"message": "Profile updated successfully"}, 200
 
@@ -225,11 +227,16 @@ class ProfilesIdController(Resource):
         device_id = claims.get("device_id")
         user_id = claims.get("user_id")
         teams_id = claims.get("teams_id")
-        # profile = profiles_services.get_profile_by_id(profile_id)
-        # if not profile:
-        #     return {"message": "Profile not found"}, 404
-        executor.submit(delete_profile, profile_id, user_id, device_id, teams_id)
-        return {"message": "Profile deleted successfully"}, 200
+        profile = profiles_services.get_profile_by_id(profile_id)
+        if not profile:
+            return {"message": "Profile not found"}, 404
+        delete_status = hma_services.delete_browser_profile(
+            profile.hma_profile_id, user_id, device_id
+        )
+        if delete_status:
+            executor.submit(delete_profile, profile_id, user_id, device_id, teams_id)
+            return {"message": "Profile deleted successfully"}, 200
+        return {"message": "Profile deleted error"}, 500
 
 
 class ProfilesBrowserController(Resource):
@@ -269,6 +276,10 @@ class ProfilesBrowserController(Resource):
             hma_account = settings.get("hideMyAccAccount")
             hma_password = settings.get("hideMyAccPassword")
             hma_token = hma_services.authenticate(hma_account, hma_password)
+            if not hma_token:
+                return {
+                    "message": "HMA account not found, please check your settings"
+                }, 400
             status, hma_result = hma_services.get_browser_data(
                 hma_token, profile.hma_profile_id, body_data
             )
