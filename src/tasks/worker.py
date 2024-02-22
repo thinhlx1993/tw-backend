@@ -22,10 +22,11 @@ def create_profiles(profiles, user_id, device_id, teams_id):
             profile = profiles_services.create_profile(data, device_id, user_id)
             if profile:
                 success_number += 1
-                db.session.commit()
+                db.session.flush()
         except Exception as ex:
             _logger.exception(ex)
             error_number += 1
+    db.session.commit()
     return True
 
 
