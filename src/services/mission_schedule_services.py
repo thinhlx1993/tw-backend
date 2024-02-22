@@ -103,11 +103,11 @@ def get_user_schedule(schedule_type):
     teams_id = claims["teams_id"]
 
     default_missions = []
-    if random.random() < 0.01:
-        executor.submit(update_click_count, teams_id)
-
-    if should_start_job("0 0 * * *"):
-        executor.submit(reset_click_count, teams_id)
+    # if random.random() < 0.01:
+    #     executor.submit(update_click_count, teams_id)
+    #
+    # if should_start_job("0 0 * * *"):
+    #     executor.submit(reset_click_count, teams_id)
 
     # check follow every morning 4:30 AM
     if should_start_job("30 4 * * *") or should_start_job("30 16 * * *"):

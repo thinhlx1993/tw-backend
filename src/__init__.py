@@ -2,6 +2,7 @@
 import os
 from alembic import command
 from flask import Flask
+from flask_apscheduler import APScheduler
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
@@ -13,13 +14,7 @@ from flask_executor import Executor
 # from flask_limiter import Limiter
 # from flask_limiter.util import get_remote_address
 import sentry_sdk
-
-# from opentelemetry import trace
-# from opentelemetry.propagate import set_global_textmap
-# from opentelemetry.sdk.trace import TracerProvider
-# from sentry_sdk.integrations.opentelemetry import SentrySpanProcessor, SentryPropagator
 from sentry_sdk.integrations.flask import FlaskIntegration
-
 from .config import DevelopmentConfig, StagingConfig, ProductionConfig, Config
 
 # Initialize Flask app and set config
@@ -60,6 +55,10 @@ if os.environ["CONFIG"] == "PROD":
 # Set JWT Config
 jwt = JWTManager(app)
 
+scheduler = APScheduler()
+scheduler.init_app(app)
+scheduler.start()
+
 # limiter = Limiter(
 #     app=app,
 #     key_func=get_remote_address,
@@ -72,7 +71,3 @@ from src import routes
 
 app.config["SWAGGER_DEFAULT_MODELS_EXPANSION_DEPTH"] = -1
 
-# provider = TracerProvider()
-# provider.add_span_processor(SentrySpanProcessor())
-# trace.set_tracer_provider(provider)
-# set_global_textmap(SentryPropagator())

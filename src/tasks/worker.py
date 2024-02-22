@@ -91,6 +91,7 @@ def update_click_count(teams_id):
     )
 
     try:
+        _logger.info('Update click count ok')
         # Execute the raw SQL query
         db.session.execute(sql_query)
         db.session.commit()

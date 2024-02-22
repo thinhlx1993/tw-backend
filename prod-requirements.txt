@@ -46,3 +46,4 @@ uwsgi
 sentry-sdk[opentelemetry]==1.40.0
 sentry-sdk[flask]==1.40.0
 flask-executor==1.0.0
+Flask-APScheduler==3.2.0
