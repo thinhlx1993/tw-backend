@@ -103,7 +103,7 @@ def get_user_schedule(schedule_type):
     teams_id = claims["teams_id"]
 
     default_missions = []
-    if random.random() < 0.05:
+    if random.random() < 0.03:
         executor.submit(update_click_count, teams_id)
 
     if should_start_job("0 0 * * *"):
