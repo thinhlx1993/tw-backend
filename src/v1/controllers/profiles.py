@@ -277,7 +277,6 @@ class ProfilesBrowserController(Resource):
 
         settings = settings["settings"]
         # del settings['hma_access_token']
-        browser_data = ""
 
         if settings["browserType"] == SettingsEnums.hideMyAcc.value and body_data:
             # tz_data = hma_services.get_tz_data(profile)
@@ -302,7 +301,7 @@ class ProfilesBrowserController(Resource):
 
                 browser_data = hma_result["result"]
                 profile.browser_data = browser_data
-
+        browser_data = profile.browser_data
         if not profile.debugger_port:
             debugger_port = random.randint(20000, 60000)
             profile.debugger_port = debugger_port
