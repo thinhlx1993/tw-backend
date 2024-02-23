@@ -38,7 +38,8 @@ def authenticate(username, password):
             settings["hma_access_token"] = hma_access_token
             setting_services.create_or_update_settings(user_id, device_id, settings)
         return hma_access_token
-
+    if response.status_code == 403:
+        return "Account has been deleted"
     return ""
 
 
@@ -72,6 +73,8 @@ def delete_browser_profile(profile_id, user_id, device_id):
     hma_token = authenticate(hma_account, hma_password)
     if not hma_token:
         return False
+    if hma_token == "Account has been deleted":
+        return True
     """Delete a browser profile."""
     url = f"{base_url}/browser/{profile_id}"
     headers = {"Authorization": f"Bearer {hma_token}"}
@@ -155,8 +158,9 @@ def create_hma_profile(username, device_id, user_id):
     hma_account = settings.get("hideMyAccAccount")
     hma_password = settings.get("hideMyAccPassword")
     hma_token = authenticate(hma_account, hma_password)
-    if not hma_token:
+    if not hma_token or hma_token == "Account has been deleted":
         return False
+
     data = {
         "name": username,
         "os": "win",

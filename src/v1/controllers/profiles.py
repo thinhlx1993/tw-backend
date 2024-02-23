@@ -166,11 +166,18 @@ class ProfilesController(Resource):
             return {"message": "Vui lòng cài đặt hệ thống"}, 400
 
         hma_account = settings.get("hideMyAccAccount")
+        if not hma_account:
+            return {"message": "Vui lòng cài đặt hma account"}, 400
+
         hma_password = settings.get("hideMyAccPassword")
+        if not hma_password:
+            return {"message": "Vui lòng cài đặt hma password"}, 400
 
         hma_token = hma_services.authenticate(hma_account, hma_password)
         if not hma_token:
             return {"message": f"Vui lòng kiểm tra HMA account"}, 400
+        if hma_token == "Account has been deleted":
+            return {"message": "HMA account has been deleted"}, 400
         account_info = hma_services.get_account_info(hma_token)
         if account_info["code"] != 1:
             return {"message": f"Vui lòng kiểm tra HMA account"}, 400
@@ -280,6 +287,8 @@ class ProfilesBrowserController(Resource):
                 return {
                     "message": "HMA account not found, please check your settings"
                 }, 400
+            if hma_token == "Account has been deleted":
+                return {"message": "Account has been deleted"}, 400
             status, hma_result = hma_services.get_browser_data(
                 hma_token, profile.hma_profile_id, body_data
             )
