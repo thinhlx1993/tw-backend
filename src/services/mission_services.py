@@ -42,7 +42,7 @@ def get_missions_by_user_id(user_id, readonly_session):
 def get_missions_by_id(mission_id):
     """Retrieve all missions. by given user id"""
     with get_readonly_session() as readonly_session:
-        mission = readonly_session.session.query(Mission.mission_id).filter_by(mission_id=mission_id).first()
+        mission = readonly_session.query(Mission.mission_id).filter_by(mission_id=mission_id).first()
         return mission
 
 
