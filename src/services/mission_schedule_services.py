@@ -174,10 +174,10 @@ def get_user_schedule(schedule_type):
             return mission_should_start, "mission_should_start"
 
         # Find a unique interaction partner from current user profiles
-        days_limit = calculate_days_for_unique_interactions(
-            event_type, readonly_session
-        )
-
+        # days_limit = calculate_days_for_unique_interactions(
+        #     event_type, readonly_session
+        # )
+        days_limit = 1
         partner_ids = []
         # create missions
         for profile_id_receiver in profile_ids_receiver:

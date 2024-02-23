@@ -137,3 +137,4 @@ nose2.cfg
 pyproject.toml
 .env.test
 /uploads/
+docker-compose.yml
