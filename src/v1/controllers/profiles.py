@@ -276,7 +276,7 @@ class ProfilesBrowserController(Resource):
             return {"message": "Please setup your settings first"}, 400
 
         settings = settings["settings"]
-        del settings['hma_access_token']
+        # del settings['hma_access_token']
         browser_data = ""
 
         if settings["browserType"] == SettingsEnums.hideMyAcc.value and body_data:

@@ -1,4 +1,5 @@
 import json
+import os
 import traceback
 
 from werkzeug.exceptions import NotFound as InvalidURLException
@@ -8,7 +9,7 @@ from src import app
 from src import db
 from src import jwt
 from src import v1
-from src.version_handler import version_1_web
+from src.version_handler import version_1_web, api_version_1_web
 from src.log_config import _logger
 
 app.register_blueprint(version_1_web, url_prefix="/api/v1")

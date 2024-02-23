@@ -1,5 +1,5 @@
 from flask import Blueprint
-from flask_restx import  Api
+from flask_restx import Api
 
 authorizations = {
     'Bearer Auth': {
@@ -20,4 +20,5 @@ agent_authorizations = {
 version_1_web = Blueprint('version_1_web', __name__)
 api_version_1_web = Api(version_1_web,
                         authorizations=authorizations,
-                        security='Bearer Auth')
+                        security='Bearer Auth',
+                        swagger=False, doc=False)
