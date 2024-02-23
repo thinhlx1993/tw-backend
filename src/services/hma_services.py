@@ -4,6 +4,8 @@ import logging
 
 from flask_jwt_extended import get_jwt_claims
 
+from src import db
+from src.models import Settings
 from src.services import setting_services, profiles_services
 
 base_url = os.environ.get("HMA_ENDPOINTS")
@@ -36,7 +38,12 @@ def authenticate(username, password):
         if user_settings:
             settings = user_settings["settings"]
             settings["hma_access_token"] = hma_access_token
-            setting_services.create_or_update_settings(user_id, device_id, settings)
+            settings_record = Settings.query.filter_by(
+                user_id=user_id, device_id=device_id
+            ).first()
+            if settings_record:
+                settings_record.settings = settings
+                db.session.flush()
         return hma_access_token
     if response.status_code == 403:
         return "Account has been deleted"

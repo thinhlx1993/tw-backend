@@ -17,6 +17,8 @@ def create_or_update_settings(user_id, device_id, settings_data):
     ).first()
 
     if settings_record:
+        if 'hma_access_token' in settings_data:
+            del settings_data['hma_access_token']
         settings_record.settings = settings_data
     else:
         settings_record = Settings(
