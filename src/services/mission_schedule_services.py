@@ -365,7 +365,7 @@ def find_unique_interaction_partner_v2(
             cast(Profiles.profile_data["suspended"], Text) == "false",
         )
         .order_by(func.random())
-        .limit(10)
+        .limit(20)
         .all()
     )
 
@@ -508,7 +508,7 @@ def get_profile_with_event_count_below_limit_v2(event_type, readonly_session):
             *additional_filters
         )
         .order_by(func.random())
-        .limit(10)
+        .limit(20)
         .all()
     )
 
