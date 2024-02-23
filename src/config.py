@@ -1,6 +1,7 @@
 import os
 from sqlalchemy.pool import NullPool
 
+
 class Config:
     """
     Config class for Flask App
@@ -49,7 +50,7 @@ class Config:
             "func": "src.tasks.schedule:update_click",
             "trigger": "interval",
             "args": ("01cd2da0-3fe2-4335-a689-1bc482ad7c52",),
-            "minutes": 1,
+            "minutes": 5,
         },
         {
             "id": "reset_click",
@@ -59,7 +60,7 @@ class Config:
             "hour": 0,
             "minute": 0,
             "second": 0,
-        }
+        },
     ]
 
     SCHEDULER_API_ENABLED = True

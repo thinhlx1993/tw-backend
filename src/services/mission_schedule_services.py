@@ -179,50 +179,47 @@ def get_user_schedule(schedule_type):
         # )
         days_limit = 1
         partner_ids = []
-        # create missions
-        for profile_id_receiver in profile_ids_receiver:
-            # user giver
-            unique_partner_id = find_unique_interaction_partner_v2(
-                profile_id_receiver,
-                event_type,
-                days_limit,
-                current_user_id,
-                readonly_session,
-                partner_ids,
-            )
-            if not unique_partner_id:
-                continue
-            partner_ids.append(unique_partner_id)
 
-            tasks = (
-                readonly_session.query(Task)
-                .filter(Task.tasks_name == event_type)
-                .first()
-            )
-            if tasks:
-                mission_should_start.append(
-                    {
-                        "schedule_id": "",
-                        "profile_id": unique_partner_id,
-                        "profile_id_receiver": profile_id_receiver,
-                        "mission_id": "",
-                        "schedule_json": "",
-                        "start_timestamp": datetime.datetime.utcnow().strftime(
-                            "%d-%m-%Y %H:%M"
-                        ),
-                        "tasks": [
-                            {
-                                "mission_id": "",
+        unique_partner_ids = find_unique_interaction_partner_v2(
+            profile_ids_receiver,
+            event_type,
+            days_limit,
+            current_user_id,
+            readonly_session,
+            partner_ids,
+        )
+        tasks = (
+            readonly_session.query(Task).filter(Task.tasks_name == event_type).first()
+        )
+        if not tasks:
+            return mission_should_start, "clickAds"
+
+        for profile_id_receiver, unique_partner_id in zip(
+            profile_ids_receiver, unique_partner_ids
+        ):
+            mission_should_start.append(
+                {
+                    "schedule_id": "",
+                    "profile_id": unique_partner_id,
+                    "profile_id_receiver": profile_id_receiver,
+                    "mission_id": "",
+                    "schedule_json": "",
+                    "start_timestamp": datetime.datetime.utcnow().strftime(
+                        "%d-%m-%Y %H:%M"
+                    ),
+                    "tasks": [
+                        {
+                            "mission_id": "",
+                            "tasks_id": tasks.tasks_id,
+                            "tasks": {
                                 "tasks_id": tasks.tasks_id,
-                                "tasks": {
-                                    "tasks_id": tasks.tasks_id,
-                                    "tasks_name": event_type,
-                                    "tasks_json": tasks.tasks_json,
-                                },
-                            }
-                        ],
-                    }
-                )
+                                "tasks_name": event_type,
+                                "tasks_json": tasks.tasks_json,
+                            },
+                        }
+                    ],
+                }
+            )
     return mission_should_start, "clickAds"
 
 
@@ -320,7 +317,7 @@ def find_unique_interaction_partner(
 
 
 def find_unique_interaction_partner_v2(
-    profile_receiver,
+    profile_receiver_ids,
     event_type,
     days_limit,
     current_user_id,
@@ -358,7 +355,7 @@ def find_unique_interaction_partner_v2(
         readonly_session.query(Profiles.profile_id)
         .filter(
             Profiles.owner == current_user_id,
-            Profiles.profile_id != profile_receiver,
+            ~Profiles.profile_id.in_(profile_receiver_ids),
             # ~Profiles.profile_id.in_(interacted_subquery),
             ~Profiles.profile_id.in_(partner_ids),
             Profiles.click_count < daily_limits[event_type],
@@ -368,17 +365,17 @@ def find_unique_interaction_partner_v2(
             cast(Profiles.profile_data["suspended"], Text) == "false",
         )
         .order_by(func.random())
-        .limit(5)
+        .limit(10)
         .all()
     )
 
     # Randomly select one account from the top 10
-    account = random.choice(top_accounts) if top_accounts else None
+    # account = random.choice(top_accounts) if top_accounts else None
+    #
+    # # Retrieve the profile ID of the selected account
+    # selected_profile_id = account.profile_id if account else None
 
-    # Retrieve the profile ID of the selected account
-    selected_profile_id = account.profile_id if account else None
-
-    return selected_profile_id
+    return [account.profile_id for account in top_accounts]
 
 
 # Function to calculate days for unique interactions
@@ -511,7 +508,7 @@ def get_profile_with_event_count_below_limit_v2(event_type, readonly_session):
             *additional_filters
         )
         .order_by(func.random())
-        .limit(5)
+        .limit(10)
         .all()
     )
 

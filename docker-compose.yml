@@ -13,44 +13,44 @@ services:
       - 5432:5432
     volumes:
       - data:/var/lib/postgresql/data
-#
-#  migration:
-#    # initialize the postgres database
-#    container_name: migration
-#    env_file: .env
-#    build:
-#      context: .
-#      dockerfile: Dockerfile.migrate
-#    command: upgrade
-#    depends_on:
-#      - postgres
-#    profiles:
-#      - migration
-#
-#
-#  myapp:
-#    container_name: smart_assistance_api
-#    build:
-#      context: .
-#      dockerfile: Dockerfile.dev
-#    env_file: .env
-#    ports:
-#      - 5009:5009
-#    depends_on:
-#      - postgres
-#      - rabbitmq
-#    volumes:
-#      - "./:/app/"
 
-#  rabbitmq:
-#    image: "rabbitmq:3-management"
-#    hostname: "rabbitmq"
-#    ports:
-#      - "5672:5672"
-#      - "15672:15672"
-#    environment:
-#      - "RABBITMQ_DEFAULT_PASS=guest"
-#      - "RABBITMQ_DEFAULT_USER=guest"
+  migration:
+    # initialize the postgres database
+    container_name: migration
+    env_file: .env
+    build:
+      context: .
+      dockerfile: Dockerfile.migrate
+    command: upgrade
+    depends_on:
+      - postgres
+    profiles:
+      - migration
+
+
+  myapp:
+    container_name: smart_assistance_api
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    env_file: .env
+    ports:
+      - 5009:5009
+    depends_on:
+      - postgres
+      - rabbitmq
+    volumes:
+      - "./:/app/"
+
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    hostname: "rabbitmq"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - "RABBITMQ_DEFAULT_PASS=guest"
+      - "RABBITMQ_DEFAULT_USER=guest"
 
   redis:
     image: bitnami/redis:latest
@@ -58,15 +58,15 @@ services:
       - '6379:6379'
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
-#  celery:
-#    build:
-#      context: .
-#      dockerfile: Dockerfile.celery
-#    env_file: .env
-#    entrypoint: ["celery", "-A", "src.celery_app"]
-#    command: ["worker", "--loglevel=info"]
-#    depends_on:
-#      - rabbitmq
-#      - postgres
-#    ports:
-#      - "5454:5009"
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile.celery
+    env_file: .env
+    entrypoint: ["celery", "-A", "src.celery_app"]
+    command: ["worker", "--loglevel=info"]
+    depends_on:
+      - rabbitmq
+      - postgres
+    ports:
+      - "5454:5009"

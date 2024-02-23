@@ -137,4 +137,5 @@ nose2.cfg
 pyproject.toml
 .env.test
 /uploads/
-docker-compose.yml
+./docker-compose.yml
+./flask_context.db

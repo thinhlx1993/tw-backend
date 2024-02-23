@@ -65,9 +65,9 @@ def update_click(teams_id):
             print(f"update_click_count_error {e}")
 
 
-def reset_click(teams_id):
+def reset_click(teams_id: str):
     with db.app.app_context():
-        db.session.execute("SET search_path TO public, 'cs_" + str(teams_id) + "'")
+        db.session.execute("SET search_path TO public, 'cs_" + teams_id + "'")
         # Update operation to set click_count to zero for all profiles
         try:
             stmt = update(Profiles).values(click_count=0, comment_count=0, like_count=0)
