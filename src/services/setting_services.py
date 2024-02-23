@@ -1,13 +1,15 @@
 from src import db, app
 from src.models import Settings
+from src.services.migration_services import get_readonly_session
 
 
 def get_settings_by_user_device(user_id, device_id):
     """Retrieve settings for a specific user and device."""
-    settings_record = Settings.query.filter_by(
-        user_id=user_id, device_id=device_id
-    ).first()
-    return settings_record.repr_name() if settings_record else None
+    with get_readonly_session() as readonly_session:
+        settings_record = readonly_session.query(Settings).filter_by(
+            user_id=user_id, device_id=device_id
+        ).first()
+        return settings_record.repr_name() if settings_record else None
 
 
 def create_or_update_settings(user_id, device_id, settings_data):

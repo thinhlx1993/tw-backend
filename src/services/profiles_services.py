@@ -10,6 +10,7 @@ from src import db, app
 from src.models.profiles import Profiles
 from src.services import hma_services
 from src.models import Events, Posts
+from src.services.migration_services import get_readonly_session
 
 # Create module log
 _logger = logging.getLogger(__name__)
@@ -59,65 +60,66 @@ def get_all_profiles(
     # if not column:
     #     return False, {"Message": "Invalid sort_by Key provided"}
     # sorting_order = sort_by + " " + sort_order
-    query = db.session.query(Profiles)
-    # Apply sorting
-    # if sorting_order:
-    query = query.order_by(db.text("username asc"))
-    if search:
-        query = query.filter(
-            or_(
-                Profiles.username.ilike(f"%{search}%"),
-                Profiles.user_access.ilike(f"%{search}%"),
-                Profiles.status.ilike(f"%{search}%"),
+    with get_readonly_session() as readonly_session:
+        query = readonly_session.query(Profiles)
+        # Apply sorting
+        # if sorting_order:
+        query = query.order_by(db.text("username asc"))
+        if search:
+            query = query.filter(
+                or_(
+                    Profiles.username.ilike(f"%{search}%"),
+                    Profiles.user_access.ilike(f"%{search}%"),
+                    Profiles.status.ilike(f"%{search}%"),
+                )
             )
-        )
-    if user_id:
-        query = query.filter(Profiles.owner == user_id)
+        if user_id:
+            query = query.filter(Profiles.owner == user_id)
 
-    if filter_by_type == "main_account":
-        query = query.filter(Profiles.main_profile == True)
-    elif filter_by_type == "monetizable":
-        query = query.filter(
-            func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
-                ["OK"]
+        if filter_by_type == "main_account":
+            query = query.filter(Profiles.main_profile == True)
+        elif filter_by_type == "monetizable":
+            query = query.filter(
+                func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
+                    ["OK"]
+                )
             )
-        )
-    elif filter_by_type == "error":
-        query = query.filter(
-            func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
-                ["ERROR"]
+        elif filter_by_type == "error":
+            query = query.filter(
+                func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
+                    ["ERROR"]
+                )
             )
-        )
-    elif filter_by_type == "AdsEligible":
-        query = query.filter(
-            func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
-                ["AdsEligible"]
+        elif filter_by_type == "AdsEligible":
+            query = query.filter(
+                func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
+                    ["AdsEligible"]
+                )
             )
-        )
-    elif filter_by_type == "suspended":
-        query = query.filter(cast(Profiles.profile_data["suspended"], Text) == "true")
-    elif filter_by_type == "verified":
-        query = query.filter(cast(Profiles.profile_data["verify"], Text) == "true")
-    elif filter_by_type == "not_verified":
-        query = query.filter(cast(Profiles.profile_data["verify"], Text) == "false")
-    elif filter_by_type == "unknown":
-        query = query.filter(Profiles.profile_data.is_(None))
+        elif filter_by_type == "suspended":
+            query = query.filter(cast(Profiles.profile_data["suspended"], Text) == "true")
+        elif filter_by_type == "verified":
+            query = query.filter(cast(Profiles.profile_data["verify"], Text) == "true")
+        elif filter_by_type == "not_verified":
+            query = query.filter(cast(Profiles.profile_data["verify"], Text) == "false")
+        elif filter_by_type == "unknown":
+            query = query.filter(Profiles.profile_data.is_(None))
 
-    # Apply pagination
-    count = query.count()
+        # Apply pagination
+        count = query.count()
 
-    if per_page:
-        query = query.limit(per_page)
-    if page:
-        query = query.offset(per_page * (page - 1))
-    profiles = query.all()
-    # Formatting the result
-    formatted_result = [profile.repr_name() for profile in profiles]
-    return {
-        "profiles": formatted_result,
-        "result_count": count,
-        "max_pages": math.ceil(count / per_page),
-    }
+        if per_page:
+            query = query.limit(per_page)
+        if page:
+            query = query.offset(per_page * (page - 1))
+        profiles = query.all()
+        # Formatting the result
+        formatted_result = [profile.repr_name() for profile in profiles]
+        return {
+            "profiles": formatted_result,
+            "result_count": count,
+            "max_pages": math.ceil(count / per_page),
+        }
 
 
 def get_user_profiles(user_id):
