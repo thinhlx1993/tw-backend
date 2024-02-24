@@ -28,7 +28,9 @@ def get_group_by_id(group_id):
 
 def get_all_groups():
     with get_readonly_session() as readonly_session:
-        groups = readonly_session.query(Groups).order_by(db.text("group_name asc")).all()
+        groups = (
+            readonly_session.query(Groups).order_by(db.text("group_name asc")).all()
+        )
         groups = [group.repr_name() for group in groups]
         return groups
 
@@ -55,8 +57,19 @@ def delete_group(group_id):
 
 def get_group_below_threshold():
     group = (
-        Groups.query.filter(Groups.click_count > Groups.receiver_count)
+        Groups.query.filter(
+            Groups.group_id == "4f712930-bb96-4aab-9a98-80794612e193",
+            Groups.click_count > Groups.receiver_count,
+        )
         .order_by(func.random())
         .first()
     )
+
+    if not group:
+        group = (
+            Groups.query.filter(Groups.click_count > Groups.receiver_count)
+            .order_by(func.random())
+            .first()
+        )
+
     return group
