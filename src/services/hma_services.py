@@ -73,7 +73,7 @@ def create_marco_browser_profile(token, data):
 def delete_browser_profile(profile_id, user_id, device_id):
     settings = setting_services.get_settings_by_user_device(user_id, device_id)
     if not settings:
-        raise Exception("User settings not found")
+        return False
     settings = settings["settings"]
     hma_account = settings.get("hideMyAccAccount")
     hma_password = settings.get("hideMyAccPassword")

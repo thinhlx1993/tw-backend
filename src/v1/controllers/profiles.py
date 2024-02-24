@@ -246,7 +246,7 @@ class ProfilesIdController(Resource):
             db.session.flush()
             # executor.submit(delete_profile, profile_id, user_id, device_id, teams_id)
             return {"message": "Profile deleted successfully"}, 200
-        return {"message": "Profile deleted error"}, 500
+        return {"message": "Profile deleted error, please check your HMA account"}, 500
 
 
 class ProfilesBrowserController(Resource):
