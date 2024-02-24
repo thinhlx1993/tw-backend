@@ -24,7 +24,7 @@ def create_profile(data, device_id, user_id):
         func.lower(Profiles.username) == func.lower(username)
     ).first()
 
-    if profile and profile.owner != user_id:
+    if profile and profile.owner != user_id and profile.is_disable == False:
         return None
 
     if not profile:
