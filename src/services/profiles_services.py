@@ -115,13 +115,7 @@ def get_all_profiles(
         elif filter_by_type == "unknown":
             query = query.filter(Profiles.profile_data.is_(None))
         elif filter_by_type == "clone_account":
-            query = query.filter(
-                or_(
-                    Profiles.profile_data.is_(None),
-                    cast(Profiles.profile_data["verify"], Text) == "false",
-                    cast(Profiles.profile_data["suspended"], Text) == "true",
-                )
-            )
+            query = query.filter(Profiles.main_profile == False)
 
         # Apply pagination
         count = query.count()
