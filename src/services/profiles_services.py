@@ -132,7 +132,7 @@ def get_all_profiles(
 
 def get_user_profiles(user_id):
     # username = user_detail.user_id
-    profiles = Profiles.query.filter_by(owner=user_id).all()
+    profiles = Profiles.query.filter_by(owner=user_id, is_disable=False).all()
     formatted_result = [profile.repr_name() for profile in profiles]
     return {"profiles": formatted_result}
 
@@ -168,7 +168,7 @@ def delete_profile(profile_id, user_id, device_id):
 def get_profile_by_usernames(selected_username: list):
     profiles = (
         db.session.query(Profiles.profile_id)
-        .filter(Profiles.username.in_(selected_username))
+        .filter(Profiles.username.in_(selected_username), Profiles.is_disable == False)
         .all()
     )
     return profiles
@@ -177,7 +177,7 @@ def get_profile_by_usernames(selected_username: list):
 def get_profile_by_ids(selected_ids: list):
     profiles = (
         db.session.query(Profiles.profile_id)
-        .filter(Profiles.profile_id.in_(selected_ids))
+        .filter(Profiles.profile_id.in_(selected_ids), Profiles.is_disable == False)
         .all()
     )
     return profiles
@@ -185,6 +185,6 @@ def get_profile_by_ids(selected_ids: list):
 
 def get_profile_by_user(user_id: str):
     profiles = (
-        db.session.query(Profiles.profile_id).filter(Profiles.owner == user_id).all()
+        db.session.query(Profiles.profile_id).filter(Profiles.owner == user_id, Profiles.is_disable == False).all()
     )
     return profiles
