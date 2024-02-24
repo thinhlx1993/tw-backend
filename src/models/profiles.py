@@ -26,6 +26,7 @@ class Profiles(db.Model):
     notes = db.Column(db.Text(), nullable=True, server_default="")
     profile_data = db.Column(db.JSON(), nullable=True)
     browser_data = db.Column(db.Text(), nullable=True, server_default="")
+    tz_info = db.Column(db.JSON(), nullable=True)
     status = db.Column(db.String(128), nullable=True, server_default="")
     created_at = db.Column(db.DateTime(), nullable=False, server_default=func.now())
     modified_at = db.Column(db.DateTime(), nullable=False, server_default=func.now())

@@ -1,11 +1,11 @@
 """Controller for profiles."""
-
+import json
 import random
 
 from flask_restx import fields, Resource
 from flask_jwt_extended import get_jwt_claims, get_jwt_identity
 
-from src import cache, executor
+from src import cache, executor, db
 from src.services import profiles_services, setting_services
 from src.services import hma_services, teams_services
 from src.tasks.worker import create_profiles, delete_profile, update_profile
@@ -212,9 +212,9 @@ class ProfilesIdController(Resource):
         data = profiles_ns2.payload
         claims = get_jwt_claims()
         teams_id = claims.get("teams_id")
-        profile = profiles_services.get_profile_by_id(profile_id)
-        if not profile:
-            return {"message": "Profile not found"}, 404
+        # profile = profiles_services.get_profile_by_id(profile_id)
+        # if not profile:
+        #     return {"message": "Profile not found"}, 404
         executor.submit(update_profile, profile_id, teams_id, data)
         return {"message": "Profile updated successfully"}, 200
 
@@ -276,12 +276,11 @@ class ProfilesBrowserController(Resource):
             return {"message": "Please setup your settings first"}, 400
 
         settings = settings["settings"]
-        # del settings['hma_access_token']
 
         if settings["browserType"] == SettingsEnums.hideMyAcc.value and body_data:
-            # tz_data = hma_services.get_tz_data(profile)
-            # _logger.info(f"tz info server request data: {tz_data}")
-            if not profile.browser_data or random.random() < 0.2:
+            if not profile.browser_data or body_data != profile.tz_info:
+                profile.tz_info = body_data
+                db.session.flush()
                 hma_account = settings.get("hideMyAccAccount")
                 hma_password = settings.get("hideMyAccPassword")
                 hma_token = hma_services.authenticate(hma_account, hma_password)

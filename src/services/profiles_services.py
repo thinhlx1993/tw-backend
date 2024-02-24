@@ -20,27 +20,34 @@ def create_profile(data, device_id, user_id):
     username = data.get("username", "").strip()
     if not username:
         return None
-    existed = Profiles.query.filter(
+    profile = Profiles.query.filter(
         func.lower(Profiles.username) == func.lower(username)
     ).first()
-    if existed:
-        return False
-    new_profile = Profiles()
-    new_profile.created_at = datetime.datetime.utcnow()
+
+    if profile and profile.owner != user_id:
+        return None
+
+    if not profile:
+        profile = Profiles()
+
+    profile.created_at = datetime.datetime.utcnow()
+    profile.is_disable = False
     for key, val in data.items():
-        if hasattr(new_profile, key):
+        if hasattr(profile, key):
+            if key == 'click_count':
+                continue
             if isinstance(val, str):
                 val = val.strip()
             if val:
-                new_profile.__setattr__(key, val)
+                profile.__setattr__(key, val)
 
     hma_profile_id = hma_services.create_hma_profile(username, device_id, user_id)
     if not hma_profile_id:
         return False
-    new_profile.hma_profile_id = hma_profile_id
-    db.session.add(new_profile)
+    profile.hma_profile_id = hma_profile_id
+    db.session.add(profile)
     db.session.flush()
-    return new_profile
+    return profile
 
 
 def get_profile_by_id(profile_id):
@@ -64,6 +71,7 @@ def get_all_profiles(
         query = readonly_session.query(Profiles)
         # Apply sorting
         # if sorting_order:
+        query = query.filter(Profiles.is_disable == False)
         query = query.order_by(db.text("username asc"))
         if search:
             query = query.filter(
@@ -148,10 +156,11 @@ def update_profile(profile_id, data):
 
 def delete_profile(profile_id, user_id, device_id):
     profile = Profiles.query.get(profile_id)
-    Events.query.filter_by(profile_id=profile_id).delete()
-    Events.query.filter_by(profile_id_interact=profile_id).delete()
-    Posts.query.filter_by(profile_id=profile_id).delete()
-    db.session.delete(profile)
+    profile.is_disable = True
+    # Events.query.filter_by(profile_id=profile_id).delete()
+    # Events.query.filter_by(profile_id_interact=profile_id).delete()
+    # Posts.query.filter_by(profile_id=profile_id).delete()
+    # db.session.delete(profile)
     db.session.commit()
     return True
 
