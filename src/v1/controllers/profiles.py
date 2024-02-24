@@ -183,6 +183,7 @@ class ProfilesController(Resource):
             return {"message": f"Vui lòng kiểm tra HMA account"}, 400
         profile_count = account_info["result"]["profiles"]
         max_profile = account_info["result"]["plan"]["maxProfiles"]
+        profiles = [data for data in profiles if data.get("username", "").strip() != ""]
         if max_profile - profile_count < len(profiles):
             return {
                 "message": f"Vui lòng nâng cấp tài khoản HMA {profile_count}/{max_profile}"
