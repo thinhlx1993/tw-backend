@@ -34,7 +34,7 @@ def create_profile(data, device_id, user_id):
     profile.is_disable = False
     for key, val in data.items():
         if hasattr(profile, key):
-            if key == 'click_count':
+            if key == "click_count":
                 continue
             if isinstance(val, str):
                 val = val.strip()
@@ -88,30 +88,40 @@ def get_all_profiles(
             query = query.filter(Profiles.main_profile == True)
         elif filter_by_type == "monetizable":
             query = query.filter(
-                func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
-                    ["OK"]
-                )
+                func.json_extract_path_text(
+                    Profiles.profile_data, "account_status"
+                ).in_(["OK"])
             )
         elif filter_by_type == "error":
             query = query.filter(
-                func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
-                    ["ERROR"]
-                )
+                func.json_extract_path_text(
+                    Profiles.profile_data, "account_status"
+                ).in_(["ERROR"])
             )
         elif filter_by_type == "AdsEligible":
             query = query.filter(
-                func.json_extract_path_text(Profiles.profile_data, "account_status").in_(
-                    ["AdsEligible"]
-                )
+                func.json_extract_path_text(
+                    Profiles.profile_data, "account_status"
+                ).in_(["AdsEligible"])
             )
         elif filter_by_type == "suspended":
-            query = query.filter(cast(Profiles.profile_data["suspended"], Text) == "true")
+            query = query.filter(
+                cast(Profiles.profile_data["suspended"], Text) == "true"
+            )
         elif filter_by_type == "verified":
             query = query.filter(cast(Profiles.profile_data["verify"], Text) == "true")
         elif filter_by_type == "not_verified":
             query = query.filter(cast(Profiles.profile_data["verify"], Text) == "false")
         elif filter_by_type == "unknown":
             query = query.filter(Profiles.profile_data.is_(None))
+        elif filter_by_type == "clone_account":
+            query = query.filter(
+                or_(
+                    Profiles.profile_data.is_(None),
+                    cast(Profiles.profile_data["verify"], Text) == "false",
+                    cast(Profiles.profile_data["suspended"], Text) == "true",
+                )
+            )
 
         # Apply pagination
         count = query.count()
@@ -185,6 +195,8 @@ def get_profile_by_ids(selected_ids: list):
 
 def get_profile_by_user(user_id: str):
     profiles = (
-        db.session.query(Profiles.profile_id).filter(Profiles.owner == user_id, Profiles.is_disable == False).all()
+        db.session.query(Profiles.profile_id)
+        .filter(Profiles.owner == user_id, Profiles.is_disable == False)
+        .all()
     )
     return profiles
