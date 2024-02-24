@@ -241,7 +241,9 @@ class ProfilesIdController(Resource):
             profile.hma_profile_id, user_id, device_id
         )
         if delete_status:
-            executor.submit(delete_profile, profile_id, user_id, device_id, teams_id)
+            profile.is_disable = True
+            db.session.flush()
+            # executor.submit(delete_profile, profile_id, user_id, device_id, teams_id)
             return {"message": "Profile deleted successfully"}, 200
         return {"message": "Profile deleted error"}, 500
 
