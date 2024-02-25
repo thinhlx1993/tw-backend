@@ -70,7 +70,12 @@ def reset_click(teams_id: str):
         db.session.execute("SET search_path TO public, 'cs_" + teams_id + "'")
         # Update operation to set click_count to zero for all profiles
         try:
-            sql_query = 'update profiles set click_count=0'
+            sql_query = """
+            UPDATE profiles
+            SET click_count = 0,
+                comment_count = 0,
+                like_count = 0;
+            """
             db.session.execute(sql_query)
             db.session.commit()
             print("reset_click_count OK")
