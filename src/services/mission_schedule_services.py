@@ -178,7 +178,6 @@ def get_user_schedule(schedule_type):
         #     event_type, readonly_session
         # )
         days_limit = 1
-        partner_ids = []
 
         unique_partner_ids = find_unique_interaction_partner_v2(
             profile_ids_receiver,
@@ -186,7 +185,6 @@ def get_user_schedule(schedule_type):
             days_limit,
             current_user_id,
             readonly_session,
-            partner_ids,
         )
         tasks = (
             readonly_session.query(Task).filter(Task.tasks_name == event_type).first()
@@ -317,12 +315,7 @@ def find_unique_interaction_partner(
 
 
 def find_unique_interaction_partner_v2(
-    profile_receiver_ids,
-    event_type,
-    days_limit,
-    current_user_id,
-    readonly_session,
-    partner_ids,
+    profile_receiver_ids, event_type, days_limit, current_user_id, readonly_session
 ):
     # Calculate the start date based on days_limit
     if days_limit < 1:
@@ -357,12 +350,12 @@ def find_unique_interaction_partner_v2(
             Profiles.owner == current_user_id,
             ~Profiles.profile_id.in_(profile_receiver_ids),
             # ~Profiles.profile_id.in_(interacted_subquery),
-            ~Profiles.profile_id.in_(partner_ids),
             Profiles.click_count < daily_limits[event_type],
             Profiles.main_profile == False,
             Profiles.is_disable == False,
             cast(Profiles.profile_data["verify"], Text) == "true",
             cast(Profiles.profile_data["suspended"], Text) == "false",
+            Profiles.status != "Wrong password",
         )
         .order_by(func.random())
         .limit(20)
