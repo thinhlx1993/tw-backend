@@ -36,9 +36,6 @@ else:
             ),
         ],
     )
-    scheduler = APScheduler()
-    scheduler.init_app(app)
-    scheduler.start()
 
 # Set CORS config
 CORS(app=app, origins=app.config["CORS_ORIGIN"], supports_credentials=True)
@@ -57,6 +54,9 @@ if os.environ["CONFIG"] == "PROD":
 # Set JWT Config
 jwt = JWTManager(app)
 
+scheduler = APScheduler()
+scheduler.init_app(app)
+scheduler.start()
 
 # limiter = Limiter(
 #     app=app,
