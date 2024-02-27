@@ -55,9 +55,7 @@ if os.environ["CONFIG"] == "PROD":
 jwt = JWTManager(app)
 scheduler = APScheduler()
 scheduler.init_app(app)
-
-if os.environ["CONFIG"] == "DEV":
-    scheduler.start()
+scheduler.start()
 
 # limiter = Limiter(
 #     app=app,
