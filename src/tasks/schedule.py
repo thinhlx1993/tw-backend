@@ -1,5 +1,4 @@
 from src import db
-from src.models import Profiles
 
 
 def update_click(teams_id):
