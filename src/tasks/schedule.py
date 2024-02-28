@@ -17,7 +17,7 @@ def update_click(teams_id):
                     JOIN "groups" g ON g.group_id = ug.group_id 
                     JOIN events e ON e.profile_id_interact = p.profile_id 
                 WHERE
-                    DATE(e.created_at) = CURRENT_DATE AND e.issue = 'OK'
+                    DATE(e.created_at) = CURRENT_DATE AT TIME ZONE 'UTC'  AND e.issue = 'OK'
                 GROUP BY
                     g.group_id 
                 HAVING
@@ -34,7 +34,7 @@ def update_click(teams_id):
                     JOIN "groups" g ON g.group_id = ug.group_id 
                     JOIN events e ON e.profile_id  = p.profile_id 
                 WHERE
-                    DATE(e.created_at) = CURRENT_DATE AND e.issue = 'OK'
+                    DATE(e.created_at) = CURRENT_DATE AT TIME ZONE 'UTC' AND e.issue = 'OK'
                 GROUP BY
                     g.group_id 
                 HAVING
