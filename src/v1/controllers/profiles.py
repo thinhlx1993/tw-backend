@@ -1,4 +1,5 @@
 """Controller for profiles."""
+
 import json
 import random
 
