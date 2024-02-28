@@ -4,10 +4,8 @@ from src.models import Task
 
 def get_all_tasks():
     """Retrieve all tasks."""
-    task_names = ['Check follow', 'newsFeed', 'Login', 'Lấy cookie', 'reUpPost']
-    tasks = Task.query.filter(
-        Task.tasks_name.in_(task_names)
-    ).execution_options(bind=db.get_engine(app, bind='readonly')).all()
+    task_names = ["Check follow", "newsFeed", "Login", "Lấy cookie", "reUpPost"]
+    tasks = Task.query.filter(Task.tasks_name.in_(task_names)).all()
     tasks = [task.repr_name() for task in tasks]
     return tasks
 

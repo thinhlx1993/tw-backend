@@ -43,7 +43,6 @@ def get_all_posts(
     if user_id:
         query = query.filter(Posts.crawl_by == user_id)
 
-    query = query.execution_options(bind=db.get_engine(app, bind='readonly'))
     # Apply pagination
     count = query.count()
 

@@ -69,7 +69,6 @@ def get_teams(teams_id):
     try:
         teams = (
             Teams.query.filter(Teams.teams_id == teams_id)
-            .execution_options(bind=db.get_engine(app, bind="readonly"))
             .first()
         )
         return teams
@@ -137,7 +136,6 @@ def fetch_teams(
             query = query.limit(per_page)
         if page:
             query = query.offset(per_page * (page - 1))
-        query = query.execution_options(bind=db.get_engine(app, bind="readonly"))
         result = query.all()
         # Formatting the result
         formatted_result = format_result(result)
@@ -223,9 +221,7 @@ def get_user_org_list(user_id):
         out_data = {}
         # This only contains teams_ids
         org_list = (
-            UserTeamsMapping.query.filter_by(user_id=user_id)
-            .execution_options(bind=db.get_engine(app, bind="readonly"))
-            .all()
+            UserTeamsMapping.query.filter_by(user_id=user_id).all()
         )
         org_details = []
         # Getting complete details for each org

@@ -4,10 +4,11 @@ from src.models import Settings
 
 def get_settings_by_user_device(user_id, device_id):
     """Retrieve settings for a specific user and device."""
-    # with get_readonly_session() as readonly_session:
-    settings_record = db.session.query(Settings).filter_by(
-        user_id=user_id, device_id=device_id
-    ).first()
+    settings_record = (
+        db.session.query(Settings)
+        .filter_by(user_id=user_id, device_id=device_id)
+        .first()
+    )
     return settings_record.repr_name() if settings_record else None
 
 
@@ -18,8 +19,8 @@ def create_or_update_settings(user_id, device_id, settings_data):
     ).first()
 
     if settings_record:
-        if 'hma_access_token' in settings_data:
-            del settings_data['hma_access_token']
+        if "hma_access_token" in settings_data:
+            del settings_data["hma_access_token"]
         settings_record.settings = settings_data
     else:
         settings_record = Settings(

@@ -3,23 +3,21 @@ import datetime
 from flask_jwt_extended import get_jwt_claims
 from src import db, app
 from src.models import Mission, MissionSchedule, MissionTask
-from src.services import profiles_services, user_services
-from src.services.migration_services import get_readonly_session
+from src.services import profiles_services
 from src.v1.controllers.utils import generate_crontab_schedule
 
 
 def get_all_missions(user_id):
     """Retrieve all missions."""
-    with get_readonly_session() as readonly_session:
-        sorting_order = "created_at desc"
-        # Now use this session for querying
-        missions = [
-            item.repr_name()
-            for item in readonly_session.query(Mission)
-            .filter(Mission.user_id == user_id)
-            .order_by(db.text(sorting_order))
-            .all()
-        ]
+    sorting_order = "created_at desc"
+    # Now use this session for querying
+    missions = [
+        item.repr_name()
+        for item in db.session.query(Mission)
+        .filter(Mission.user_id == user_id)
+        .order_by(db.text(sorting_order))
+        .all()
+    ]
 
     # for mission in missions:
     #     user_id = mission["user_id"]
@@ -30,20 +28,21 @@ def get_all_missions(user_id):
     return missions
 
 
-def get_missions_by_user_id(user_id, readonly_session):
+def get_missions_by_user_id(user_id):
     """Retrieve all missions. by given user id"""
     missions = [
         item.repr_name()
-        for item in readonly_session.query(Mission).filter_by(user_id=user_id).all()
+        for item in db.session.query(Mission).filter_by(user_id=user_id).all()
     ]
     return missions
 
 
 def get_missions_by_id(mission_id):
     """Retrieve all missions. by given user id"""
-    with get_readonly_session() as readonly_session:
-        mission = readonly_session.query(Mission.mission_id).filter_by(mission_id=mission_id).first()
-        return mission
+    mission = (
+        db.session.query(Mission.mission_id).filter_by(mission_id=mission_id).first()
+    )
+    return mission
 
 
 def set_force_start_false(mission_id):

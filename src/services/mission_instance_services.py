@@ -42,7 +42,6 @@ def get_mission_instance_from_timestamp_and_schedule_id(
                 .join(Mission, MissionInstance.mission_id == Mission.mission_id)
                 .join(Robot, Robot.robot_id == Mission.robot_id)
                 .filter(Mission.mission_id == mission_id)
-                .execution_options(bind=db.get_engine(app, bind="readonly"))
                 .first()
             )
         else:
@@ -58,7 +57,6 @@ def get_mission_instance_from_timestamp_and_schedule_id(
                 )
                 .join(Robot, Mission.robot_id == Robot.robot_id)
                 .filter(Mission.mission_id == mission_id)
-                .execution_options(bind=db.get_engine(app, bind="readonly"))
                 .first()
             )
         return mission_instance

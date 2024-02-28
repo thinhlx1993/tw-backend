@@ -6,7 +6,6 @@ from sqlalchemy import func
 
 from src import db, app
 from src.models.groups import Groups
-from src.services.migration_services import get_readonly_session
 
 # Create module log
 _logger = logging.getLogger(__name__)
@@ -27,12 +26,9 @@ def get_group_by_id(group_id):
 
 
 def get_all_groups():
-    with get_readonly_session() as readonly_session:
-        groups = (
-            readonly_session.query(Groups).order_by(db.text("group_name asc")).all()
-        )
-        groups = [group.repr_name() for group in groups]
-        return groups
+    groups = db.session.query(Groups).order_by(db.text("group_name asc")).all()
+    groups = [group.repr_name() for group in groups]
+    return groups
 
 
 def update_group(group_id, data):

@@ -71,7 +71,6 @@ def check_user_exists(username=None, user_id=None):
                     models.User.is_disabled == False,
                 )
             )
-            .execution_options(bind=db.get_engine(app, bind="readonly"))
             .first()
         )
         return user
@@ -80,7 +79,6 @@ def check_user_exists(username=None, user_id=None):
             models.User.query.filter(
                 and_(models.User.user_id == user_id, models.User.is_disabled == False)
             )
-            .execution_options(bind=db.get_engine(app, bind="readonly"))
             .first()
         )
         return user
@@ -110,7 +108,6 @@ def check_user_info(teams_id=None, username=None):
                 models.User.is_disabled == False,
             )
         )
-        .execution_options(bind=db.get_engine(app, bind="readonly"))
         .first()
     )
     return user
@@ -128,7 +125,6 @@ def get_user(email):
         models.User.query.filter(
             and_(models.User.email == email, models.User.is_disabled == False)
         )
-        .execution_options(bind=db.get_engine(app, bind="readonly"))
         .first()
     )
     return user
@@ -146,7 +142,6 @@ def get_username(username):
         models.User.query.filter(
             and_(models.User.username == username, models.User.is_disabled == False)
         )
-        .execution_options(bind=db.get_engine(app, bind="readonly"))
         .first()
     )
     db.session.flush()
@@ -165,14 +160,12 @@ def get_user_details(username=None, user_id=None):
     if username:
         user = (
             models.UserDetails.query.filter_by(username=username)
-            .execution_options(bind=db.get_engine(app, bind="readonly"))
             .first()
         )
         return user
     elif user_id:
         user = (
             models.UserDetails.query.filter_by(user_id=user_id)
-            .execution_options(bind=db.get_engine(app, bind="readonly"))
             .first()
         )
         return user
@@ -590,7 +583,6 @@ def get_user_role_list():
             models.UserRole.role_description,
         )
         .order_by(models.UserRole.role_name)
-        .execution_options(bind=db.get_engine(app, bind="readonly"))
         .all()
     )
 

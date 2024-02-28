@@ -20,7 +20,6 @@ class Config:
     JWT_BLACKLIST_TOKEN_CHECKS = ["access"]
     JWT_TOKEN_LOCATION = ["headers", "query_string"]
     SQLALCHEMY_DATABASE_URI = os.environ["DATABASE_URI"]
-    SQLALCHEMY_BINDS = {"readonly": os.environ.get("READONLY_DATABASE_URL")}
     SQLALCHEMY_ECHO = False
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {"poolclass": NullPool}

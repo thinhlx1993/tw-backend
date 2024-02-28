@@ -17,9 +17,6 @@ import datetime
 from croniter import croniter
 import logging
 
-from src.services.migration_services import get_readonly_session
-from src.tasks.worker import update_click_count, reset_click_count
-
 _logger = logging.getLogger(__name__)
 
 daily_limits = {"clickAds": 400}
@@ -53,9 +50,7 @@ def should_start_job(cron_expression):
 
 
 def get_mission_schedule(schedule_id):
-    return MissionSchedule.query.execution_options(
-        bind=db.get_engine(app, bind="readonly")
-    ).get(schedule_id)
+    return MissionSchedule.query.get(schedule_id)
 
 
 def get_user_schedule(schedule_type):
@@ -137,87 +132,76 @@ def get_user_schedule(schedule_type):
     #     return default_missions, "mission_should_start"
 
     mission_should_start = []
-    with get_readonly_session() as readonly_session:
-        mission_force_start = []
-        missions = mission_services.get_missions_by_user_id(
-            current_user_id, readonly_session
-        )
-        for mission in missions:
-            mission_json = mission.get("mission_json")
-            cron_job = mission_json.get("cron")
-            if should_start_job(cron_job) or mission["force_start"]:
-                mission_schedule = mission["mission_schedule"]
-                mission_tasks = mission["mission_tasks"]
-                for item in mission_schedule:
-                    item["tasks"] = mission_tasks
-                mission_should_start.extend(mission_schedule)
-                mission_force_start.append(mission["mission_id"])
+    mission_force_start = []
+    missions = mission_services.get_missions_by_user_id(current_user_id)
+    for mission in missions:
+        mission_json = mission.get("mission_json")
+        cron_job = mission_json.get("cron")
+        if should_start_job(cron_job) or mission["force_start"]:
+            mission_schedule = mission["mission_schedule"]
+            mission_tasks = mission["mission_tasks"]
+            for item in mission_schedule:
+                item["tasks"] = mission_tasks
+            mission_should_start.extend(mission_schedule)
+            mission_force_start.append(mission["mission_id"])
 
-        for mission_id in mission_force_start:
-            mission_services.set_force_start_false(mission_id)
+    for mission_id in mission_force_start:
+        mission_services.set_force_start_false(mission_id)
 
-        if mission_should_start or schedule_type == "mission_should_start":
-            return mission_should_start, "mission_should_start"
+    if mission_should_start or schedule_type == "mission_should_start":
+        return mission_should_start, "mission_should_start"
 
-        """
-        Get tasks for clickAds, comment, like
-        """
-        event_type = random.choice(list(daily_limits.keys()))
+    """
+    Get tasks for clickAds, comment, like
+    """
+    event_type = random.choice(list(daily_limits.keys()))
 
-        # user should be online within 5 minutes
-        profile_ids_receiver = get_profile_with_event_count_below_limit_v2(
-            event_type, readonly_session
-        )
+    # user should be online within 5 minutes
+    profile_ids_receiver = get_profile_with_event_count_below_limit_v2(event_type)
 
-        # Not found any user receiver
-        if not profile_ids_receiver:
-            return mission_should_start, "mission_should_start"
+    # Not found any user receiver
+    if not profile_ids_receiver:
+        return mission_should_start, "mission_should_start"
 
-        # Find a unique interaction partner from current user profiles
-        # days_limit = calculate_days_for_unique_interactions(
-        #     event_type, readonly_session
-        # )
-        days_limit = 1
+    # Find a unique interaction partner from current user profiles
+    # days_limit = calculate_days_for_unique_interactions(
+    #     event_type
+    # )
+    days_limit = 1
 
-        unique_partner_ids = find_unique_interaction_partner_v2(
-            profile_ids_receiver,
-            event_type,
-            days_limit,
-            current_user_id,
-            readonly_session,
-        )
-        tasks = (
-            readonly_session.query(Task).filter(Task.tasks_name == event_type).first()
-        )
-        if not tasks:
-            return mission_should_start, "clickAds"
+    unique_partner_ids = find_unique_interaction_partner_v2(
+        profile_ids_receiver, event_type, days_limit, current_user_id
+    )
+    tasks = db.session.query(Task).filter(Task.tasks_name == event_type).first()
+    if not tasks:
+        return mission_should_start, "clickAds"
 
-        for profile_id_receiver, unique_partner_id in zip(
-            profile_ids_receiver, unique_partner_ids
-        ):
-            mission_should_start.append(
-                {
-                    "schedule_id": "",
-                    "profile_id": unique_partner_id,
-                    "profile_id_receiver": profile_id_receiver,
-                    "mission_id": "",
-                    "schedule_json": "",
-                    "start_timestamp": datetime.datetime.utcnow().strftime(
-                        "%d-%m-%Y %H:%M"
-                    ),
-                    "tasks": [
-                        {
-                            "mission_id": "",
+    for profile_id_receiver, unique_partner_id in zip(
+        profile_ids_receiver, unique_partner_ids
+    ):
+        mission_should_start.append(
+            {
+                "schedule_id": "",
+                "profile_id": unique_partner_id,
+                "profile_id_receiver": profile_id_receiver,
+                "mission_id": "",
+                "schedule_json": "",
+                "start_timestamp": datetime.datetime.utcnow().strftime(
+                    "%d-%m-%Y %H:%M"
+                ),
+                "tasks": [
+                    {
+                        "mission_id": "",
+                        "tasks_id": tasks.tasks_id,
+                        "tasks": {
                             "tasks_id": tasks.tasks_id,
-                            "tasks": {
-                                "tasks_id": tasks.tasks_id,
-                                "tasks_name": event_type,
-                                "tasks_json": tasks.tasks_json,
-                            },
-                        }
-                    ],
-                }
-            )
+                            "tasks_name": event_type,
+                            "tasks_json": tasks.tasks_json,
+                        },
+                    }
+                ],
+            }
+        )
     return mission_should_start, "clickAds"
 
 
@@ -245,7 +229,6 @@ def find_unique_interaction_partner(
             Events.issue == "OK",
             db.func.date(Events.created_at) >= start_date,
         )
-        .execution_options(bind=db.get_engine(app, bind="readonly"))
     )
 
     # Subquery to find profiles that have reached their daily limit for the interaction type
@@ -258,7 +241,6 @@ def find_unique_interaction_partner(
         )
         .group_by(Events.profile_id)
         .having(db.func.count() >= daily_limits[event_type])
-        .execution_options(bind=db.get_engine(app, bind="readonly"))
     )
 
     # Subquery to count clicks for each profile
@@ -271,7 +253,6 @@ def find_unique_interaction_partner(
             db.func.date(Events.created_at) == datetime.datetime.utcnow().date(),
         )
         .group_by(Events.profile_id_interact)
-        .execution_options(bind=db.get_engine(app, bind="readonly"))
         .subquery()
     )
 
@@ -301,7 +282,6 @@ def find_unique_interaction_partner(
             *additional_filters
         )
         .order_by(func.random())
-        .execution_options(bind=db.get_engine(app, bind="readonly"))
         .first()
     )
 
@@ -315,7 +295,7 @@ def find_unique_interaction_partner(
 
 
 def find_unique_interaction_partner_v2(
-    profile_receiver_ids, event_type, days_limit, current_user_id, readonly_session
+    profile_receiver_ids, event_type, days_limit, current_user_id
 ):
     # Calculate the start date based on days_limit
     if days_limit < 1:
@@ -345,7 +325,7 @@ def find_unique_interaction_partner_v2(
     # additional_filters = (verified_filter)
 
     top_accounts = (
-        readonly_session.query(Profiles.profile_id)
+        db.session.query(Profiles.profile_id)
         .filter(
             Profiles.owner == current_user_id,
             ~Profiles.profile_id.in_(profile_receiver_ids),
@@ -372,14 +352,14 @@ def find_unique_interaction_partner_v2(
 
 
 # Function to calculate days for unique interactions
-def calculate_days_for_unique_interactions(event_type, readonly_session):
+def calculate_days_for_unique_interactions(event_type):
     # get total verify accounts
     # monetizable_filter = cast(Profiles.profile_data["monetizable"], Text) == "false"
     # verified_filter = cast(Profiles.profile_data["verify"], Text) == "true"
     # additional_filters = (monetizable_filter, verified_filter)
 
     total_accounts = (
-        readonly_session.query(Profiles)
+        db.session.query(Profiles)
         .filter(
             Profiles.profile_data.isnot(None),
             Profiles.main_profile == False,
@@ -410,10 +390,7 @@ def get_profile_with_event_count_below_limit(event_type):
 
     # Step 1: Query active user IDs
     active_user_ids = (
-        db.session.query(User.user_id)
-        .filter(User.last_active_at > active_cutoff)
-        .execution_options(bind=db.get_engine(app, bind="readonly"))
-        .all()
+        db.session.query(User.user_id).filter(User.last_active_at > active_cutoff).all()
     )
     active_user_ids = [user_id[0] for user_id in active_user_ids]
 
@@ -426,7 +403,6 @@ def get_profile_with_event_count_below_limit(event_type):
             db.func.date(Events.created_at) == today,
         )
         .group_by(Events.profile_id)
-        .execution_options(bind=db.get_engine(app, bind="readonly"))
         .subquery()
     )
 
@@ -459,7 +435,6 @@ def get_profile_with_event_count_below_limit(event_type):
             Profiles.main_profile.is_(True),
         )
         .order_by(func.random())
-        .execution_options(bind=db.get_engine(app, bind="readonly"))
         .first()
     )
 
@@ -472,7 +447,7 @@ def get_profile_with_event_count_below_limit(event_type):
         return None
 
 
-def get_profile_with_event_count_below_limit_v2(event_type, readonly_session):
+def get_profile_with_event_count_below_limit_v2(event_type):
     """Count direct by click count in profile data"""
     # active_cutoff = datetime.datetime.utcnow() - datetime.timedelta(minutes=5)
 
@@ -489,7 +464,7 @@ def get_profile_with_event_count_below_limit_v2(event_type, readonly_session):
         additional_filters.append(Profiles.owner.in_(user_receiver))
 
     profiles = (
-        readonly_session.query(Profiles.profile_id)
+        db.session.query(Profiles.profile_id)
         .filter(
             Profiles.click_count < daily_limits[event_type],
             Profiles.profile_data.isnot(None),

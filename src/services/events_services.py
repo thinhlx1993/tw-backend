@@ -6,10 +6,6 @@ from sqlalchemy import text, or_, func
 from src import db, app
 from src.models import Profiles, Events
 from sqlalchemy.orm import aliased
-from sqlalchemy import update
-
-from src.services.migration_services import get_readonly_session
-from src.services.mission_schedule_services import should_start_job
 from src.v1.dto.event_type import EventType
 from src.log_config import _logger
 
@@ -45,64 +41,62 @@ def get_all_events(
     if not column:
         return False, {"Message": "Invalid sort_by Key provided"}
 
-    with get_readonly_session() as readonly_session:
+    sorting_order = f"{column} {sort_order}"
+    query = (
+        db.session.query(Events)
+        .join(giver_profile, Events.profile_id_interact == giver_profile.profile_id)
+        .join(receiver_profile, Events.profile_id == receiver_profile.profile_id)
+    )
 
-        sorting_order = f"{column} {sort_order}"
-        query = (
-            readonly_session.query(Events)
-            .join(giver_profile, Events.profile_id_interact == giver_profile.profile_id)
-            .join(receiver_profile, Events.profile_id == receiver_profile.profile_id)
+    query = query.filter(db.func.date(Events.created_at) == today_date)
+    query = query.filter(Events.issue == "OK")
+    # Apply sorting
+    if sorting_order:
+        query = query.order_by(text(sorting_order))
+
+    # Apply filters
+    if event_type:
+        query = query.filter(func.lower(Events.event_type) == func.lower(event_type))
+    if search:
+        search = search.strip().lower()
+        query = query.filter(
+            or_(
+                func.lower(Events.issue).ilike(f"%{search}%"),
+                func.lower(Events.event_type).ilike(f"%{search}%"),
+            )
+        )
+    if profile_id:
+        query = query.filter(Events.profile_id == profile_id)
+    if user_id:
+        query = query.filter(Events.user_id == user_id)
+    if receiver_username:
+        receiver_username = receiver_username.strip().lower()
+        query = query.filter(
+            func.lower(receiver_profile.username) == func.lower(receiver_username)
+        )
+    if giver_username:
+        giver_username = giver_username.strip().lower()
+        query = query.filter(
+            func.lower(giver_profile.username) == func.lower(giver_username)
         )
 
-        query = query.filter(db.func.date(Events.created_at) == today_date)
-        query = query.filter(Events.issue == "OK")
-        # Apply sorting
-        if sorting_order:
-            query = query.order_by(text(sorting_order))
+    # Apply pagination
+    count = query.count()
+    if per_page:
+        query = query.limit(per_page)
+    if page:
+        query = query.offset(per_page * (page - 1))
 
-        # Apply filters
-        if event_type:
-            query = query.filter(func.lower(Events.event_type) == func.lower(event_type))
-        if search:
-            search = search.strip().lower()
-            query = query.filter(
-                or_(
-                    func.lower(Events.issue).ilike(f"%{search}%"),
-                    func.lower(Events.event_type).ilike(f"%{search}%"),
-                )
-            )
-        if profile_id:
-            query = query.filter(Events.profile_id == profile_id)
-        if user_id:
-            query = query.filter(Events.user_id == user_id)
-        if receiver_username:
-            receiver_username = receiver_username.strip().lower()
-            query = query.filter(
-                func.lower(receiver_profile.username) == func.lower(receiver_username)
-            )
-        if giver_username:
-            giver_username = giver_username.strip().lower()
-            query = query.filter(
-                func.lower(giver_profile.username) == func.lower(giver_username)
-            )
+    events = query.all()
 
-        # Apply pagination
-        count = query.count()
-        if per_page:
-            query = query.limit(per_page)
-        if page:
-            query = query.offset(per_page * (page - 1))
+    # Formatting the result
+    formatted_result = [event.repr_name() for event in events]
 
-        events = query.all()
-
-        # Formatting the result
-        formatted_result = [event.repr_name() for event in events]
-
-        return {
-            "data": formatted_result,
-            "result_count": count,
-            "max_pages": math.ceil(count / per_page),
-        }
+    return {
+        "data": formatted_result,
+        "result_count": count,
+        "max_pages": math.ceil(count / per_page),
+    }
 
 
 def create_or_update_event(event_id, event_data):

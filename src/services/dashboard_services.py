@@ -4,7 +4,6 @@ from src.models import User, Profiles
 
 
 def get_dashboard_data():
-    # with get_readonly_session() as readonly_session:
     user_count = db.session.query(User).count()
     profiles_count = db.session.query(Profiles).count()
 
@@ -61,10 +60,7 @@ def get_dashboard_data():
     result = db.session.execute(text(sql_query))
     total_payouts = result.scalar()
 
-    users = (
-        User.query.filter_by()
-        .all()
-    )
+    users = User.query.filter_by().all()
     summaries = []
     for user in users:
         user_summary = get_summary(user.user_id)
@@ -87,9 +83,13 @@ def get_dashboard_data():
 
 
 def get_summary(user_id):
-    profiles_count = db.session.query(Profiles).filter(
-        Profiles.owner == user_id,
-    ).count()
+    profiles_count = (
+        db.session.query(Profiles)
+        .filter(
+            Profiles.owner == user_id,
+        )
+        .count()
+    )
     if profiles_count == 0:
         return {
             "profiles_count": profiles_count,
