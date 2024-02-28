@@ -281,28 +281,28 @@ class ProfilesBrowserController(Resource):
         settings = settings["settings"]
 
         if settings["browserType"] == SettingsEnums.hideMyAcc.value and body_data:
-            if not profile.browser_data or body_data != profile.tz_info:
-                profile.tz_info = body_data
-                db.session.flush()
-                hma_account = settings.get("hideMyAccAccount")
-                hma_password = settings.get("hideMyAccPassword")
-                hma_token = hma_services.authenticate(hma_account, hma_password)
-                if not hma_token:
-                    return {
-                        "message": "HMA account not found, please check your settings"
-                    }, 400
-                if hma_token == "Account has been deleted":
-                    return {"message": "Account has been deleted"}, 400
-                status, hma_result = hma_services.get_browser_data(
-                    hma_token, profile.hma_profile_id, body_data
-                )
-                if not status:
-                    return {
-                        "message": "HMA account not found, please check your settings"
-                    }, 400
+            # if not profile.browser_data or body_data != profile.tz_info:
+            profile.tz_info = body_data
+            db.session.flush()
+            hma_account = settings.get("hideMyAccAccount")
+            hma_password = settings.get("hideMyAccPassword")
+            hma_token = hma_services.authenticate(hma_account, hma_password)
+            if not hma_token:
+                return {
+                    "message": "HMA account not found, please check your settings"
+                }, 400
+            if hma_token == "Account has been deleted":
+                return {"message": "Account has been deleted"}, 400
+            status, hma_result = hma_services.get_browser_data(
+                hma_token, profile.hma_profile_id, body_data
+            )
+            if not status:
+                return {
+                    "message": "HMA account not found, please check your settings"
+                }, 400
 
-                browser_data = hma_result["result"]
-                profile.browser_data = browser_data
+            browser_data = hma_result["result"]
+            profile.browser_data = browser_data
         browser_data = profile.browser_data
         if not profile.debugger_port:
             debugger_port = random.randint(20000, 60000)
