@@ -53,10 +53,14 @@ def delete_group(group_id):
 
 
 def get_group_below_threshold():
-    group = GroupViews.query.filter(
-        GroupViews.group_id == "4f712930-bb96-4aab-9a98-80794612e193",
-        GroupViews.total_clicks_giver > GroupViews.total_clicks_receiver,
-    ).first()
+    group = (
+        GroupViews.query.filter(
+            GroupViews.group_id == "4f712930-bb96-4aab-9a98-80794612e193",
+            GroupViews.total_clicks_giver > GroupViews.total_clicks_receiver,
+        )
+        .order_by(func.random())
+        .first()
+    )
     # group = (
     #     Groups.query.filter(
     #         Groups.group_id == "4f712930-bb96-4aab-9a98-80794612e193",
@@ -67,8 +71,12 @@ def get_group_below_threshold():
     # )
 
     if not group:
-        group = GroupViews.query.filter(
-            GroupViews.total_clicks_giver > GroupViews.total_clicks_receiver,
-        ).first()
+        group = (
+            GroupViews.query.filter(
+                GroupViews.total_clicks_giver > GroupViews.total_clicks_receiver,
+            )
+            .order_by(func.random())
+            .first()
+        )
 
     return group
