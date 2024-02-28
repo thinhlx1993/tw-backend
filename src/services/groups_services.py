@@ -6,6 +6,7 @@ from sqlalchemy import func
 
 from src import db, app
 from src.models.groups import Groups
+from src.views.groups import GroupViews
 
 # Create module log
 _logger = logging.getLogger(__name__)
@@ -52,20 +53,22 @@ def delete_group(group_id):
 
 
 def get_group_below_threshold():
-    group = (
-        Groups.query.filter(
-            Groups.group_id == "4f712930-bb96-4aab-9a98-80794612e193",
-            Groups.click_count > Groups.receiver_count,
-        )
-        .order_by(func.random())
-        .first()
-    )
+    group = GroupViews.query.filter(
+        GroupViews.group_id == "4f712930-bb96-4aab-9a98-80794612e193",
+        GroupViews.total_clicks_giver > GroupViews.total_clicks_receiver,
+    ).first()
+    # group = (
+    #     Groups.query.filter(
+    #         Groups.group_id == "4f712930-bb96-4aab-9a98-80794612e193",
+    #         Groups.click_count > Groups.receiver_count,
+    #     )
+    #     .order_by(func.random())
+    #     .first()
+    # )
 
     if not group:
-        group = (
-            Groups.query.filter(Groups.click_count > Groups.receiver_count)
-            .order_by(func.random())
-            .first()
-        )
+        group = GroupViews.query.filter(
+            GroupViews.total_clicks_giver > GroupViews.total_clicks_receiver,
+        ).first()
 
     return group
