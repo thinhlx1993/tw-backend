@@ -45,6 +45,13 @@ class Config:
     SUPER_ADMIN = os.environ["SUPER_ADMIN"]
     JOBS = [
         {
+            "id": "update_click",
+            "func": "src.tasks.schedule:update_click",
+            "trigger": "interval",
+            "args": ("01cd2da0-3fe2-4335-a689-1bc482ad7c52",),
+            "minutes": 2,
+        },
+        {
             "id": "reset_click",
             "func": "src.tasks.schedule:reset_click",
             "trigger": "cron",

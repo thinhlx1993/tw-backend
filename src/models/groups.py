@@ -31,6 +31,10 @@ class Groups(db.Model):
     users = db.relationship("User", secondary="user_group", backref="groups")
     click_count = db.Column(db.Integer, default=0)  # New column for click count
     receiver_count = db.Column(db.Integer, default=0)  # New column for receiver count
+    profile_receiver_count = db.Column(
+        db.Integer, default=0
+    )  # New column for receiver count
+    profile_giver_count = db.Column(db.Integer, default=0)  # New column for receiver count
 
     def repr_name(self):
         return {
