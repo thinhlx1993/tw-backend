@@ -86,7 +86,11 @@ def delete_browser_profile(profile_id, user_id, device_id):
     url = f"{base_url}/browser/{profile_id}"
     headers = {"Authorization": f"Bearer {hma_token}"}
     response = requests.delete(url, headers=headers)
-    return response.json()["code"] == 1
+    if response.json()["code"] == 1:
+        return True
+    if response.json()["code"] == 0 and response.json()["errors"] == "Not found":
+        return True
+    return False
 
 
 def list_browser_profiles(token):
