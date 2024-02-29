@@ -61,6 +61,7 @@ class Config:
             "second": 0,
         },
     ]
+    SCHEDULER_TIMEZONE = "Asia/Bangkok"
 
     SCHEDULER_API_ENABLED = True
 

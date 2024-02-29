@@ -7,7 +7,7 @@ metadata:
   name: tw-api
 spec:
   minReadySeconds: 5
-  replicas: 13
+  replicas: 16
   selector:
     matchLabels:
       app: tw-api
