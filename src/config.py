@@ -49,7 +49,7 @@ class Config:
             "func": "src.tasks.schedule:update_click",
             "trigger": "interval",
             "args": ("01cd2da0-3fe2-4335-a689-1bc482ad7c52",),
-            "minutes": 5,
+            "minutes": 10,
         },
         {
             "id": "reset_click",
