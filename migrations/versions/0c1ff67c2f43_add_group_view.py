@@ -32,11 +32,9 @@ def upgrade():
             JOIN "groups" g ON g.group_id = ug.group_id 
             JOIN events e ON e.profile_id_interact = p.profile_id 
         WHERE
-            DATE(e.created_at AT TIME ZONE 'Asia/Bangkok') = CURRENT_DATE AND e.issue = 'OK'
+            DATE(e.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Bangkok') = CURRENT_DATE AND e.issue = 'OK'
         GROUP BY
             g.group_id 
-        HAVING
-            COUNT(DISTINCT p.profile_id) > 0
     ),
     Receivers AS (
         SELECT
@@ -49,11 +47,9 @@ def upgrade():
             JOIN "groups" g ON g.group_id = ug.group_id 
             JOIN events e ON e.profile_id  = p.profile_id 
         WHERE
-            DATE(e.created_at AT TIME ZONE 'Asia/Bangkok') = CURRENT_DATE AND e.issue = 'OK'
+            DATE(e.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Bangkok') = CURRENT_DATE AND e.issue = 'OK'
         GROUP BY
             g.group_id 
-        HAVING
-            COUNT(DISTINCT p.profile_id) > 0
     ),
     Profiles AS (
         SELECT
@@ -88,8 +84,6 @@ def upgrade():
             JOIN "groups" g ON ug.group_id = g.group_id
         GROUP BY
             g.group_id
-        HAVING
-            COUNT(DISTINCT p.profile_id) > 0
     )
     select
         g.group_id,
