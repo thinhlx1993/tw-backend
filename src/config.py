@@ -46,20 +46,9 @@ class Config:
     API_URL = os.environ["API_URL"]
     BASE_URL = os.environ["BASE_URL"]
     SUPER_ADMIN = os.environ["SUPER_ADMIN"]
-    # BROKER_URL = os.environ['CELERY_BROKER_URL']
-    # CELERY_RESULT_BACKEND = os.environ['CELERY_BROKER_URL']
-    # CELERY_ACCEPT_CONTENT = ['json']
-    # CELERY_TASK_SERIALIZER = 'json'
-    # CELERY_RESULT_SERIALIZER = 'json'
-    # CELERY_TIMEZONE = 'Asia/Bangkok'
-    #
-    # # Additional configuration for periodic tasks
-    # CELERYBEAT_SCHEDULE = {
-    #     'update_click': {
-    #         'task': 'src.tasks.schedule:update_click',  # Specify the task function
-    #         'schedule': 10.0,  # Set the schedule interval in seconds
-    #     },
-    # }
+    CACHE_DEFAULT_TIMEOUT: 300
+    CACHE_TYPE = os.environ.get("CACHE_TYPE", "SimpleCache")
+    CACHE_REDIS_URL = os.environ["CACHE_REDIS_URL"]
 
 
 class ProductionConfig(Config):

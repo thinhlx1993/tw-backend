@@ -20,7 +20,6 @@ from .config import DevelopmentConfig, StagingConfig, ProductionConfig, Config
 
 # Initialize Flask app and set config
 app = Flask(__name__)
-cache = Cache(app, config={"CACHE_TYPE": "simple"})
 
 # Config is PROD by default
 if os.environ["CONFIG"] == "DEV":
@@ -44,7 +43,7 @@ CORS(app=app, origins=app.config["CORS_ORIGIN"], supports_credentials=True)
 # Set configuration for DB
 db = SQLAlchemy(app)
 executor = Executor(app)
-
+cache = Cache(app)
 migrate = Migrate(app, db, compare_type=True)
 
 

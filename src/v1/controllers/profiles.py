@@ -220,12 +220,10 @@ class ProfilesIdController(Resource):
     def put(self, profile_id):
         """Update a profile by ID"""
         data = profiles_ns2.payload
-        claims = get_jwt_claims()
-        teams_id = claims.get("teams_id")
-        # profile = profiles_services.get_profile_by_id(profile_id)
-        # if not profile:
-        #     return {"message": "Profile not found"}, 404
-        executor.submit(update_profile, profile_id, teams_id, data)
+        # claims = get_jwt_claims()
+        # teams_id = claims.get("teams_id")
+        # executor.submit(update_profile, profile_id, teams_id, data)
+        profiles_services.update_profile(profile_id, data)
         return {"message": "Profile updated successfully"}, 200
 
     @profiles_ns2.response(
@@ -267,6 +265,7 @@ class ProfilesBrowserController(Resource):
     )
     @profiles_ns2.response(500, "Internal Server Error", internal_server_error_model)
     @custom_jwt_required()
+    @cache.cached()
     def post(self, profile_id):
         """Used to retrieve profile's data"""
         body_data = profiles_ns2.payload

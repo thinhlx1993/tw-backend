@@ -47,6 +47,10 @@ jobs:
      - name: Deploy to DigitalOcean Kubernetes
        run: kubectl apply -f $GITHUB_WORKSPACE/config/deployment.yaml
      - name: Verify deployment
-       run: kubectl rollout status deployment/tw-api
+       run: kubectl rollout restart deployment/tw-api
+     - name: Verify Beat deployment
+       run: kubectl rollout restart deployment/tw-api-beat
+     - name: Verify Worker deployment
+       run: kubectl rollout restart deployment/tw-api-worker
      - name: Run garbage collection
        run: doctl registry garbage-collection start --force
