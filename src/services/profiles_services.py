@@ -19,7 +19,7 @@ def create_profile(data, device_id, user_id, hma_token, browser_version, teams_i
     username = data.get("username", "").strip()
     if not username:
         return None
-    profile = Profiles.query.filter(Profiles.username == username.lower()).first()
+    profile = Profiles.query.filter(Profiles.username == username).first()
 
     if profile and profile.owner != user_id and profile.is_disable == False:
         return None
