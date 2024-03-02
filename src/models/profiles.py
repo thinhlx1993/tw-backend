@@ -22,7 +22,7 @@ class Profiles(db.Model):
     fa = db.Column(db.Text(), nullable=True, server_default="")
     proxy = db.Column(db.String(128), nullable=True, server_default="")
     gpt_key = db.Column(db.String(128), nullable=True, server_default="")
-    cookies = db.Column(db.String(128), nullable=True, server_default="")
+    cookies = db.Column(db.Text(), nullable=True, server_default="")
     notes = db.Column(db.Text(), nullable=True, server_default="")
     profile_data = db.Column(db.JSON(), nullable=True)
     browser_data = db.Column(db.Text(), nullable=True, server_default="")
