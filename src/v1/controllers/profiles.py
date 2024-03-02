@@ -189,7 +189,15 @@ class ProfilesController(Resource):
             return {
                 "message": f"Vui lòng nâng cấp tài khoản HMA {profile_count}/{max_profile}"
             }, 400
-        executor.submit(create_profiles, profiles, user_id, device_id, teams_id)
+        executor.submit(
+            create_profiles,
+            profiles,
+            user_id,
+            device_id,
+            teams_id,
+            hma_token,
+            browser_version,
+        )
         return {"message": f"Đang tạo tài khoản, vui lòng chờ trong giây lát"}, 200
 
 

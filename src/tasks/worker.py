@@ -1,6 +1,12 @@
-from src.services import profiles_services, migration_services, mission_services
+from src.services import (
+    profiles_services,
+    migration_services,
+    mission_services,
+    setting_services,
+)
+from src.services.profiles_services import create_profile
 from src.log_config import _logger
-from src import db
+from src import db, executor
 
 
 def delete_missions_schedule(mission_id, teams_id):
@@ -11,22 +17,22 @@ def delete_missions_schedule(mission_id, teams_id):
     _logger.debug("Delete mission ok")
 
 
-def create_profiles(profiles, user_id, device_id, teams_id):
-    migration_services.set_search_path(teams_id)
+def create_profiles(profiles, user_id, device_id, teams_id, hma_token, browser_version):
     success_number = 0
     error_number = 0
+
     for data in profiles:
-        try:
-            data["owner"] = user_id  # set owner
-            data["user_access"] = user_id
-            profile = profiles_services.create_profile(data, device_id, user_id)
-            if profile:
-                success_number += 1
-                db.session.flush()
-        except Exception as ex:
-            _logger.exception(ex)
-            error_number += 1
-    db.session.commit()
+        data["owner"] = user_id  # set owner
+        data["user_access"] = user_id
+        executor.submit(
+            create_profile,
+            data,
+            device_id,
+            user_id,
+            hma_token,
+            browser_version,
+            teams_id,
+        )
     return True
 
 
@@ -92,7 +98,7 @@ def update_click_count(teams_id):
     )
 
     try:
-        _logger.info('Update click count ok')
+        _logger.info("Update click count ok")
         # Execute the raw SQL query
         db.session.execute(sql_query)
         db.session.commit()

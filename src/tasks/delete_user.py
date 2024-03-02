@@ -1,6 +1,6 @@
 import requests
 
-username = "thanthan101101@gmail.com"
+username = "thanh00002@gmail.com"
 password = "99999999"
 appVersion = 3049
 base_url = "https://api-tuan.hidemyacc.com"

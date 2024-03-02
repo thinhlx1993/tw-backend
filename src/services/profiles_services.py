@@ -8,18 +8,19 @@ from sqlalchemy import or_, func, cast, Text
 
 from src import db
 from src.models.profiles import Profiles
-from src.services import hma_services
+from src.services import hma_services, migration_services
 
 # Create module log
 _logger = logging.getLogger(__name__)
 
 
-def create_profile(data, device_id, user_id):
+def create_profile(data, device_id, user_id, hma_token, browser_version, teams_id):
+    migration_services.set_search_path(teams_id)
     username = data.get("username", "").strip()
     if not username:
         return None
     profile = Profiles.query.filter(
-        func.lower(Profiles.username) == func.lower(username)
+        func.lower(Profiles.username) == username.lower()
     ).first()
 
     if profile and profile.owner != user_id and profile.is_disable == False:
@@ -39,12 +40,15 @@ def create_profile(data, device_id, user_id):
             if val:
                 profile.__setattr__(key, val)
 
-    hma_profile_id = hma_services.create_hma_profile(username, device_id, user_id)
+    hma_profile_id = hma_services.create_hma_profile(
+        username, device_id, user_id, hma_token, browser_version
+    )
     if not hma_profile_id:
         return False
     profile.hma_profile_id = hma_profile_id
     db.session.add(profile)
-    db.session.flush()
+    db.session.commit()
+    print(f"Add ok {username}")
     return profile
 
 

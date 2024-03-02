@@ -154,21 +154,23 @@ def delete_team_member(token, team_name, member_email):
     return response.json()
 
 
-def create_hma_profile(username, device_id, user_id):
-    settings = setting_services.get_settings_by_user_device(user_id, device_id)
-    if not settings or "settings" not in settings.keys():
-        return "Vui lòng cài đặt hệ thống"
-    settings = settings["settings"]
-    browser_type = settings.get("browserType")
-    if browser_type != "hideMyAcc" or username == "":
-        return ""
+def create_hma_profile(username, device_id, user_id, hma_token, browser_version):
+    if not hma_token:
+        settings = setting_services.get_settings_by_user_device(user_id, device_id)
+        if not settings or "settings" not in settings.keys():
+            return "Vui lòng cài đặt hệ thống"
+        settings = settings["settings"]
+        browser_type = settings.get("browserType")
+        if browser_type != "hideMyAcc" or username == "":
+            return ""
 
-    browser_version = settings.get("browserVersion")
-    if not browser_version:
-        browser_version = 119
-    hma_account = settings.get("hideMyAccAccount")
-    hma_password = settings.get("hideMyAccPassword")
-    hma_token = authenticate(hma_account, hma_password)
+        browser_version = settings.get("browserVersion")
+        if not browser_version:
+            browser_version = 119
+        hma_account = settings.get("hideMyAccAccount")
+        hma_password = settings.get("hideMyAccPassword")
+        hma_token = authenticate(hma_account, hma_password)
+
     if not hma_token or hma_token == "Account has been deleted":
         return False
 
