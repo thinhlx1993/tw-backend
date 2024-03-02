@@ -40,3 +40,61 @@ spec:
   selector:
     app: tw-api
   type: LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: tw-api-worker
+  name: tw-api-worker
+spec:
+  minReadySeconds: 5
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tw-api-worker
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: tw-api-worker
+    spec:
+      containers:
+      - envFrom:
+        - configMapRef:
+            name: api-config
+        image: <IMAGE_CELERY_WORKER>
+        name: tw-api-worker
+        imagePullPolicy: Always
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: tw-api-beat
+  name: tw-api-beat
+spec:
+  minReadySeconds: 5
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tw-api-beat
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: tw-api-beat
+    spec:
+      containers:
+      - envFrom:
+        - configMapRef:
+            name: api-config
+        image: <IMAGE_CELERY_BEAT>
+        name: tw-api-beat
+        imagePullPolicy: Always

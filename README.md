@@ -233,6 +233,10 @@ To connect to your database from outside the cluster execute the following comma
     export SERVICE_IP=$(kubectl get svc --namespace default my-redis-master --template "{{ range (index .status.loadBalancer.ingress 0) }}{{ . }}{{ end }}")
     REDISCLI_AUTH="$REDIS_PASSWORD" redis-cli -h $SERVICE_IP -p 6379
 
+### Celery
+celery -A src.celery beat --loglevel=info
+celery -A src.celery worker  --loglevel=info --concurrency=1 -P eventlet
+
 ### Release Notes
 - 1.0.0 [10/12/2023]
     - Init Source Code

@@ -1,5 +1,8 @@
 import os
 from sqlalchemy.pool import NullPool
+# from dotenv import load_dotenv
+#
+# load_dotenv()
 
 
 class Config:
@@ -43,27 +46,20 @@ class Config:
     API_URL = os.environ["API_URL"]
     BASE_URL = os.environ["BASE_URL"]
     SUPER_ADMIN = os.environ["SUPER_ADMIN"]
-    JOBS = [
-        {
-            "id": "update_click",
-            "func": "src.tasks.schedule:update_click",
-            "trigger": "interval",
-            "args": ("01cd2da0-3fe2-4335-a689-1bc482ad7c52",),
-            "minutes": 10,
-        },
-        {
-            "id": "reset_click",
-            "func": "src.tasks.schedule:reset_click",
-            "trigger": "cron",
-            "args": ("01cd2da0-3fe2-4335-a689-1bc482ad7c52",),
-            "hour": 0,
-            "minute": 0,
-            "second": 0,
-        },
-    ]
-    SCHEDULER_TIMEZONE = "Asia/Bangkok"
-
-    SCHEDULER_API_ENABLED = True
+    # BROKER_URL = os.environ['CELERY_BROKER_URL']
+    # CELERY_RESULT_BACKEND = os.environ['CELERY_BROKER_URL']
+    # CELERY_ACCEPT_CONTENT = ['json']
+    # CELERY_TASK_SERIALIZER = 'json'
+    # CELERY_RESULT_SERIALIZER = 'json'
+    # CELERY_TIMEZONE = 'Asia/Bangkok'
+    #
+    # # Additional configuration for periodic tasks
+    # CELERYBEAT_SCHEDULE = {
+    #     'update_click': {
+    #         'task': 'src.tasks.schedule:update_click',  # Specify the task function
+    #         'schedule': 10.0,  # Set the schedule interval in seconds
+    #     },
+    # }
 
 
 class ProductionConfig(Config):

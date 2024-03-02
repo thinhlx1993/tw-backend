@@ -1,0 +1,25 @@
+# Dockerfile for DEV
+
+FROM python:3.10.5
+
+LABEL MAINTAINER "jaseel@cognicept.systems"
+
+ENV CONFIG=DEV
+
+RUN apt-get update && apt-get -y install \
+    libssl-dev \
+    libffi-dev \
+    libsasl2-dev \
+    libldap2-dev
+
+COPY prod-requirements.txt /app/requirements.txt
+
+WORKDIR /app
+
+RUN pip install --upgrade pip
+RUN cat requirements.txt | xargs -n 1 -L 1 pip install
+
+COPY . /app
+
+ENTRYPOINT ["celery"]
+CMD ["-A", "src.celery", "beat", "--loglevel=info"]

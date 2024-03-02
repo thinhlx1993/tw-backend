@@ -1,6 +1,8 @@
 # Setup log for the whole app
 import os
 from alembic import command
+from celery import Celery
+from celery.schedules import crontab
 from flask import Flask
 from flask_apscheduler import APScheduler
 from flask_sqlalchemy import SQLAlchemy
@@ -11,10 +13,9 @@ from flask_caching import Cache
 from flask_migrate import Migrate, MigrateCommand
 from flask_executor import Executor
 
-# from flask_limiter import Limiter
-# from flask_limiter.util import get_remote_address
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
+
 from .config import DevelopmentConfig, StagingConfig, ProductionConfig, Config
 
 # Initialize Flask app and set config
@@ -43,7 +44,9 @@ CORS(app=app, origins=app.config["CORS_ORIGIN"], supports_credentials=True)
 # Set configuration for DB
 db = SQLAlchemy(app)
 executor = Executor(app)
+
 migrate = Migrate(app, db, compare_type=True)
+
 
 if os.environ["CONFIG"] == "PROD":
     manager = Manager(app)
@@ -53,17 +56,23 @@ if os.environ["CONFIG"] == "PROD":
 
 # Set JWT Config
 jwt = JWTManager(app)
-scheduler = APScheduler()
-scheduler.init_app(app)
-scheduler.start()
 
-# limiter = Limiter(
-#     app=app,
-#     key_func=get_remote_address,
-#     default_limits=["50/second"],
-#     storage_uri="memory://",
-# )
-
+celery = Celery(
+    __name__,
+    broker=os.environ['CELERY_BROKER_URL'],
+    backend=os.environ['CELERY_BROKER_URL'],
+    beat_schedule={
+        "task-every-10-seconds": {
+            "task": "src.tasks.schedule.update_click",
+            "schedule": 600,
+        },
+        "task-every-day-at-midnight": {
+            "task": "src.tasks.schedule.reset_click",
+            "schedule": crontab(hour=0, minute=0, day_of_week='*'),
+        }
+    },
+    timezone="Asia/Bangkok"
+)
 
 from src import routes
 
