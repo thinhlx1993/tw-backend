@@ -62,9 +62,9 @@ celery = Celery(
     broker=os.environ['CELERY_BROKER_URL'],
     backend=os.environ['CELERY_BROKER_URL'],
     beat_schedule={
-        "task-every-10-seconds": {
+        "task-every-120-seconds": {
             "task": "src.tasks.schedule.update_click",
-            "schedule": 600,
+            "schedule": 120,
         },
         "task-every-day-at-midnight": {
             "task": "src.tasks.schedule.reset_click",
