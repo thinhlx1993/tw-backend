@@ -25,23 +25,23 @@ jobs:
      - name: Build container image
        run: docker build -t registry.digitalocean.com/meetingx/tw-api:$(echo $GITHUB_SHA | head -c7) .
      - name: Build celery worker container image
-       run: docker build -t registry.digitalocean.com/meetingx/tw-api:$(echo $GITHUB_SHA_CELERY | head -c7) -f Dockerfile.celery .
+       run: docker build -t registry.digitalocean.com/meetingx/tw-api:celery_latest -f Dockerfile.celery .
      - name: Build celery beat container image
-       run: docker build -t registry.digitalocean.com/meetingx/tw-api:$(echo $GITHUB_SHA_BEAT | head -c7) -f Dockerfile.beat .
+       run: docker build -t registry.digitalocean.com/meetingx/tw-api:beat_latest -f Dockerfile.beat .
      - name: Log in to DigitalOcean Container Registry with short-lived credentials
        run: doctl registry login --expiry-seconds 1200
      - name: Push image to DigitalOcean Container Registry
        run: docker push registry.digitalocean.com/meetingx/tw-api:$(echo $GITHUB_SHA | head -c7)
      - name: Push celery image to DigitalOcean Container Registry
-       run: docker push registry.digitalocean.com/meetingx/tw-api:$(echo $GITHUB_SHA_CELERY | head -c7)
+       run: docker push registry.digitalocean.com/meetingx/tw-api:celery_latest
      - name: Push beat image to DigitalOcean Container Registry
-       run: docker push registry.digitalocean.com/meetingx/tw-api:$(echo $GITHUB_SHA_BEAT | head -c7)
+       run: docker push registry.digitalocean.com/meetingx/tw-api:beat_latest
      - name: Update deployment file
        run: TAG=$(echo $GITHUB_SHA | head -c7) && sed -i 's|<IMAGE>|registry.digitalocean.com/meetingx/tw-api:'${TAG}'|' $GITHUB_WORKSPACE/config/deployment.yaml
      - name: Update deployment file
-       run: TAG=$(echo $GITHUB_SHA_CELERY | head -c7) && sed -i 's|<IMAGE_CELERY_WORKER>|registry.digitalocean.com/meetingx/tw-api:'${TAG}'|' $GITHUB_WORKSPACE/config/deployment.yaml
+       run: TAG=celery_latest && sed -i 's|<IMAGE_CELERY_WORKER>|registry.digitalocean.com/meetingx/tw-api:'${TAG}'|' $GITHUB_WORKSPACE/config/deployment.yaml
      - name: Update deployment file
-       run: TAG=$(echo $GITHUB_SHA_BEAT | head -c7) && sed -i 's|<IMAGE_CELERY_BEAT>|registry.digitalocean.com/meetingx/tw-api:'${TAG}'|' $GITHUB_WORKSPACE/config/deployment.yaml
+       run: TAG=beat_latest && sed -i 's|<IMAGE_CELERY_BEAT>|registry.digitalocean.com/meetingx/tw-api:'${TAG}'|' $GITHUB_WORKSPACE/config/deployment.yaml
      - name: Save DigitalOcean kubeconfig with short-lived credentials
        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 3600 k8s-1-28-2-do-0-sgp1-1704968941741
      - name: Deploy to DigitalOcean Kubernetes
