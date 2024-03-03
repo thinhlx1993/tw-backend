@@ -1,6 +1,10 @@
 import json
 from datetime import datetime
 
+from flask_jwt_extended import get_jwt_claims
+
+from src.parsers import profile_page_parser
+
 
 def generate_crontab_schedule(time_str=None, days=None):
     """
@@ -41,3 +45,16 @@ def generate_crontab_schedule(time_str=None, days=None):
     crontab_schedule = f"{minute} {hour} * * {day_field}"
 
     return crontab_schedule
+
+
+def make_cache_key(*args, **kwargs):
+   """A function which is called to derive the key for a computed value.
+      The key in this case is the concat value of all the json request
+      parameters. Other strategy could to use any hashing function.
+   :returns: unique string for which the value should be cached.
+   """
+   args = profile_page_parser.parse_args()
+   claims = get_jwt_claims()
+   user_id = claims["user_id"]
+   cache_key = ",".join([f"{key}={value}" for key, value in args.items()])
+   return f"{user_id}:{cache_key}"

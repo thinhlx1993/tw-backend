@@ -11,6 +11,7 @@ from src.services import profiles_services, setting_services
 from src.services import hma_services, teams_services
 from src.tasks.worker import create_profiles, delete_profile, update_profile
 from src.utilities.custom_decorator import custom_jwt_required
+from src.v1.controllers.utils import make_cache_key
 from src.version_handler import api_version_1_web
 from src.parsers import profile_page_parser
 from src.v1.enums.config import SettingsEnums
@@ -101,6 +102,7 @@ class ProfilesController(Resource):
     )
     @profiles_ns2.response(500, "Internal Server Error", internal_server_error_model)
     @custom_jwt_required()
+    @cache.cached(timeout=60, make_cache_key=make_cache_key)
     def get(self):
         claims = get_jwt_claims()
         user_id = claims["user_id"]

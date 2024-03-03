@@ -46,7 +46,7 @@ class Config:
     API_URL = os.environ["API_URL"]
     BASE_URL = os.environ["BASE_URL"]
     SUPER_ADMIN = os.environ["SUPER_ADMIN"]
-    CACHE_DEFAULT_TIMEOUT: 300
+    CACHE_DEFAULT_TIMEOUT: 60
     CACHE_TYPE = os.environ.get("CACHE_TYPE", "SimpleCache")
     CACHE_REDIS_URL = os.environ["CACHE_REDIS_URL"]
 
