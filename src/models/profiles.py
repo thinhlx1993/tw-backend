@@ -102,7 +102,8 @@ class Profiles(db.Model):
             "main_profile": self.main_profile,
             "click_count": self.click_count,
             "comment_count": self.comment_count,
-            "like_count": self.like_count
+            "like_count": self.like_count,
+            "profile_data": self.profile_data
         }
 
     def event_data(self):
