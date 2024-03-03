@@ -86,6 +86,25 @@ class Profiles(db.Model):
             "modified_at": self.modified_at.strftime("%d-%m-%Y %H:%M"),
         }
 
+    def repr_data(self):
+        return {
+            "profile_id": self.profile_id,
+            "owner": self.owner,
+            "username": self.username if self.username else "",
+            "user_access": self.user_access if self.user_access else "",
+            "password": self.password if self.password else "",
+            "fa": self.fa if self.fa else "",
+            "proxy": self.proxy if self.proxy else "",
+            "gpt_key": self.gpt_key if self.gpt_key else "",
+            "cookies": self.cookies if self.cookies else "",
+            "hma_profile_id": self.hma_profile_id if self.hma_profile_id else "",
+            "status": self.status if self.status else "",
+            "main_profile": self.main_profile,
+            "click_count": self.click_count,
+            "comment_count": self.comment_count,
+            "like_count": self.like_count
+        }
+
     def event_data(self):
         return {
             "profile_id": self.profile_id,

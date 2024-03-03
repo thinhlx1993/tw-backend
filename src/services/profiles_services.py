@@ -123,7 +123,7 @@ def get_all_profiles(
         query = query.offset(per_page * (page - 1))
     profiles = query.all()
     # Formatting the result
-    formatted_result = [profile.repr_name() for profile in profiles]
+    formatted_result = [profile.repr_data() for profile in profiles]
     return {
         "profiles": formatted_result,
         "result_count": count,
