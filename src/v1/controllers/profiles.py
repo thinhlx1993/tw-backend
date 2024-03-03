@@ -267,7 +267,7 @@ class ProfilesBrowserController(Resource):
     )
     @profiles_ns2.response(500, "Internal Server Error", internal_server_error_model)
     @custom_jwt_required()
-    @cache.cached()
+    # @cache.cached()
     def post(self, profile_id):
         """Used to retrieve profile's data"""
         body_data = profiles_ns2.payload
