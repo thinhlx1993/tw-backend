@@ -292,7 +292,7 @@ class ProfilesBrowserController(Resource):
         browser_data = ""
         if settings["browserType"] == SettingsEnums.hideMyAcc.value and body_data:
             # if not profile.browser_data or body_data != profile.tz_info:
-            profile.tz_info = body_data
+            # profile.tz_info = body_data
             db.session.flush()
             hma_account = settings.get("hideMyAccAccount")
             hma_password = settings.get("hideMyAccPassword")
@@ -312,7 +312,6 @@ class ProfilesBrowserController(Resource):
                 }, 400
 
             browser_data = hma_result["result"]
-            profile.browser_data = ""
 
         if not profile.debugger_port:
             debugger_port = random.randint(20000, 60000)
