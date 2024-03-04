@@ -289,7 +289,7 @@ class ProfilesBrowserController(Resource):
             return {"message": "Please setup your settings first"}, 400
 
         settings = settings["settings"]
-
+        browser_data = ""
         if settings["browserType"] == SettingsEnums.hideMyAcc.value and body_data:
             # if not profile.browser_data or body_data != profile.tz_info:
             profile.tz_info = body_data
@@ -312,8 +312,8 @@ class ProfilesBrowserController(Resource):
                 }, 400
 
             browser_data = hma_result["result"]
-            profile.browser_data = browser_data
-        browser_data = profile.browser_data
+            profile.browser_data = ""
+
         if not profile.debugger_port:
             debugger_port = random.randint(20000, 60000)
             profile.debugger_port = debugger_port
