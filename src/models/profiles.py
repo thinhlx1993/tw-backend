@@ -35,6 +35,7 @@ class Profiles(db.Model):
     pass_emails = db.Column(db.String(128), nullable=True, server_default="")
     phone_number = db.Column(db.String(128), nullable=True, server_default="")
     debugger_port = db.Column(db.String(128), nullable=True)
+    today_post_count = db.Column(db.Integer, nullable=True, server_default="0")
     owner = db.Column(
         db.String(128),
         db.ForeignKey("user.user_id"),
@@ -82,6 +83,7 @@ class Profiles(db.Model):
             "click_count": self.click_count,
             "comment_count": self.comment_count,
             "like_count": self.like_count,
+            "today_post_count": self.today_post_count,
             "created_at": self.created_at.strftime("%d-%m-%Y %H:%M"),
             "modified_at": self.modified_at.strftime("%d-%m-%Y %H:%M"),
         }
@@ -91,18 +93,17 @@ class Profiles(db.Model):
             "profile_id": self.profile_id,
             "owner": self.owner,
             "username": self.username if self.username else "",
-            "user_access": self.user_access if self.user_access else "",
             "password": self.password if self.password else "",
             "fa": self.fa if self.fa else "",
             "proxy": self.proxy if self.proxy else "",
             "gpt_key": self.gpt_key if self.gpt_key else "",
-            "cookies": self.cookies if self.cookies else "",
             "hma_profile_id": self.hma_profile_id if self.hma_profile_id else "",
             "status": self.status if self.status else "",
             "main_profile": self.main_profile,
             "click_count": self.click_count,
             "comment_count": self.comment_count,
             "like_count": self.like_count,
+            "today_post_count": self.today_post_count,
             "profile_data": self.profile_data,
             "modified_at": self.modified_at.strftime("%d-%m-%Y %H:%M"),
         }
