@@ -45,9 +45,8 @@ def reset_click(*args, **kwargs):
         # Update operation to set click_count to zero for all profiles
         sql_query = """
                     UPDATE profiles
-                    SET click_count = 0,
-                        comment_count = 0,
-                        like_count = 0;
+                    SET click_count = 0,comment_count = 0,like_count = 0
+                    where click_count > 280;
                     """
         db.session.execute(sql_query)
         db.session.flush()
