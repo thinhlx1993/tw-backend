@@ -135,10 +135,14 @@ def create_or_update_event(event_id, event_data):
 
 def update_count(profile_id, event_type):
     profile_receiver = Profiles.query.filter(Profiles.profile_id == profile_id).first()
-    # today = datetime.datetime.utcnow().date()
-    # _logger.info(
-    #     f"Today is {today}  and profile date {profile_receiver.modified_at.date()}"
-    # )
+    today = datetime.datetime.utcnow().date()
+    _logger.info(
+        f"Today is {today}  and profile date {profile_receiver.modified_at.date()}"
+    )
+    if today != profile_receiver.modified_at.date():
+        profile_receiver.click_count = 0
+        profile_receiver.comment_count = 0
+        profile_receiver.like_count = 0
 
     click_count = profile_receiver.click_count
     comment_count = profile_receiver.comment_count

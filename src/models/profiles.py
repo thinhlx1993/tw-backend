@@ -103,7 +103,8 @@ class Profiles(db.Model):
             "click_count": self.click_count,
             "comment_count": self.comment_count,
             "like_count": self.like_count,
-            "profile_data": self.profile_data
+            "profile_data": self.profile_data,
+            "modified_at": self.modified_at.strftime("%d-%m-%Y %H:%M"),
         }
 
     def event_data(self):
