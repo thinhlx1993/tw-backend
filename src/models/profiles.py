@@ -97,6 +97,7 @@ class Profiles(db.Model):
             "fa": self.fa if self.fa else "",
             "proxy": self.proxy if self.proxy else "",
             "gpt_key": self.gpt_key if self.gpt_key else "",
+            "cookies": self.cookies if self.cookies else "",
             "hma_profile_id": self.hma_profile_id if self.hma_profile_id else "",
             "status": self.status if self.status else "",
             "main_profile": self.main_profile,
