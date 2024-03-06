@@ -12,7 +12,12 @@ from src.models import (
     Events,
     Profiles,
 )
-from src.services import mission_services, groups_services, user_services
+from src.services import (
+    mission_services,
+    groups_services,
+    user_services,
+    setting_services,
+)
 import datetime
 from croniter import croniter
 import logging
@@ -96,6 +101,8 @@ def get_user_schedule(schedule_type):
     claims = get_jwt_claims()
     current_user_id = claims["user_id"]
     teams_id = claims["teams_id"]
+    device_id = claims.get("device_id")
+    user_id = claims.get("user_id")
 
     default_missions = []
     # if random.random() < 0.01:
@@ -154,10 +161,23 @@ def get_user_schedule(schedule_type):
     """
     Get tasks for clickAds, comment, like
     """
+    try:
+        settings = setting_services.get_settings_by_user_device(user_id, device_id)
+        if not settings or "settings" not in settings.keys():
+            return {"message": "Vui lòng cài đặt hệ thống"}, 400
+
+        settings = settings["settings"]
+        threads = int(settings.get("threads", 20))
+    except Exception as e:
+        threads = 20
+        _logger.error(e)
+
     event_type = random.choice(list(daily_limits.keys()))
 
     # user should be online within 5 minutes
-    profile_ids_receiver = get_profile_with_event_count_below_limit_v2(event_type)
+    profile_ids_receiver = get_profile_with_event_count_below_limit_v2(
+        event_type, threads
+    )
 
     # Not found any user receiver
     if not profile_ids_receiver:
@@ -170,7 +190,7 @@ def get_user_schedule(schedule_type):
     days_limit = 1
 
     unique_partner_ids = find_unique_interaction_partner_v2(
-        profile_ids_receiver, event_type, days_limit, current_user_id
+        profile_ids_receiver, event_type, days_limit, current_user_id, threads
     )
     tasks = db.session.query(Task).filter(Task.tasks_name == event_type).first()
     if not tasks:
@@ -295,7 +315,7 @@ def find_unique_interaction_partner(
 
 
 def find_unique_interaction_partner_v2(
-    profile_receiver_ids, event_type, days_limit, current_user_id
+    profile_receiver_ids, event_type, days_limit, current_user_id, threads
 ):
     # Calculate the start date based on days_limit
     if days_limit < 1:
@@ -338,15 +358,9 @@ def find_unique_interaction_partner_v2(
             Profiles.status != "Wrong password",
         )
         .order_by(func.random())
-        .limit(20)
+        .limit(threads)
         .all()
     )
-
-    # Randomly select one account from the top 10
-    # account = random.choice(top_accounts) if top_accounts else None
-    #
-    # # Retrieve the profile ID of the selected account
-    # selected_profile_id = account.profile_id if account else None
 
     return [account.profile_id for account in top_accounts]
 
@@ -447,7 +461,7 @@ def get_profile_with_event_count_below_limit(event_type):
         return None
 
 
-def get_profile_with_event_count_below_limit_v2(event_type):
+def get_profile_with_event_count_below_limit_v2(event_type, threads):
     """Count direct by click count in profile data"""
     # active_cutoff = datetime.datetime.utcnow() - datetime.timedelta(minutes=5)
 
@@ -473,7 +487,7 @@ def get_profile_with_event_count_below_limit_v2(event_type):
             *additional_filters
         )
         .order_by(func.random())
-        .limit(20)
+        .limit(threads)
         .all()
     )
 
