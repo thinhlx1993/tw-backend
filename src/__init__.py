@@ -58,19 +58,15 @@ jwt = JWTManager(app)
 
 celery = Celery(
     __name__,
-    broker=os.environ['CELERY_BROKER_URL'],
-    backend=os.environ['CELERY_BROKER_URL'],
+    broker=os.environ["CELERY_BROKER_URL"],
+    backend=os.environ["CELERY_BROKER_URL"],
     beat_schedule={
         "task-every-120-seconds": {
             "task": "src.tasks.schedule.update_click",
             "schedule": 120,
-        },
-        "task-every-day-at-midnight": {
-            "task": "src.tasks.schedule.reset_click",
-            "schedule": crontab(hour=0, minute=0, day_of_week='*'),
         }
     },
-    timezone="Asia/Bangkok"
+    timezone="Asia/Bangkok",
 )
 
 from src import routes
