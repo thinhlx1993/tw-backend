@@ -19,31 +19,31 @@ def authenticate(username, password):
     url = f"{base_url}/auth"
     auth = (username, password)
     data = {"version": appVersion}
-    claims = get_jwt_claims()
-    user_id = claims.get("user_id")
-    device_id = claims.get("device_id")
-    user_settings = setting_services.get_settings_by_user_device(user_id, device_id)
-    if user_settings:
-        settings = user_settings["settings"]
-        hma_access_token = settings.get("hma_access_token", "")
-        if hma_access_token:
-            url = f"{base_url}/users/me"
-            headers = {"Authorization": f"Bearer {hma_access_token}"}
-            response = requests.get(url, headers=headers)
-            if response.status_code == 200:
-                return hma_access_token
+    # claims = get_jwt_claims()
+    # user_id = claims.get("user_id")
+    # device_id = claims.get("device_id")
+    # user_settings = setting_services.get_settings_by_user_device(user_id, device_id)
+    # if user_settings:
+    #     settings = user_settings["settings"]
+    #     hma_access_token = settings.get("hma_access_token", "")
+    #     if hma_access_token:
+    #         url = f"{base_url}/users/me"
+    #         headers = {"Authorization": f"Bearer {hma_access_token}"}
+    #         response = requests.get(url, headers=headers)
+    #         if response.status_code == 200:
+    #             return hma_access_token
     response = requests.post(url, auth=auth, data=data)
     if response.status_code == 200 and response.json()["code"] == 1:
         hma_access_token = response.json()["result"]["token"]
-        if user_settings:
-            settings = user_settings["settings"]
-            settings["hma_access_token"] = hma_access_token
-            settings_record = Settings.query.filter_by(
-                user_id=user_id, device_id=device_id
-            ).first()
-            if settings_record:
-                settings_record.settings = settings
-                db.session.flush()
+        # if user_settings:
+        #     settings = user_settings["settings"]
+        #     settings["hma_access_token"] = hma_access_token
+        #     settings_record = Settings.query.filter_by(
+        #         user_id=user_id, device_id=device_id
+        #     ).first()
+        #     if settings_record:
+        #         settings_record.settings = settings
+        #         db.session.flush()
         return hma_access_token
     if response.status_code == 403:
         return "Account has been deleted"
