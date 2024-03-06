@@ -140,9 +140,13 @@ def update_count(profile_id, event_type):
         f"Today is {today}  and profile date {profile_receiver.modified_at.date()}"
     )
     if today != profile_receiver.modified_at.date():
+        print(
+            f"Today is {today}  and profile date {profile_receiver.modified_at.date()}"
+        )
         profile_receiver.click_count = 0
         profile_receiver.comment_count = 0
         profile_receiver.like_count = 0
+        db.session.flush()
 
     click_count = profile_receiver.click_count
     comment_count = profile_receiver.comment_count
