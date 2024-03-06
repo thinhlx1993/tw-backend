@@ -184,7 +184,12 @@ class ProfilesController(Resource):
         account_info = hma_services.get_account_info(hma_token)
         if account_info["code"] != 1:
             return {"message": f"Vui lòng kiểm tra HMA account"}, 400
-        profile_count = account_info["result"]["profiles"]
+        # profile_count = account_info["result"]["profiles"]
+        user_profiles = hma_services.get_hma_profiles(hma_token)
+        if user_profiles == "Please check your HMA account":
+            return {"message": "Vui lòng kiểm tra HMA account"}
+
+        profile_count = len(user_profiles.get("result", []))
         max_profile = account_info["result"]["plan"]["maxProfiles"]
         profiles = [data for data in profiles if data.get("username", "").strip() != ""]
         if max_profile - profile_count < len(profiles):
