@@ -481,7 +481,6 @@ def get_profile_with_event_count_below_limit_v2(event_type, threads):
         db.session.query(Profiles.profile_id)
         .filter(
             Profiles.click_count < daily_limits[event_type],
-            Profiles.profile_data.isnot(None),
             Profiles.main_profile.is_(True),
             Profiles.is_disable.is_(False),
             *additional_filters
