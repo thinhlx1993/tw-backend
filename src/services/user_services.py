@@ -64,23 +64,17 @@ def check_user_exists(username=None, user_id=None):
     """
 
     if username:
-        user = (
-            models.User.query.filter(
-                and_(
-                    func.lower(models.User.username) == func.lower(username),
-                    models.User.is_disabled == False,
-                )
+        user = models.User.query.filter(
+            and_(
+                func.lower(models.User.username) == func.lower(username),
+                models.User.is_disabled == False,
             )
-            .first()
-        )
+        ).first()
         return user
     elif user_id:
-        user = (
-            models.User.query.filter(
-                and_(models.User.user_id == user_id, models.User.is_disabled == False)
-            )
-            .first()
-        )
+        user = models.User.query.filter(
+            and_(models.User.user_id == user_id, models.User.is_disabled == False)
+        ).first()
         return user
     return None
 
@@ -121,12 +115,9 @@ def get_user(email):
 
     :return: User row from table, if user exists. Else, None.
     """
-    user = (
-        models.User.query.filter(
-            and_(models.User.email == email, models.User.is_disabled == False)
-        )
-        .first()
-    )
+    user = models.User.query.filter(
+        and_(models.User.email == email, models.User.is_disabled == False)
+    ).first()
     return user
 
 
@@ -138,12 +129,9 @@ def get_username(username):
 
     :return: User row from table, if user exists. Else, None.
     """
-    user = (
-        models.User.query.filter(
-            and_(models.User.username == username, models.User.is_disabled == False)
-        )
-        .first()
-    )
+    user = models.User.query.filter(
+        and_(models.User.username == username, models.User.is_disabled == False)
+    ).first()
     db.session.flush()
     return user
 
@@ -158,16 +146,10 @@ def get_user_details(username=None, user_id=None):
     :return: User row from table, if user exists. Else, None.
     """
     if username:
-        user = (
-            models.UserDetails.query.filter_by(username=username)
-            .first()
-        )
+        user = models.UserDetails.query.filter_by(username=username).first()
         return user
     elif user_id:
-        user = (
-            models.UserDetails.query.filter_by(user_id=user_id)
-            .first()
-        )
+        user = models.UserDetails.query.filter_by(user_id=user_id).first()
         return user
     return None
 
@@ -2017,6 +1999,7 @@ def get_user_receiver_by_group_id(group_id):
         db.session.query(User.user_id)
         .join(UserGroup)
         .filter(UserGroup.group_id == group_id)
+        .order_by(func.random())
         .all()
     )
     return users

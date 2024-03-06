@@ -307,9 +307,7 @@ class ProfilesBrowserController(Resource):
                 hma_token, profile.hma_profile_id, body_data
             )
             if not status:
-                return {
-                    "message": "HMA account not found, please check your settings"
-                }, 400
+                return {"message": "HMA profile not found error"}, 400
 
             browser_data = hma_result["result"]
 
