@@ -44,6 +44,7 @@ def create_profile(data, device_id, user_id, hma_token, browser_version, teams_i
     if not hma_profile_id:
         return False
     profile.hma_profile_id = hma_profile_id
+    profile.cookies = ""
     db.session.add(profile)
     db.session.commit()
     print(f"Add ok {username}")
