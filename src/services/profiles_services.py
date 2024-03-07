@@ -71,7 +71,7 @@ def get_all_profiles(
     # Apply sorting
     # if sorting_order:
     query = query.filter(Profiles.is_disable == False)
-    # query = query.order_by(db.text("username asc"))
+    query = query.order_by(db.text("created_at asc"))
     if search:
         query = query.filter(
             or_(
