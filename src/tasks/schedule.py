@@ -1,6 +1,6 @@
 from src import db, celery
 from src.views.groups import GroupViews
-from src.models import Groups
+from src.models import Groups, Profiles
 from sqlalchemy import update
 
 
@@ -43,13 +43,23 @@ def reset_click(*args, **kwargs):
     with db.app.app_context():
         db.session.execute("SET search_path TO public, 'cs_" + teams_id + "'")
         # Update operation to set click_count to zero for all profiles
-        sql_query = """
-                    UPDATE profiles
-                    SET click_count = 0,comment_count = 0,like_count = 0
-                    where click_count > 280;
-                    """
-        db.session.execute(sql_query)
-        db.session.flush()
-        db.session.commit()
-        print("reset_click_count OK")
+        profiles = db.session.query(Profiles.profile_id).filter().all()
+        for profile in profiles:
+            reset_profile_click.apply_async(args=[profile.profile_id])
+        return True
+
+
+def reset_profile_click(profile_id):
+    teams_id = "01cd2da0-3fe2-4335-a689-1bc482ad7c52"
+    with db.app.app_context():
+        db.session.execute("SET search_path TO public, 'cs_" + teams_id + "'")
+        profile = db.session.query(Profiles).find_one(profile_id=profile_id)
+        if profile:
+            profile.click_count = 0
+            profile.comment_count = 0
+            profile.like_count = 0
+            profile.today_post_count = 0
+            db.session.flush()
+            db.session.commit()
+        print(f"reset_click_count {profile.username}")
         return True
