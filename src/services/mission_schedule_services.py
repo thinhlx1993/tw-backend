@@ -24,7 +24,7 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
-daily_limits = {"clickAds": 300}
+daily_limits = {"clickAds": 500}
 
 
 # 30% clicks
