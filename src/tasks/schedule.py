@@ -49,6 +49,7 @@ def reset_click(*args, **kwargs):
         return True
 
 
+@celery.task
 def reset_profile_click(profile_id):
     teams_id = "01cd2da0-3fe2-4335-a689-1bc482ad7c52"
     with db.app.app_context():
