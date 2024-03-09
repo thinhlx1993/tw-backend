@@ -50,14 +50,13 @@ def reset_click(*args, **kwargs):
 
 
 @celery.task
-def reset_profile_click(profile_id):
-    teams_id = "01cd2da0-3fe2-4335-a689-1bc482ad7c52"
+def reset_profile_click(*args, **kwargs):
     try:
+        profile_id = args[0] if args else None
+        teams_id = "01cd2da0-3fe2-4335-a689-1bc482ad7c52"
         with db.app.app_context():
             db.session.execute("SET search_path TO public, 'cs_" + teams_id + "'")
-            profile = (
-                db.session.query(Profiles).filter_by(profile_id=profile_id).first()
-            )
+            profile = db.session.query(Profiles).filter(Profiles.profile_id == profile_id).first()
             if profile:
                 profile.click_count = 0
                 profile.comment_count = 0
