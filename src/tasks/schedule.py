@@ -52,15 +52,21 @@ def reset_click(*args, **kwargs):
 @celery.task
 def reset_profile_click(profile_id):
     teams_id = "01cd2da0-3fe2-4335-a689-1bc482ad7c52"
-    with db.app.app_context():
-        db.session.execute("SET search_path TO public, 'cs_" + teams_id + "'")
-        profile = db.session.query(Profiles).filter_by(profile_id=profile_id).first()
-        if profile:
-            profile.click_count = 0
-            profile.comment_count = 0
-            profile.like_count = 0
-            profile.today_post_count = 0
-            db.session.flush()
-            db.session.commit()
-        print(f"reset_click_count {profile.username}")
-        return True
+    try:
+        with db.app.app_context():
+            db.session.execute("SET search_path TO public, 'cs_" + teams_id + "'")
+            profile = (
+                db.session.query(Profiles).filter_by(profile_id=profile_id).first()
+            )
+            if profile:
+                profile.click_count = 0
+                profile.comment_count = 0
+                profile.like_count = 0
+                profile.today_post_count = 0
+                db.session.flush()
+                db.session.commit()
+                print(f"reset_click_count {profile.username}")
+                return True
+            print(f"reset_click_count failed, profile not found")
+    except Exception as e:
+        raise e
