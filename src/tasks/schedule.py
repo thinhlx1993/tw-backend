@@ -69,4 +69,4 @@ def reset_profile_click(profile_id):
                 return True
             print(f"reset_click_count failed, profile not found")
     except Exception as e:
-        raise e
+        print(f"An error occurred: {str(e)}")
