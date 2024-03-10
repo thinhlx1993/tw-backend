@@ -64,6 +64,10 @@ celery = Celery(
         "task-every-120-seconds": {
             "task": "src.tasks.schedule.update_click",
             "schedule": 120,
+        },
+        "task-every-day-at-midnight": {
+            "task": "src.tasks.schedule.reset_click",
+            "schedule": crontab(hour=0, minute=0, day_of_week="*"),
         }
     },
     timezone="Asia/Bangkok",
