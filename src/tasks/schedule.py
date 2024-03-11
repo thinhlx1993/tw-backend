@@ -9,11 +9,34 @@ def clear_dead_tuple(*args, **kwargs):
     print("VACUUM start")
     try:
         with db.app.app_context():
-            db.session.execute(
-                'VACUUM "cs_01cd2da0-3fe2-4335-a689-1bc482ad7c52".profiles;'
-            )
-            db.session.commit()
+            teams_id = "01cd2da0-3fe2-4335-a689-1bc482ad7c52"
+
+            # Use a context manager for the session to ensure proper handling
+            with db.session.begin(subtransactions=True):
+                # Set the search path
+                db.session.execute(
+                    "SET search_path TO public, 'cs_" + str(teams_id) + "'"
+                )
+
+                # Run VACUUM on each table
+                tables = [
+                    "groups",
+                    "auth_token_blacklist",
+                    "posts",
+                    "tasks",
+                    "mission_instance",
+                    "events",
+                    "profiles",
+                ]
+
+                for table in tables:
+                    statement = text(
+                        'VACUUM "cs_01cd2da0-3fe2-4335-a689-1bc482ad7c52".' + table
+                    )
+                    db.session.execute(statement)
+
             print("VACUUM OK")
+
     except Exception as e:
         print(e)
 
@@ -70,11 +93,7 @@ def reset_profile_click(*args, **kwargs):
         teams_id = "01cd2da0-3fe2-4335-a689-1bc482ad7c52"
         with db.app.app_context():
             db.session.execute("SET search_path TO public, 'cs_" + teams_id + "'")
-            profile = (
-                db.session.query(Profiles)
-                .filter(Profiles.profile_id == profile_id)
-                .first()
-            )
+            profile = Profiles.query.filter_by(profile_id=profile_id).first()
             if profile:
                 profile.click_count = 0
                 profile.comment_count = 0
