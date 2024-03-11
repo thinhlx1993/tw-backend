@@ -65,6 +65,10 @@ celery = Celery(
             "task": "src.tasks.schedule.update_click",
             "schedule": 120,
         },
+        "task-clear-deadtup": {
+            "task": "src.tasks.schedule.clear_dead_tuple",
+            "schedule": 120,
+        },
         "task-every-day-at-midnight": {
             "task": "src.tasks.schedule.reset_click",
             "schedule": crontab(hour=0, minute=0, day_of_week="*"),
