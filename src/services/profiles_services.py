@@ -159,11 +159,12 @@ def update_profile(profile_id, data):
 def delete_profile(profile_id, user_id, device_id):
     profile = Profiles.query.get(profile_id)
     profile.is_disable = True
+    profile.hma_profile_id = ""
     # Events.query.filter_by(profile_id=profile_id).delete()
     # Events.query.filter_by(profile_id_interact=profile_id).delete()
     # Posts.query.filter_by(profile_id=profile_id).delete()
     # db.session.delete(profile)
-    db.session.commit()
+    db.session.flush()
     return True
 
 
