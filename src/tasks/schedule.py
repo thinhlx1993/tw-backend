@@ -18,6 +18,9 @@ def clear_dead_tuple(*args, **kwargs):
                     "SET search_path TO public, 'cs_" + str(teams_id) + "'"
                 )
 
+                # Commit the changes before running VACUUM
+                db.session.commit()
+
                 # Run VACUUM on each table
                 tables = [
                     "groups",
