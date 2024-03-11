@@ -29,7 +29,7 @@ else:
     sentry_sdk.init(
         dsn="https://4d71513c1fe88390e864983b9110f431@o1068161.ingest.sentry.io/4506666720952320",
         enable_tracing=True,
-        traces_sample_rate=0.3,  # Adjust sample rate as needed,
+        traces_sample_rate=0.1,  # Adjust sample rate as needed,
         integrations=[
             FlaskIntegration(
                 transaction_style="url",
@@ -68,7 +68,7 @@ celery = Celery(
         "task-every-day-at-midnight": {
             "task": "src.tasks.schedule.reset_click",
             "schedule": crontab(hour=0, minute=0, day_of_week="*"),
-        }
+        },
     },
     timezone="Asia/Bangkok",
 )
