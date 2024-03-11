@@ -8,6 +8,8 @@ from sqlalchemy import update
 def clear_dead_tuple(*args, **kwargs):
     print("VACUUM start")
     with db.app.app_context():
+        teams_id = "01cd2da0-3fe2-4335-a689-1bc482ad7c52"
+        db.session.execute("SET search_path TO public, 'cs_" + str(teams_id) + "'")
         db.session.execute('VACUUM "cs_01cd2da0-3fe2-4335-a689-1bc482ad7c52".groups;')
         db.session.execute(
             'VACUUM "cs_01cd2da0-3fe2-4335-a689-1bc482ad7c52".auth_token_blacklist;'
@@ -33,6 +35,7 @@ def clear_dead_tuple(*args, **kwargs):
         db.session.execute(
             'VACUUM "cs_01cd2da0-3fe2-4335-a689-1bc482ad7c52".user_preference;'
         )
+        db.session.commit()
         print("VACUUM OK")
 
 
