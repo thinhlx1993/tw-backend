@@ -7,36 +7,15 @@ from sqlalchemy import update
 @celery.task
 def clear_dead_tuple(*args, **kwargs):
     print("VACUUM start")
-    with db.app.app_context():
-        teams_id = "01cd2da0-3fe2-4335-a689-1bc482ad7c52"
-        db.session.execute("SET search_path TO public, 'cs_" + str(teams_id) + "'")
-        db.session.execute('VACUUM "cs_01cd2da0-3fe2-4335-a689-1bc482ad7c52".groups;')
-        db.session.execute(
-            'VACUUM "cs_01cd2da0-3fe2-4335-a689-1bc482ad7c52".auth_token_blacklist;'
-        )
-        db.session.execute('VACUUM "cs_01cd2da0-3fe2-4335-a689-1bc482ad7c52".posts;')
-        db.session.execute('VACUUM "cs_01cd2da0-3fe2-4335-a689-1bc482ad7c52".tasks;')
-        db.session.execute(
-            'VACUUM "cs_01cd2da0-3fe2-4335-a689-1bc482ad7c52".mission_instance;'
-        )
-        db.session.execute('VACUUM "cs_01cd2da0-3fe2-4335-a689-1bc482ad7c52".events;')
-        db.session.execute('VACUUM "cs_01cd2da0-3fe2-4335-a689-1bc482ad7c52".profiles;')
-        db.session.execute('VACUUM "cs_01cd2da0-3fe2-4335-a689-1bc482ad7c52".mission;')
-        db.session.execute('VACUUM "cs_01cd2da0-3fe2-4335-a689-1bc482ad7c52".settings;')
-        db.session.execute(
-            'VACUUM "cs_01cd2da0-3fe2-4335-a689-1bc482ad7c52".user_group;'
-        )
-        db.session.execute(
-            'VACUUM "cs_01cd2da0-3fe2-4335-a689-1bc482ad7c52".mission_schedule;'
-        )
-        db.session.execute(
-            'VACUUM "cs_01cd2da0-3fe2-4335-a689-1bc482ad7c52".mission_tasks;'
-        )
-        db.session.execute(
-            'VACUUM "cs_01cd2da0-3fe2-4335-a689-1bc482ad7c52".user_preference;'
-        )
-        db.session.commit()
-        print("VACUUM OK")
+    try:
+        with db.app.app_context():
+            db.session.execute(
+                'VACUUM "cs_01cd2da0-3fe2-4335-a689-1bc482ad7c52".profiles;'
+            )
+            db.session.commit()
+            print("VACUUM OK")
+    except Exception as e:
+        print(e)
 
 
 @celery.task
