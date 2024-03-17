@@ -70,10 +70,7 @@ def upgrade():
                         SELECT COUNT(*)
                         FROM profiles pf
                         JOIN user_group ug ON pf.owner = ug.user_id
-                        WHERE pf.profile_data IS NOT NULL
-                        AND (pf.profile_data->>'verify' = 'true')
-                        AND (pf.profile_data->>'suspended' = 'false')
-                        AND pf.main_profile = True
+                        WHERE pf.main_profile = True
                         AND pf.is_disable = FALSE
                         AND ug.group_id = g.group_id
                     ) as profile_receiver
@@ -82,6 +79,7 @@ def upgrade():
                     JOIN profiles p ON u.user_id = p.owner
                     JOIN user_group ug ON u.user_id = ug.user_id
                     JOIN "groups" g ON ug.group_id = g.group_id
+                WHERE p.is_disable = FALSE
                 GROUP BY
                     g.group_id
             )
