@@ -2,6 +2,7 @@ import os
 import logging
 
 import jwt
+from datetime import datetime, timedelta
 from flask import request
 from functools import wraps
 from flask_jwt_extended import verify_jwt_in_request, get_jwt_claims, get_jwt_identity
@@ -9,6 +10,8 @@ from flask_jwt_extended.exceptions import NoAuthorizationError, InvalidHeaderErr
 from pydantic import ValidationError
 from jwt import ExpiredSignatureError
 from src import db
+from src.models import User
+from src.services import user_services
 
 _logger = logging.getLogger(__name__)
 
@@ -24,14 +27,41 @@ def custom_jwt_required():
         @wraps(fn)
         def decorator(*args, **kwargs):
             verify_jwt_in_request()
-            user = get_jwt_claims()
-            if user["authorized"]:
+            claims = get_jwt_claims()
+            if claims["authorized"]:
                 db.session.execute(
-                    "SET search_path TO public, 'cs_" + str(user["teams_id"]) + "'"
+                    "SET search_path TO public, 'cs_" + str(claims["teams_id"]) + "'"
                 )
-                return fn(*args, **kwargs)
-            else:
-                return {"message": "Not authorized"}, 401
+                roles = claims["role"]
+                is_admin = user_services.check_is_administrator_user(roles)
+                if is_admin:
+                    return fn(*args, **kwargs)
+
+                user = (
+                    db.session.query(User)
+                    .filter(User.user_id == claims["user_id"])
+                    .first()
+                )
+
+                if not user.expired_at:
+                    expired_at = user.created_at + timedelta(days=30)
+                    user.expired_at = expired_at
+                    db.session.commit()
+                    db.session.execute(
+                        "SET search_path TO public, 'cs_"
+                        + str(claims["teams_id"])
+                        + "'"
+                    )
+                else:
+                    expired_at = user.expired_at
+
+                if user.created_at < expired_at - timedelta(days=30):
+                    return fn(*args, **kwargs)
+                else:
+                    return {
+                        "message": "Tài khoản đã hết hạn vui lòng liên hệ admin để gia hạn"
+                    }, 500
+            return {"message": "Not authorized"}, 401
 
         return decorator
 

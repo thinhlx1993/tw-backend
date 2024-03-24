@@ -589,6 +589,7 @@ class TeamsUserOperations(Resource):
         try:
             user_services.delete_user_group_mapping(user_id)
             user_services.create_user_group_mapping(user_id, request_data["group_id"])
+            user_services.extend_expired_date(user_id, int(request_data['expired_days']))
             return {"message": "User updated successfully"}, 200
         except Exception as err:
             _logger.exception(err)

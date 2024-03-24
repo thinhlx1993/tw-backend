@@ -399,6 +399,14 @@ def create_user_group_mapping(user_id, group_id):
     db.session.flush()
 
 
+def extend_expired_date(user_id, expired_days):
+    if expired_days > 0:
+        user = models.User.query.get(user_id)
+        expired_at = datetime.datetime.utcnow() + datetime.timedelta(days=expired_days)
+        user.expired_at = expired_at
+        db.session.flush()
+
+
 def update_user(
     username,
     first_name=None,

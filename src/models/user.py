@@ -45,6 +45,7 @@ class User(db.Model):
     first_name = db.Column(db.String(128))
     last_name = db.Column(db.String(128))
     created_at = db.Column(db.DateTime, server_default=func.now())
+    expired_at = db.Column(db.DateTime(), nullable=True)
     default_page = db.Column(db.String(128))
     is_disabled = db.Column(db.Boolean, server_default="false")
     notifications_enabled = db.Column(db.Boolean)
@@ -116,12 +117,17 @@ class User(db.Model):
             "first_name": str(self.first_name),
             "last_name": str(self.last_name),
             "created_at": self.created_at.strftime("%d-%m-%Y %H:%M"),
+            "expired_at": (
+                self.expired_at.strftime("%d-%m-%Y %H:%M") if self.expired_at else ""
+            ),
             "is_disabled": str(self.is_disabled),
             "phone_number": str(self.phone_number),
             "is_email_verified": str(self.is_email_verified),
             "last_active_at": self.last_active_at.strftime("%d-%m-%Y %H:%M"),
-            "is_admin": True
-            if [role for role in self.user_roles if role.role_name == "admin"]
-            else False,
+            "is_admin": (
+                True
+                if [role for role in self.user_roles if role.role_name == "admin"]
+                else False
+            ),
             "groups": [group.repr_name() for group in self.groups],
         }
