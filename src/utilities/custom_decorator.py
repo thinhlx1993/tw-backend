@@ -55,7 +55,7 @@ def custom_jwt_required():
                 else:
                     expired_at = user.expired_at
 
-                if user.created_at < expired_at - timedelta(days=30):
+                if datetime.utcnow() < expired_at:
                     return fn(*args, **kwargs)
                 else:
                     return {
