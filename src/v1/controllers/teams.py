@@ -485,6 +485,7 @@ class TeamsUserOperations(Resource):
             user_services.create_user_group_mapping(user_details["user_id"], group_id)
             user_services.create_user_preference(user_details["user_id"])
             org_name = teams_services.get_teams(teams_id).teams_name
+            user_services.extend_expired_date(user_details["user_id"], 30)
             return {
                 "message": f"User {user_details['username']} has been added to {org_name}"
             }, 200
