@@ -1,8 +1,9 @@
 import os
 from sqlalchemy.pool import NullPool
-# from dotenv import load_dotenv
-#
-# load_dotenv()
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class Config:
