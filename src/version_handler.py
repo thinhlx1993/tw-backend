@@ -11,5 +11,9 @@ agent_authorizations = {
 
 version_1_web = Blueprint("version_1_web", __name__)
 api_version_1_web = Api(
-    version_1_web, authorizations=authorizations, security="Bearer Auth"
+    version_1_web,
+    authorizations=authorizations,
+    security="Bearer Auth",
+    swagger=False,
+    doc=False,
 )
