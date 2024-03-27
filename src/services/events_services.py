@@ -110,7 +110,6 @@ def create_or_update_event(event_id, event_data):
     else:
         # Create a new record
         event_record = Events()
-        event_record.created_at = datetime.datetime.utcnow()
         # "event_type": fields.String(required=True, example="event_type"),
         # "profile_id": fields.String(required=False, example="profile_id"),
         # "profile_id_interact": fields.String(required=True, example="profile_id"),
